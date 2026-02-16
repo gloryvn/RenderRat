@@ -1,5 +1,7 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
+import base64
+import io
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from typing import Dict, Set
@@ -27,6 +29,9 @@ admins: Set[WebSocket] = set()
 # Track which admin is watching which client (for stream routing)
 admin_watching: Dict[WebSocket, str] = {}   # admin_ws → client_id
 
+# File transfer buffer: transfer_id -> {filename, chunks, total_chunks, done}
+file_transfers: Dict[str, dict] = {}
+
 # ===============================
 # PAGES
 # ===============================
@@ -42,6 +47,33 @@ async def health_check():
         "clients_online": len(clients),
         "admins_online": len(admins)
     }
+
+# ===============================
+# FILE DOWNLOAD ENDPOINT
+# ===============================
+
+@app.get("/download/{transfer_id}")
+async def download_file(transfer_id: str):
+    """Admin download file đã nhận từ Client qua HTTP GET."""
+    t = file_transfers.get(transfer_id)
+    if not t:
+        return HTMLResponse("<h3>File not found or expired</h3>", status_code=404)
+    if not t.get("done"):
+        return HTMLResponse("<h3>File transfer not complete yet</h3>", status_code=425)
+
+    # Ghép chunks
+    buffer = io.BytesIO()
+    for i in range(t["total_chunks"]):
+        chunk = t["chunks"].get(i, "")
+        buffer.write(base64.b64decode(chunk))
+    buffer.seek(0)
+
+    filename = t["filename"]
+    return StreamingResponse(
+        buffer,
+        media_type="application/octet-stream",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+    )
 
 # ===============================
 # CLIENT WEBSOCKET
@@ -85,6 +117,50 @@ async def client_ws(websocket: WebSocket, client_id: str):
                     "output": message.get("output")
                 })
 
+            # ── File transfer: Client → Admin ─────────────────────
+            elif msg_type in ("file_transfer_start", "file_chunk", "file_transfer_done",
+                              "file_transfer_error", "file_transfer_progress"):
+                transfer_id = message.get("transfer_id")
+
+                if msg_type == "file_transfer_start":
+                    file_transfers[transfer_id] = {
+                        "filename": message.get("filename"),
+                        "file_size": message.get("file_size"),
+                        "total_chunks": message.get("total_chunks"),
+                        "chunks": {},
+                        "done": False,
+                        "client_id": client_id
+                    }
+                elif msg_type == "file_chunk":
+                    if transfer_id in file_transfers:
+                        file_transfers[transfer_id]["chunks"][message.get("chunk_idx")] = message.get("data")
+                elif msg_type == "file_transfer_done":
+                    if transfer_id in file_transfers:
+                        file_transfers[transfer_id]["done"] = True
+                        print(f"[FILE] Transfer done: {message.get('filename')} ({message.get('file_size')} bytes)")
+
+                # Relay progress đến admin
+                await broadcast_to_admins({
+                    "type": msg_type,
+                    "client_id": client_id,
+                    "transfer_id": transfer_id,
+                    "filename": message.get("filename"),
+                    "file_size": message.get("file_size"),
+                    "total_chunks": message.get("total_chunks"),
+                    "chunk_idx": message.get("chunk_idx"),
+                    "error": message.get("error")
+                })
+
+            # ── File save result (Admin → Client download kết quả) ─
+            elif msg_type == "file_save_result":
+                await broadcast_to_admins({
+                    "type": "file_save_result",
+                    "client_id": client_id,
+                    "transfer_id": message.get("transfer_id"),
+                    "path": message.get("path"),
+                    "error": message.get("error")
+                })
+
             # ── Client connected (sysinfo) ─────────────────────────
             elif msg_type == "client_connected":
                 await broadcast_to_admins({
@@ -100,7 +176,9 @@ async def client_ws(websocket: WebSocket, client_id: str):
                     "client_id": client_id,
                     "data": message.get("data"),
                     "result": message.get("result"),
-                    "path": message.get("path")
+                    "path": message.get("path"),
+                    "message": message.get("message"),
+                    "status": message.get("status")
                 })
 
     except WebSocketDisconnect:
@@ -195,11 +273,61 @@ async def admin_ws(websocket: WebSocket):
                         "path": message.get("path", ".")
                     }))
 
+            elif msg_type == "get_drives":
+                if client_id in clients:
+                    await clients[client_id].send_text(json.dumps({
+                        "type": "get_drives"
+                    }))
+
             elif msg_type == "read_file":
                 if client_id in clients:
                     await clients[client_id].send_text(json.dumps({
                         "type": "read_file",
                         "path": message.get("path")
+                    }))
+
+            # ── File: Admin yêu cầu Client gửi file lên ───────────
+            elif msg_type == "request_file_upload":
+                if client_id in clients:
+                    import uuid as _uuid
+                    transfer_id = message.get("transfer_id") or str(_uuid.uuid4())[:8]
+                    await clients[client_id].send_text(json.dumps({
+                        "type": "request_file_upload",
+                        "path": message.get("path"),
+                        "transfer_id": transfer_id
+                    }))
+                    print(f"[FILE] Request upload: {message.get('path')} from {client_id}")
+
+            # ── File: Admin gửi file xuống Client ─────────────────
+            elif msg_type == "send_file_to_client":
+                if client_id in clients:
+                    # Forward toàn bộ file_transfer_start + chunks + done
+                    await clients[client_id].send_text(json.dumps({
+                        "type": "file_transfer_start",
+                        "transfer_id": message.get("transfer_id"),
+                        "filename": message.get("filename"),
+                        "file_size": message.get("file_size"),
+                        "total_chunks": message.get("total_chunks"),
+                        "save_dir": message.get("save_dir", ".")
+                    }))
+
+            elif msg_type in ("send_chunk_to_client",):
+                if client_id in clients:
+                    await clients[client_id].send_text(json.dumps({
+                        "type": "file_chunk",
+                        "transfer_id": message.get("transfer_id"),
+                        "chunk_idx": message.get("chunk_idx"),
+                        "total_chunks": message.get("total_chunks"),
+                        "data": message.get("data")
+                    }))
+
+            elif msg_type == "finish_file_to_client":
+                if client_id in clients:
+                    await clients[client_id].send_text(json.dumps({
+                        "type": "file_transfer_done",
+                        "transfer_id": message.get("transfer_id"),
+                        "filename": message.get("filename"),
+                        "file_size": message.get("file_size")
                     }))
 
     except WebSocketDisconnect:
