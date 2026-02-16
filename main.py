@@ -7,6 +7,7 @@ import json
 
 app = FastAPI()
 
+
 # ===============================
 # CONFIG TEMPLATE + STATIC
 # ===============================
@@ -120,3 +121,4 @@ async def broadcast_to_admins(message: dict):
 
     for dead in dead_admins:
         admins.remove(dead)
+
