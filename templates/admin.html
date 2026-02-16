@@ -248,7 +248,31 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
   border-top: 1px solid var(--border);
   background: var(--surf2);
 }
+}
  
+.transfer-item {
+  padding: 8px 12px; border-bottom: 1px solid rgba(26,34,51,.5);
+  font-size: 11px;
+}
+
+.t-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+.t-name { font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+.t-size { color: var(--muted); font-size: 10px; flex-shrink: 0; }
+.t-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 4px; }
+.t-fill { height: 100%; border-radius: 2px; transition: width .2s; background: var(--accent); width: 0%; }
+.t-fill.done { background: var(--green); }
+.t-fill.err  { background: var(--red); }
+.t-status { display: flex; justify-content: space-between; align-items: center; }
+.t-msg { font-size: 10px; color: var(--muted); }
+.t-dl { font-size: 10px; font-weight: 700; color: var(--accent); text-decoration: none; display: none; }
+.t-dl.show { display: inline; }
+.t-dl:hover { text-decoration: underline; }
+.no-transfers { font-size: 11px; color: var(--muted); text-align: center; padding: 12px; }
+.ex-transfers { font-size: 11px; color: var(--muted); text-align: left; padding: 12px; }
+
+
+
+
 /* Loading spinner */
 .ex-loading { display: flex; align-items: center; justify-content: center; padding: 30px; gap: 10px; color: var(--muted); font-size: 12px; }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -256,6 +280,423 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
 
  
 .drop-overlay.show { display: flex; }
+
+
+
+
+
+
+
+
+
+
+/* ══ TASK MANAGER PANEL ═════════════════════════════ */
+.task-manager-panel {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--surf);
+  border-left: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  transition: width .25s cubic-bezier(.4,0,.2,1), border-color .25s;
+  z-index: 101;
+}
+.task-manager-panel.open {
+  width: 750px;
+  min-width: 750px;
+  border-left-color: var(--border);
+}
+.tm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surf2);
+  flex-shrink: 0;
+}
+.tm-title {
+  font-family: var(--sans);
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--purple);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.tm-title-icon {
+  font-size: 16px;
+}
+.tm-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 20px;
+  padding: 4px 8px;
+  transition: color .12s;
+  line-height: 1;
+}
+.tm-close:hover { color: var(--red); }
+.tm-stats {
+  display: flex;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surf);
+  flex-shrink: 0;
+}
+.tm-stat-card {
+  flex: 1;
+  background: var(--surf2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tm-stat-label {
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.tm-stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+.tm-stat-value.cpu { color: var(--accent); }
+.tm-stat-value.mem { color: var(--green); }
+.tm-stat-value.proc { color: var(--purple); }
+.tm-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surf);
+  flex-shrink: 0;
+}
+.tm-search {
+  flex: 1;
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--surf2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 7px 12px;
+  color: var(--text);
+  outline: none;
+  transition: border-color .2s;
+}
+.tm-search:focus {
+  border-color: var(--accent);
+}
+.tm-search::placeholder {
+  color: var(--muted);
+}
+.tm-sort-btn {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text);
+  transition: all .12s;
+  white-space: nowrap;
+}
+.tm-sort-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.tm-sort-btn.active {
+  background: rgba(0,229,255,.08);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.tm-refresh-btn {
+  font-family: var(--mono);
+  font-size: 18px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--muted);
+  transition: all .12s;
+  line-height: 1;
+}
+.tm-refresh-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: rotate(90deg);
+}
+.tm-table-container {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.tm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+.tm-table thead {
+  position: sticky;
+  top: 0;
+  background: var(--surf);
+  z-index: 10;
+  border-bottom: 2px solid var(--border);
+}
+.tm-table th {
+  text-align: left;
+  padding: 10px 12px;
+  font-weight: 700;
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: color .12s;
+  user-select: none;
+}
+.tm-table th:hover {
+  color: var(--accent);
+}
+.tm-table th.sortable::after {
+  content: ' ↕';
+  opacity: .3;
+}
+.tm-table th.sort-asc::after {
+  content: ' ↑';
+  opacity: 1;
+  color: var(--accent);
+}
+.tm-table th.sort-desc::after {
+  content: ' ↓';
+  opacity: 1;
+  color: var(--accent);
+}
+.tm-table tbody tr {
+  border-bottom: 1px solid rgba(26,34,51,.4);
+  transition: background .12s;
+  cursor: pointer;
+}
+.tm-table tbody tr:hover {
+  background: #111a28;
+}
+.tm-table tbody tr.selected {
+  background: rgba(187,102,255,.08);
+  border-left: 3px solid var(--purple);
+}
+.tm-table td {
+  padding: 10px 12px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+.tm-table td.pid {
+  font-weight: 700;
+  color: var(--accent);
+  font-family: var(--mono);
+}
+.tm-table td.name {
+  font-weight: 600;
+  max-width: 180px;
+}
+.tm-table td.cpu,
+.tm-table td.memory {
+  font-family: var(--mono);
+  font-weight: 600;
+}
+.tm-table td.cpu.high { color: var(--red); }
+.tm-table td.cpu.mid { color: var(--yellow); }
+.tm-table td.cpu.low { color: var(--green); }
+.tm-table td.memory.high { color: var(--red); }
+.tm-table td.memory.mid { color: var(--yellow); }
+.tm-table td.memory.low { color: var(--green); }
+.tm-table td.status {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.tm-table td.status.running { color: var(--green); }
+.tm-table td.status.sleeping { color: var(--muted); }
+.tm-table td.path {
+  max-width: 250px;
+  font-size: 10px;
+  color: var(--muted);
+}
+.tm-table td.user {
+  max-width: 100px;
+  font-size: 10px;
+}
+.tm-table td.actions {
+  text-align: right;
+}
+.tm-end-btn {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--red);
+  transition: all .12s;
+}
+.tm-end-btn:hover {
+  background: rgba(255,51,102,.12);
+  border-color: var(--red);
+}
+.tm-details {
+  max-height: 0;
+  overflow: hidden;
+  border-top: 1px solid transparent;
+  background: var(--surf2);
+  transition: max-height .3s ease-out, border-color .3s;
+}
+.tm-details.show {
+  max-height: 400px;
+  border-top-color: var(--border);
+}
+.tm-details-title {
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--purple);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: 12px 16px 8px;
+}
+.tm-details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 0 16px 12px;
+}
+.tm-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tm-detail-label {
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.tm-detail-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tm-detail-value.path {
+  font-size: 11px;
+  word-break: break-all;
+  white-space: normal;
+}
+.tm-details-actions {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px 16px;
+}
+.tm-detail-btn {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 7px 14px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text);
+  transition: all .12s;
+  flex: 1;
+}
+.tm-detail-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(0,229,255,.08);
+}
+.tm-detail-btn.danger {
+  border-color: var(--red);
+  color: var(--red);
+}
+.tm-detail-btn.danger:hover {
+  background: rgba(255,51,102,.12);
+}
+.tm-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: var(--muted);
+}
+.tm-empty-icon {
+  font-size: 48px;
+  opacity: .2;
+  margin-bottom: 16px;
+}
+.tm-empty-text {
+  font-size: 13px;
+  font-family: var(--sans);
+  letter-spacing: .05em;
+}
+.tm-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner {
+  border: 3px solid var(--border);
+  border-top-color: var(--purple);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  animation: spin .7s linear infinite;
+  flex-shrink: 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* ══ OUTPUT LOG ═════════════════════════════════════ */
 .output-panel {
@@ -296,6 +737,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
     <button class="btn" onclick="sendCmd()">Run</button>
     <div class="divider"></div>
     <button class="btn" id="filesBtn" onclick="toggleExplorer()">📁 Files</button>
+    <button class="btn" id="taskBtn" onclick="toggleTaskManager()">⚙️ Tasks</button>
     <div class="divider"></div>
     <div class="stat-badge" id="fpsBadge">-- FPS</div>
     <div class="stat-badge" id="latBadge">-- ms</div>
@@ -365,7 +807,101 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
 
     </div><!-- /explorer-panel -->
 
+        <div class="task-manager-panel" id="taskManagerPanel">
+      
+      <!-- Header -->
+      <div class="tm-header">
+        <div class="tm-title">
+          <span class="tm-title-icon">⚙️</span>
+          <span>Task Manager</span>
+        </div>
+        <button class="tm-close" onclick="toggleTaskManager()">×</button>
+      </div>
+
+      <!-- Stats -->
+      <div class="tm-stats">
+        <div class="tm-stat-card">
+          <div class="tm-stat-label">CPU Usage</div>
+          <div class="tm-stat-value cpu" id="tmCpuStat">--</div>
+        </div>
+        <div class="tm-stat-card">
+          <div class="tm-stat-label">Memory</div>
+          <div class="tm-stat-value mem" id="tmMemStat">--</div>
+        </div>
+        <div class="tm-stat-card">
+          <div class="tm-stat-label">Processes</div>
+          <div class="tm-stat-value proc" id="tmProcStat">--</div>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="tm-controls">
+        <input type="text" class="tm-search" id="tmSearch" placeholder="🔍 Search processes..." onkeyup="filterProcesses()">
+        <button class="tm-sort-btn" id="sortCpuBtn" onclick="sortBy('cpu')">Sort CPU</button>
+        <button class="tm-sort-btn" id="sortMemBtn" onclick="sortBy('memory')">Sort MEM</button>
+        <button class="tm-refresh-btn" onclick="requestProcesses()" title="Refresh">↻</button>
+      </div>
+
+      <!-- Process Table -->
+      <div class="tm-table-container" id="tmTableContainer">
+        <div class="tm-loading">
+          <div class="spinner"></div>
+          <span>Loading processes...</span>
+        </div>
+      </div>
+
+      <!-- Process Details -->
+      <div class="tm-details" id="tmDetails">
+        <div class="tm-details-title">Process Details</div>
+        <div class="tm-details-grid">
+          <div class="tm-detail-item">
+            <div class="tm-detail-label">Process ID</div>
+            <div class="tm-detail-value" id="detailPid">--</div>
+          </div>
+          <div class="tm-detail-item">
+            <div class="tm-detail-label">Name</div>
+            <div class="tm-detail-value" id="detailName">--</div>
+          </div>
+          <div class="tm-detail-item">
+            <div class="tm-detail-label">CPU Usage</div>
+            <div class="tm-detail-value" id="detailCpu">--</div>
+          </div>
+          <div class="tm-detail-item">
+            <div class="tm-detail-label">Memory Usage</div>
+            <div class="tm-detail-value" id="detailMem">--</div>
+          </div>
+          <div class="tm-detail-item">
+            <div class="tm-detail-label">Status</div>
+            <div class="tm-detail-value" id="detailStatus">--</div>
+          </div>
+          <div class="tm-detail-item">
+            <div class="tm-detail-label">Threads</div>
+            <div class="tm-detail-value" id="detailThreads">--</div>
+          </div>
+          <div class="tm-detail-item">
+            <div class="tm-detail-label">User</div>
+            <div class="tm-detail-value" id="detailUser">--</div>
+          </div>
+          <div class="tm-detail-item" style="grid-column: span 2;">
+            <div class="tm-detail-label">Executable Path</div>
+            <div class="tm-detail-value path" id="detailPath">--</div>
+          </div>
+        </div>
+        <div class="tm-details-actions">
+          <button class="tm-detail-btn" onclick="copyPath()">📋 Copy Path</button>
+          <button class="tm-detail-btn" onclick="openLocation()">📂 Open Location</button>
+          <button class="tm-detail-btn danger" onclick="endSelectedTask()">🔴 End Task</button>
+        </div>
+      </div>
+    </div><!-- /task-manager-panel -->
+
+
+
   </div><!-- /workspace -->
+
+
+
+
 
   <!-- OUTPUT LOG -->
   <div class="output-panel" id="output">
@@ -393,6 +929,17 @@ let exSelected   = new Set();
 let exItems      = [];
 let activeXfers  = {};       // tid → { el, fill, msg, dl, chunks, total }
 const CHUNK      = 512*1024; // 512KB
+let tmOpen           = false;
+let fileOpen         = false;
+let processes        = [];
+let selectedProcess  = null;
+let sortField        = 'cpu';
+let sortDirection    = 'desc';
+let currentPath      = '';
+let pathHistory      = [];
+
+
+
 
 // ════════════════════════════════════════════════════════════
 //  WEBSOCKET
@@ -534,7 +1081,21 @@ function toggleExplorer() {
   document.getElementById('explorerPanel').classList.toggle('open',exOpen);
   document.getElementById('filesBtn').classList.toggle('files-active',exOpen);
   if(exOpen && selClient) { reqDrives(); navTo(exCurPath); }
+
+  if (exOpen)
+  {
+    tmOpen = false;
+    document.getElementById('taskManagerPanel').classList.remove('open');
+    document.getElementById('taskBtn').classList.remove('files-active');
+  }
 }
+
+
+
+
+
+
+
 
 function reqDrives() {
   if(!selClient) return;
@@ -871,173 +1432,252 @@ function log(msg, cls='') {
   $out.append(ts,el); $out.scrollTop=$out.scrollHeight;
   while($out.children.length>300) $out.removeChild($out.firstChild);
 }
+ 
 
-// ════════════════════════════════════════════════════════════
-//  IMAGE VIEWER & TEXT EDITOR
-// ════════════════════════════════════════════════════════════
 
-let currentFilePath = null;
-let currentFileContent = null;
-let isTextModified = false;
 
-// Handle file content received from client
-function handleFileContent(msg) {
-  const data = msg.data;
-  const path = msg.path;
+function toggleTaskManager() {
+  tmOpen = !tmOpen;
+  const panel = document.getElementById('taskManagerPanel');
+  const btn = document.getElementById('taskBtn');
   
-  if (!data) {
-    log('Failed to read file', 'error');
-    return;
-  }
-  
-  if (data.error) {
-    log(`File error: ${data.error}`, 'error');
-    return;
-  }
-  
-  currentFilePath = path;
-  
-  // Image file
-  if (data.type === 'image') {
-    const ext = data.extension || '';
-    const mimeMap = {
-      '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
-      '.png': 'image/png', '.gif': 'image/gif',
-      '.bmp': 'image/bmp', '.webp': 'image/webp',
-      '.svg': 'image/svg+xml', '.ico': 'image/x-icon'
-    };
-    const mime = mimeMap[ext] || 'image/jpeg';
-    openImageViewer(path, data.content, mime);
-  }
-  // Text file
-  else if (data.type === 'text') {
-    openTextEditor(path, data.content, data.size);
-  }
-}
-
-// Image Viewer functions
-function openImageViewer(path, base64Data, mimeType) {
-  document.getElementById('imageViewerPath').textContent = path;
-  const img = document.getElementById('imageViewerImg');
-  img.src = `data:${mimeType};base64,${base64Data}`;
-  
-  img.onload = () => {
-    const info = document.getElementById('imageViewerInfo');
-    info.textContent = `${img.naturalWidth} × ${img.naturalHeight} px`;
-  };
-  
-  document.getElementById('imageViewerModal').classList.add('show');
-  log(`📷 Opened image: ${path.split(/[\\/]/).pop()}`, 'info');
-}
-
-function closeImageViewer() {
-  document.getElementById('imageViewerModal').classList.remove('show');
-  document.getElementById('imageViewerImg').src = '';
-}
-
-// Text Editor functions
-function openTextEditor(path, content, size) {
-  currentFileContent = content;
-  isTextModified = false;
-  
-  document.getElementById('textEditorPath').textContent = path;
-  document.getElementById('textEditorTextarea').value = content;
-  document.getElementById('editorFileSize').textContent = `Size: ${fmtSize(size)}`;
-  
-  const lines = content.split('\n').length;
-  document.getElementById('editorLines').textContent = `Lines: ${lines}`;
-  document.getElementById('editorModified').style.display = 'none';
-  document.getElementById('editorStatus').textContent = 'Ready';
-  
-  document.getElementById('textEditorModal').classList.add('show');
-  log(`📝 Opened file: ${path.split(/[\\/]/).pop()}`, 'info');
-  
-  // Track changes
-  const textarea = document.getElementById('textEditorTextarea');
-  textarea.oninput = () => {
-    isTextModified = (textarea.value !== currentFileContent);
-    document.getElementById('editorModified').style.display = isTextModified ? 'inline' : 'none';
-    const newLines = textarea.value.split('\n').length;
-    document.getElementById('editorLines').textContent = `Lines: ${newLines}`;
-  };
-}
-
-function closeTextEditor() {
-  if (isTextModified) {
-    if (!confirm('You have unsaved changes. Close anyway?')) {
-      return;
+  if (tmOpen) {
+    // Tắt File Manager nếu đang mở
+    if (exOpen) {
+      exOpen = false;
+      document.getElementById('explorerPanel').classList.remove('open');
+      document.getElementById('filesBtn').classList.remove('files-active');
     }
-  }
-  document.getElementById('textEditorModal').classList.remove('show');
-  document.getElementById('textEditorTextarea').value = '';
-  currentFilePath = null;
-  currentFileContent = null;
-  isTextModified = false;
-}
-
-function reloadTextFile() {
-  if (!currentFilePath || !selClient) return;
-  
-  if (isTextModified && !confirm('Discard your changes?')) {
-    return;
-  }
-  
-  ws.send(JSON.stringify({
-    type: 'read_file',
-    client_id: selClient,
-    path: currentFilePath
-  }));
-  document.getElementById('editorStatus').textContent = 'Reloading...';
-}
-
-function saveTextFile() {
-  if (!currentFilePath || !selClient) return;
-  
-  const content = document.getElementById('textEditorTextarea').value;
-  document.getElementById('saveBtn').disabled = true;
-  document.getElementById('editorStatus').textContent = 'Saving...';
-  
-  ws.send(JSON.stringify({
-    type: 'write_file',
-    client_id: selClient,
-    path: currentFilePath,
-    content: content
-  }));
-}
-
-function handleWriteFileResult(msg) {
-  document.getElementById('saveBtn').disabled = false;
-  
-  if (msg.success) {
-    document.getElementById('editorStatus').textContent = '✓ Saved successfully';
-    document.getElementById('editorStatus').style.color = 'var(--green)';
-    currentFileContent = document.getElementById('textEditorTextarea').value;
-    isTextModified = false;
-    document.getElementById('editorModified').style.display = 'none';
-    log(`💾 Saved: ${currentFilePath.split(/[\\/]/).pop()}`, 'info');
     
-    setTimeout(() => {
-      document.getElementById('editorStatus').textContent = 'Ready';
-      document.getElementById('editorStatus').style.color = 'var(--muted)';
-    }, 2000);
+    panel.classList.add('open');
+    btn.classList.add('task-active');
+    if (selClient) {
+      requestProcesses();
+      requestSysInfo();
+    }
   } else {
-    document.getElementById('editorStatus').textContent = `✕ Error: ${msg.error}`;
-    document.getElementById('editorStatus').style.color = 'var(--red)';
-    log(`Save failed: ${msg.error}`, 'error');
+    panel.classList.remove('open');
+    btn.classList.remove('task-active');
   }
 }
 
-// Close modals with ESC key
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    if (document.getElementById('imageViewerModal').classList.contains('show')) {
-      closeImageViewer();
-    }
-    if (document.getElementById('textEditorModal').classList.contains('show')) {
-      closeTextEditor();
-    }
+function requestProcesses() {
+  if (!selClient) {
+    log('Please select a client first', 'warn');
+    return;
   }
-});
+
+  if (!ws || ws.readyState !== WebSocket.OPEN) {
+    log('WebSocket not connected', 'error');
+    return;
+  }
+
+  ws.send(JSON.stringify({
+    type: 'request_processes',
+    client_id: selClient
+  }));
+}
+
+function requestSysInfo() {
+  if (!selClient) return;
+
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+  ws.send(JSON.stringify({
+    type: 'request_sysinfo',
+    client_id: selClient
+  }));
+}
+
+function handleProcessesData(data) {
+  if (!Array.isArray(data)) {
+    log('Invalid process data received', 'error');
+    return;
+  }
+
+  processes = data;
+  renderProcessTable();
+  
+  document.getElementById('tmProcStat').textContent = data.length;
+}
+
+function updateSysStats(data) {
+  if (!data) return;
+
+  document.getElementById('tmCpuStat').textContent = `${data.cpu_percent}%`;
+  document.getElementById('tmMemStat').textContent = `${data.memory_percent}%`;
+}
+
+function renderProcessTable() {
+  const container = document.getElementById('tmTableContainer');
+  
+  if (!processes || processes.length === 0) {
+    showEmptyState('No processes found');
+    return;
+  }
+
+  const sorted = [...processes].sort((a, b) => {
+    const aVal = a[sortField] || 0;
+    const bVal = b[sortField] || 0;
+    return sortDirection === 'desc' ? bVal - aVal : aVal - bVal;
+  });
+
+  const search = document.getElementById('tmSearch').value.toLowerCase();
+  const filtered = search ? sorted.filter(p => 
+    p.name.toLowerCase().includes(search) ||
+    String(p.pid).includes(search) ||
+    (p.path && p.path.toLowerCase().includes(search))
+  ) : sorted;
+
+  const html = `
+    <table class="tm-table">
+      <thead>
+        <tr>
+          <th class="sortable ${sortField === 'pid' ? 'sort-' + sortDirection : ''}" onclick="sortBy('pid')">PID</th>
+          <th class="sortable ${sortField === 'name' ? 'sort-' + sortDirection : ''}" onclick="sortBy('name')">Name</th>
+          <th class="sortable ${sortField === 'cpu' ? 'sort-' + sortDirection : ''}" onclick="sortBy('cpu')">CPU %</th>
+          <th class="sortable ${sortField === 'memory' ? 'sort-' + sortDirection : ''}" onclick="sortBy('memory')">Memory %</th>
+          <th class="sortable ${sortField === 'status' ? 'sort-' + sortDirection : ''}" onclick="sortBy('status')">Status</th>
+          <th class="sortable ${sortField === 'threads' ? 'sort-' + sortDirection : ''}" onclick="sortBy('threads')">Threads</th>
+          <th>User</th>
+          <th>Path</th>
+          <th style="text-align: right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${filtered.map(p => {
+          const cpuClass = p.cpu > 50 ? 'high' : p.cpu > 20 ? 'mid' : 'low';
+          const memClass = p.memory > 30 ? 'high' : p.memory > 10 ? 'mid' : 'low';
+          const isSelected = selectedProcess && selectedProcess.pid === p.pid;
+          
+          return `
+            <tr class="${isSelected ? 'selected' : ''}" onclick="selectProcess(${p.pid})">
+              <td class="pid">${p.pid}</td>
+              <td class="name" title="${p.name}">${p.name}</td>
+              <td class="cpu ${cpuClass}">${p.cpu.toFixed(1)}%</td>
+              <td class="memory ${memClass}">${p.memory.toFixed(1)}%</td>
+              <td class="status ${p.status}">${p.status || 'unknown'}</td>
+              <td>${p.threads || 0}</td>
+              <td class="user" title="${p.user || 'N/A'}">${p.user || 'N/A'}</td>
+              <td class="path" title="${p.path || 'N/A'}">${p.path || 'N/A'}</td>
+              <td class="actions">
+                <button class="tm-end-btn" onclick="event.stopPropagation(); killProcess(${p.pid})">End</button>
+              </td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+
+  container.innerHTML = html;
+}
+
+function selectProcess(pid) {
+  const process = processes.find(p => p.pid === pid);
+  if (!process) return;
+
+  selectedProcess = process;
+  
+  document.getElementById('detailPid').textContent = process.pid;
+  document.getElementById('detailName').textContent = process.name;
+  document.getElementById('detailCpu').textContent = process.cpu.toFixed(2) + '%';
+  document.getElementById('detailMem').textContent = process.memory.toFixed(2) + '%';
+  document.getElementById('detailStatus').textContent = process.status || 'unknown';
+  document.getElementById('detailThreads').textContent = process.threads || '0';
+  document.getElementById('detailUser').textContent = process.user || 'N/A';
+  document.getElementById('detailPath').textContent = process.path || 'N/A';
+  
+  document.getElementById('tmDetails').classList.add('show');
+  renderProcessTable();
+}
+
+function sortBy(field) {
+  if (sortField === field) {
+    sortDirection = sortDirection === 'desc' ? 'asc' : 'desc';
+  } else {
+    sortField = field;
+    sortDirection = 'desc';
+  }
+  
+  document.querySelectorAll('.tm-sort-btn').forEach(btn => btn.classList.remove('active'));
+  if (field === 'cpu') {
+    document.getElementById('sortCpuBtn').classList.add('active');
+  } else if (field === 'memory') {
+    document.getElementById('sortMemBtn').classList.add('active');
+  }
+  
+  renderProcessTable();
+}
+
+function filterProcesses() {
+  renderProcessTable();
+}
+
+function killProcess(pid) {
+  if (!confirm(`Are you sure you want to end process ${pid}?`)) {
+    return;
+  }
+
+  if (!ws || ws.readyState !== WebSocket.OPEN) {
+    log('WebSocket not connected', 'error');
+    return;
+  }
+
+  ws.send(JSON.stringify({
+    type: 'kill_process',
+    client_id: selClient,
+    pid: pid
+  }));
+
+  log(`Killing process ${pid}...`, 'info');
+}
+
+function endSelectedTask() {
+  if (!selectedProcess) {
+    log('No process selected', 'warn');
+    return;
+  }
+  
+  killProcess(selectedProcess.pid);
+}
+
+function copyPath() {
+  if (!selectedProcess || !selectedProcess.path || selectedProcess.path === 'N/A') {
+    log('No path available to copy', 'warn');
+    return;
+  }
+
+  navigator.clipboard.writeText(selectedProcess.path).then(() => {
+    log('Path copied to clipboard', 'result');
+  }).catch(err => {
+    log('Failed to copy path', 'error');
+  });
+}
+
+function openLocation() {
+  if (!selectedProcess || !selectedProcess.path || selectedProcess.path === 'N/A') {
+    log('No path available', 'warn');
+    return;
+  }
+
+  const path = selectedProcess.path;
+  const lastSlash = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
+  const directory = lastSlash > 0 ? path.substring(0, lastSlash) : path;
+
+  log(`Opening location: ${directory}`, 'info');
+}
+
+function showEmptyState(message) {
+  const container = document.getElementById('tmTableContainer');
+  container.innerHTML = `
+    <div class="tm-empty">
+      <div class="tm-empty-icon">⚙️</div>
+      <div class="tm-empty-text">${message}</div>
+    </div>
+  `;
+}
+
 
 </script>
 </body>
