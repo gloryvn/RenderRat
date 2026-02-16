@@ -31,6 +31,8 @@ admin_watching: Dict[WebSocket, str] = {}   # admin_ws → client_id
 
 # File transfer buffer: transfer_id -> {filename, chunks, total_chunks, done}
 file_transfers: Dict[str, dict] = {}
+# Folder transfer: tid -> {folder_name, files: {arcname: chunks}, total_files}
+folder_transfers: Dict[str, dict] = {}
 
 # ===============================
 # PAGES
@@ -73,6 +75,31 @@ async def download_file(transfer_id: str):
         buffer,
         media_type="application/octet-stream",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+    )
+
+@app.get("/download_folder/{transfer_id}")
+async def download_folder(transfer_id: str):
+    """Ghép tất cả file của folder transfer thành zip để admin download."""
+    import zipfile as zf
+    ft = folder_transfers.get(transfer_id)
+    if not ft:
+        return HTMLResponse("<h3>Folder transfer not found</h3>", status_code=404)
+    if not ft.get("done"):
+        return HTMLResponse("<h3>Folder transfer incomplete</h3>", status_code=425)
+
+    buf = io.BytesIO()
+    with zf.ZipFile(buf, "w", zf.ZIP_DEFLATED) as z:
+        for arcname, fdata in ft["files"].items():
+            chunks = fdata["chunks"]
+            total  = fdata["total_chunks"]
+            fbuf = io.BytesIO()
+            for i in range(total):
+                fbuf.write(base64.b64decode(chunks.get(i, "")))
+            z.writestr(arcname, fbuf.getvalue())
+    buf.seek(0)
+    fname = ft["folder_name"] + ".zip"
+    return StreamingResponse(buf, media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{fname}"'}
     )
 
 # ===============================
@@ -119,25 +146,57 @@ async def client_ws(websocket: WebSocket, client_id: str):
 
             # ── File transfer: Client → Admin ─────────────────────
             elif msg_type in ("file_transfer_start", "file_chunk", "file_transfer_done",
-                              "file_transfer_error", "file_transfer_progress"):
+                              "file_transfer_error", "file_transfer_progress",
+                              "folder_transfer_start", "folder_transfer_done", "folder_transfer_empty"):
                 transfer_id = message.get("transfer_id")
 
-                if msg_type == "file_transfer_start":
-                    file_transfers[transfer_id] = {
-                        "filename": message.get("filename"),
-                        "file_size": message.get("file_size"),
-                        "total_chunks": message.get("total_chunks"),
-                        "chunks": {},
-                        "done": False,
-                        "client_id": client_id
+                if msg_type == "folder_transfer_start":
+                    folder_transfers[transfer_id] = {
+                        "folder_name": message.get("folder_name"),
+                        "total_files": message.get("total_files"),
+                        "files": {},
+                        "done": False
                     }
+
+                elif msg_type == "folder_transfer_done":
+                    if transfer_id in folder_transfers:
+                        folder_transfers[transfer_id]["done"] = True
+
+                elif msg_type == "file_transfer_start":
+                    is_folder = message.get("is_folder", False)
+                    arcname   = message.get("filename")
+                    total_c   = message.get("total_chunks")
+                    if is_folder and transfer_id in folder_transfers:
+                        # Track individual file inside folder
+                        folder_transfers[transfer_id]["files"][arcname] = {"chunks": {}, "total_chunks": total_c}
+                    else:
+                        file_transfers[transfer_id] = {
+                            "filename": arcname,
+                            "file_size": message.get("file_size"),
+                            "total_chunks": total_c,
+                            "chunks": {},
+                            "done": False,
+                            "client_id": client_id
+                        }
+
                 elif msg_type == "file_chunk":
-                    if transfer_id in file_transfers:
-                        file_transfers[transfer_id]["chunks"][message.get("chunk_idx")] = message.get("data")
+                    idx  = message.get("chunk_idx")
+                    data_val = message.get("data")
+                    is_folder = message.get("is_folder") or (transfer_id in folder_transfers)
+                    if is_folder and transfer_id in folder_transfers:
+                        # Find current file being transferred
+                        for arcname, fdata in folder_transfers[transfer_id]["files"].items():
+                            if len(fdata["chunks"]) < fdata["total_chunks"] and idx not in fdata["chunks"]:
+                                fdata["chunks"][idx] = data_val
+                                break
+                    elif transfer_id in file_transfers:
+                        file_transfers[transfer_id]["chunks"][idx] = data_val
+
                 elif msg_type == "file_transfer_done":
-                    if transfer_id in file_transfers:
+                    is_folder = message.get("is_folder", False)
+                    if not is_folder and transfer_id in file_transfers:
                         file_transfers[transfer_id]["done"] = True
-                        print(f"[FILE] Transfer done: {message.get('filename')} ({message.get('file_size')} bytes)")
+                        print(f"[FILE] Done: {message.get('filename')} ({message.get('file_size')} bytes)")
 
                 # Relay progress đến admin
                 await broadcast_to_admins({
