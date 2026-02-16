@@ -297,7 +297,12 @@ async def client_ws(websocket: WebSocket, client_id: str):
                     "client_id": client_id,
                     "reason": "webcam_started"
                 })
-
+            elif msg_type == "webcam_stopped_by_stream":
+                await broadcast_to_admins({
+                    "type": "webcam_stopped",
+                    "client_id": client_id,
+                    "reason": "stream_started"
+                })
 
             # ── Screenshot ────────────────────────────────────────
             elif msg_type == "screenshot":
