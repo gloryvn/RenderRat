@@ -107,6 +107,8 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
 .status-pill { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); margin-left: auto; }
 .sdot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
 .sdot.on { background: var(--green); box-shadow: 0 0 5px var(--green); }
+.btn-logout { background: transparent; border: 1px solid var(--border); color: var(--muted); font-size: 11px; padding: 6px 12px; border-radius: 5px; cursor: pointer; transition: all .12s; font-family: var(--mono); font-weight: 600; margin-left: 8px; }
+.btn-logout:hover { border-color: var(--red); color: var(--red); }
 
 /* ══ WORKSPACE (viewer + explorer side by side) ══════ */
 .workspace { flex: 1; display: flex; overflow: hidden; }
@@ -331,6 +333,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
       <div class="sdot" id="sdot"></div>
       <span id="stxt">Connecting…</span>
     </div>
+    <button class="btn-logout" onclick="window.location.href='/logout'">🚪 Logout</button>
   </div>
 
   <!-- WORKSPACE -->
