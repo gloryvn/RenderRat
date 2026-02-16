@@ -453,6 +453,274 @@
     display: none;
   }
   .files-badge.show { display: block; }
+
+  /* ══════════════════════════════════════════
+     EXPLORER MODAL
+  ══════════════════════════════════════════ */
+  .modal-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-backdrop.open { display: flex; }
+
+  .explorer-modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    width: 900px;
+    max-width: 95vw;
+    height: 600px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.7);
+    overflow: hidden;
+  }
+
+  /* Header */
+  .ex-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    background: #0a1018;
+  }
+  .ex-title {
+    font-family: var(--sans);
+    font-weight: 800;
+    font-size: 13px;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
+  .ex-path-bar {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    background: #080d14;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0 10px;
+    gap: 6px;
+    overflow: hidden;
+    min-width: 0;
+  }
+  .ex-path-icon { color: var(--muted); font-size: 12px; flex-shrink: 0; }
+  .ex-path-input {
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    width: 100%;
+    padding: 7px 0;
+  }
+  .ex-close-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 6px;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 12px;
+    white-space: nowrap;
+    transition: all 0.12s;
+  }
+  .ex-close-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  /* Toolbar */
+  .ex-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+  .ex-btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text);
+    transition: all 0.12s;
+    white-space: nowrap;
+  }
+  .ex-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .ex-btn.primary { background: var(--accent); border-color: var(--accent); color: #000; }
+  .ex-btn.primary:hover { opacity: 0.85; }
+  .ex-btn.danger { border-color: rgba(255,51,102,.5); color: var(--accent2); }
+  .ex-btn.danger:hover { background: rgba(255,51,102,.1); }
+  .ex-btn:disabled { opacity: 0.35; pointer-events: none; }
+
+  .ex-sep { width: 1px; height: 16px; background: var(--border); }
+  .ex-select-info { font-size: 11px; color: var(--muted); margin-left: auto; }
+
+  /* Body: sidebar + file list */
+  .ex-body {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* Sidebar: drives + bookmarks */
+  .ex-sidebar {
+    width: 150px;
+    min-width: 150px;
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 10px 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .ex-sidebar::-webkit-scrollbar { width: 3px; }
+  .ex-sidebar::-webkit-scrollbar-thumb { background: var(--border); }
+  .ex-sidebar-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    padding: 8px 6px 4px;
+  }
+  .ex-drive {
+    padding: 7px 8px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    transition: background 0.1s;
+  }
+  .ex-drive:hover { background: #111a28; }
+  .ex-drive.active { background: #0a1929; color: var(--accent); }
+
+  /* File list */
+  .ex-filelist {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px;
+  }
+  .ex-filelist::-webkit-scrollbar { width: 4px; }
+  .ex-filelist::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .ex-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .ex-table thead th {
+    text-align: left;
+    padding: 6px 10px;
+    color: var(--muted);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: var(--surface);
+    cursor: pointer;
+    user-select: none;
+    font-weight: 600;
+  }
+  .ex-table thead th:hover { color: var(--accent); }
+
+  .ex-row {
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background 0.1s;
+  }
+  .ex-row:hover td { background: #111a28; }
+  .ex-row.selected td { background: #0a1929; }
+  .ex-row.selected td:first-child { border-left: 2px solid var(--accent); }
+
+  .ex-row td {
+    padding: 7px 10px;
+    color: var(--text);
+    vertical-align: middle;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 300px;
+  }
+  .ex-row td:first-child { border-left: 2px solid transparent; border-radius: 5px 0 0 5px; }
+
+  .ex-icon { margin-right: 7px; font-size: 14px; }
+  .ex-name { font-weight: 500; }
+  .ex-name.dir { color: var(--accent); }
+  .ex-name.parent { color: var(--muted); font-style: italic; }
+  .ex-size { color: var(--muted); text-align: right; min-width: 70px; }
+  .ex-date { color: var(--muted); min-width: 120px; }
+
+  /* Status bar */
+  .ex-statusbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 14px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--muted);
+    flex-shrink: 0;
+    gap: 10px;
+  }
+  .ex-progress {
+    flex: 1;
+    max-width: 250px;
+    display: none;
+    align-items: center;
+    gap: 8px;
+  }
+  .ex-progress.show { display: flex; }
+  .ex-prog-bar { flex: 1; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .ex-prog-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.2s; }
+  .ex-prog-fill.done { background: var(--green); }
+
+  /* Upload drop zone in explorer */
+  .ex-dropzone {
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--muted);
+    margin: 8px;
+    transition: all 0.15s;
+  }
+  .ex-dropzone:hover, .ex-dropzone.drag-over {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(0,229,255,0.03);
+  }
+  .ex-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--muted);
+    gap: 8px;
+    font-size: 13px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner { border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; width: 16px; height: 16px; animation: spin 0.8s linear infinite; }
 </style>
 </head>
 <body>
@@ -476,7 +744,7 @@
            onkeydown="if(event.key==='Enter')sendCommand()">
     <button class="btn" onclick="sendCommand()">Run</button>
     <div class="divider"></div>
-    <button class="btn files-btn" onclick="toggleFtPanel()" title="File Transfer">
+    <button class="btn files-btn" onclick="openExplorer()" title="File Explorer">
       📁 Files
       <span class="files-badge" id="filesBadge">0</span>
     </button>
@@ -555,6 +823,13 @@
     const ftTypes = ['file_transfer_start','file_chunk','file_transfer_done','file_transfer_error','file_save_result'];
     if (ftTypes.includes(type)) {
       handleFileTransferMsg(msg);
+      handleExplorerMsg(msg);    // Explorer cũng cần theo dõi transfers
+      return;
+    }
+
+    // Explorer directory/drives messages
+    if (type === "directory_list" || type === "drives_list") {
+      handleExplorerMsg(msg);
       return;
     }
 
@@ -984,6 +1259,351 @@
     h.insertBefore(d, h.firstChild);
   }
 
+
+  // ════════════════════════════════════════════════════════
+  //  FILE EXPLORER
+  // ════════════════════════════════════════════════════════
+  let exCurrentPath  = ".";
+  let exHistory      = [];
+  let exSelected     = new Set();   // selected paths
+  let exItems        = [];          // current listing
+  let exSortCol      = "name";
+  let exSortAsc      = true;
+  let exTransfers    = {};          // transfer_id → progress state
+
+  function openExplorer() {
+    if (!selectedClient) { log("Select a client first", "error"); return; }
+    document.getElementById("explorerModal").classList.add("open");
+    // Load drives
+    ws.send(JSON.stringify({ type: "get_drives", client_id: selectedClient }));
+    // Navigate to home
+    navigateTo(".");
+  }
+
+  function closeExplorer(e) {
+    if (e && e.target !== document.getElementById("explorerModal")) return;
+    document.getElementById("explorerModal").classList.remove("open");
+  }
+
+  function navigateTo(path) {
+    if (!selectedClient) return;
+    if (path !== exCurrentPath) exHistory.push(exCurrentPath);
+    exCurrentPath = path;
+    exSelected.clear();
+    updateSelectUI();
+    document.getElementById("exPathInput").value = path;
+    document.getElementById("exFileList").innerHTML =
+      '<div class="ex-loading"><div class="spinner"></div> Loading…</div>';
+    document.getElementById("exStatusText").textContent = "Loading…";
+    ws.send(JSON.stringify({ type: "list_directory", client_id: selectedClient, path: path }));
+  }
+
+  function exNavBack() {
+    if (exHistory.length) navigateTo(exHistory.pop());
+  }
+
+  // ── Render drives ──────────────────────────────────────
+  function renderDrives(drives) {
+    const list = document.getElementById("exDriveList");
+    list.innerHTML = drives.map(d => `
+      <div class="ex-drive" onclick="navigateTo(\`${d.path}\`)">
+        💾 ${d.name}
+      </div>`).join("");
+  }
+
+  // ── Render file listing ────────────────────────────────
+  function renderListing(data) {
+    const items  = data.items || [];
+    const path   = data.path  || exCurrentPath;
+    const sep    = data.sep   || "/";
+    exCurrentPath = path;
+    exItems = items;
+    exSelected.clear();
+    updateSelectUI();
+
+    document.getElementById("exPathInput").value  = path;
+    document.getElementById("exStatusText").textContent = path;
+    document.getElementById("exItemCount").textContent =
+      `${items.filter(i => i.type !== "parent").length} items`;
+
+    if (data.error) {
+      document.getElementById("exFileList").innerHTML =
+        `<div style="color:var(--accent2);padding:20px;font-size:13px">⚠ ${data.error}</div>`;
+      return;
+    }
+
+    // Sort
+    const sorted = [...items].sort((a, b) => {
+      if (a.type === "parent") return -1;
+      if (b.type === "parent") return  1;
+      if (a.type !== b.type) return a.type === "dir" ? -1 : 1;
+      let va = a[exSortCol] ?? "", vb = b[exSortCol] ?? "";
+      if (typeof va === "string") va = va.toLowerCase();
+      if (typeof vb === "string") vb = vb.toLowerCase();
+      return exSortAsc ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1);
+    });
+
+    const tbody = sorted.map((item, idx) => {
+      const isParent = item.type === "parent";
+      const isDir    = item.type === "dir";
+      const icon     = isParent ? "↩" : isDir ? "📁" : getFileIcon(item.ext);
+      const nameClass = isParent ? "parent" : isDir ? "dir" : "";
+      const sizeStr  = isParent ? "" : isDir
+        ? `${item.size} items`
+        : formatSize(item.size);
+      const selClass = exSelected.has(item.path) ? "selected" : "";
+
+      return `<tr class="ex-row ${selClass}" data-path="${escHtml(item.path)}"
+               data-type="${item.type}" data-name="${escHtml(item.name)}"
+               ondblclick="exRowDblClick(this)"
+               onclick="exRowClick(this, event)">
+        <td><span class="ex-icon">${icon}</span><span class="ex-name ${nameClass}">${escHtml(item.name)}</span></td>
+        <td class="ex-size">${sizeStr}</td>
+        <td class="ex-date">${item.modified || ""}</td>
+      </tr>`;
+    }).join("");
+
+    document.getElementById("exFileList").innerHTML = `
+      <table class="ex-table">
+        <thead>
+          <tr>
+            <th onclick="exSort('name')" style="width:55%">Name ${exSortCol==="name"?(exSortAsc?"▲":"▼"):""}</th>
+            <th onclick="exSort('size')" style="width:15%;text-align:right">Size ${exSortCol==="size"?(exSortAsc?"▲":"▼"):""}</th>
+            <th onclick="exSort('modified')" style="width:25%">Modified ${exSortCol==="modified"?(exSortAsc?"▲":"▼"):""}</th>
+          </tr>
+        </thead>
+        <tbody>${tbody}</tbody>
+      </table>`;
+  }
+
+  function exSort(col) {
+    if (exSortCol === col) exSortAsc = !exSortAsc;
+    else { exSortCol = col; exSortAsc = true; }
+    // re-render với items hiện tại
+    renderListing({ items: exItems, path: exCurrentPath, sep: "/" });
+  }
+
+  // ── Row interactions ───────────────────────────────────
+  function exRowDblClick(row) {
+    const type = row.dataset.type;
+    const path = row.dataset.path;
+    if (type === "dir" || type === "parent") {
+      navigateTo(path);
+    }
+    // double-click file → download
+    else {
+      exSelected.clear();
+      exSelected.add(path);
+      exDownloadSelected();
+    }
+  }
+
+  function exRowClick(row, event) {
+    const path = row.dataset.path;
+    if (row.dataset.type === "parent") return;
+
+    if (event.ctrlKey || event.metaKey) {
+      // Multi-select
+      if (exSelected.has(path)) exSelected.delete(path);
+      else exSelected.add(path);
+    } else if (event.shiftKey && exSelected.size) {
+      // Range select
+      const rows = [...document.querySelectorAll(".ex-row")];
+      const selRow = rows.indexOf(row);
+      const firstSel = rows.findIndex(r => exSelected.has(r.dataset.path));
+      const [lo, hi] = [Math.min(selRow, firstSel), Math.max(selRow, firstSel)];
+      for (let i = lo; i <= hi; i++) {
+        if (rows[i].dataset.path) exSelected.add(rows[i].dataset.path);
+      }
+    } else {
+      exSelected.clear();
+      exSelected.add(path);
+    }
+
+    // Update visual
+    document.querySelectorAll(".ex-row").forEach(r => {
+      r.classList.toggle("selected", exSelected.has(r.dataset.path));
+    });
+    updateSelectUI();
+  }
+
+  function updateSelectUI() {
+    const count = exSelected.size;
+    document.getElementById("exSelectInfo").textContent =
+      count ? `${count} item${count > 1 ? "s" : ""} selected` : "No selection";
+    document.getElementById("exBtnDownload").disabled = count === 0;
+  }
+
+  // ── Download selected ──────────────────────────────────
+  function exDownloadSelected() {
+    if (!exSelected.size || !selectedClient) return;
+    exSelected.forEach(path => {
+      const tid = Math.random().toString(36).slice(2, 10);
+      const name = path.split(/[\/]/).pop();
+      // Hiện progress trong statusbar
+      showExProgress(tid, `Fetching ${name}…`);
+      ws.send(JSON.stringify({
+        type: "request_file_upload",
+        client_id: selectedClient,
+        path: path,
+        transfer_id: tid
+      }));
+      log(`[FILE] ↓ Fetching: ${path}`, "info");
+    });
+  }
+
+  // ── Upload files to current directory ─────────────────
+  async function exUploadFiles(event) {
+    const files = [...event.target.files];
+    if (!files.length || !selectedClient) return;
+    event.target.value = "";
+
+    for (const file of files) {
+      const tid = Math.random().toString(36).slice(2, 10);
+      const totalChunks = Math.ceil(file.size / CHUNK_SIZE) || 1;
+      showExProgress(tid, `Uploading ${file.name}…`);
+
+      ws.send(JSON.stringify({
+        type: "send_file_to_client",
+        client_id: selectedClient,
+        transfer_id: tid,
+        filename: file.name,
+        file_size: file.size,
+        total_chunks: totalChunks,
+        save_dir: exCurrentPath
+      }));
+
+      for (let i = 0; i < totalChunks; i++) {
+        const blob = file.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+        const b64  = await readChunkAsBase64(blob);
+        ws.send(JSON.stringify({
+          type: "send_chunk_to_client",
+          client_id: selectedClient,
+          transfer_id: tid,
+          chunk_idx: i,
+          total_chunks: totalChunks,
+          data: b64
+        }));
+        updateExProgress(tid, i + 1, totalChunks);
+        await new Promise(r => setTimeout(r, 0));
+      }
+
+      ws.send(JSON.stringify({
+        type: "finish_file_to_client",
+        client_id: selectedClient,
+        transfer_id: tid,
+        filename: file.name,
+        file_size: file.size
+      }));
+
+      log(`[FILE] ↑ Sent: ${file.name} → ${exCurrentPath}`, "info");
+    }
+  }
+
+  // ── Explorer progress bar ──────────────────────────────
+  function showExProgress(tid, label) {
+    exTransfers[tid] = { label, chunks: 0, total: 0 };
+    const el = document.getElementById("exProgress");
+    el.classList.add("show");
+    document.getElementById("exProgressLabel").textContent = label;
+    document.getElementById("exProgFill").style.width = "0%";
+    document.getElementById("exProgressPct").textContent = "0%";
+    document.getElementById("exProgFill").classList.remove("done");
+  }
+
+  function updateExProgress(tid, received, total) {
+    if (!exTransfers[tid]) return;
+    const pct = Math.round(received / total * 100);
+    document.getElementById("exProgFill").style.width = pct + "%";
+    document.getElementById("exProgressPct").textContent = pct + "%";
+  }
+
+  function doneExProgress(tid) {
+    document.getElementById("exProgFill").classList.add("done");
+    document.getElementById("exProgressPct").textContent = "100%";
+    setTimeout(() => {
+      document.getElementById("exProgress").classList.remove("show");
+      delete exTransfers[tid];
+    }, 2000);
+  }
+
+  // ── Handle incoming msgs for explorer ─────────────────
+  function handleExplorerMsg(msg) {
+    const { type, data, transfer_id } = msg;
+
+    if (type === "directory_list" && data) {
+      if (document.getElementById("explorerModal").classList.contains("open")) {
+        renderListing(data);
+      }
+    }
+
+    if (type === "drives_list" && data) {
+      renderDrives(data);
+    }
+
+    if (type === "file_transfer_progress") {
+      if (exTransfers[transfer_id]) {
+        document.getElementById("exProgressLabel").textContent = msg.message || "Processing…";
+      }
+    }
+
+    if (type === "file_transfer_start" && exTransfers[transfer_id]) {
+      exTransfers[transfer_id].total = msg.total_chunks;
+    }
+
+    if (type === "file_chunk" && exTransfers[transfer_id]) {
+      const t = exTransfers[transfer_id];
+      t.chunks = (t.chunks || 0) + 1;
+      updateExProgress(transfer_id, t.chunks, t.total || 1);
+    }
+
+    if (type === "file_transfer_done" && exTransfers[transfer_id]) {
+      doneExProgress(transfer_id);
+      log(`[FILE] ✓ ${msg.filename} — ready`, "result");
+    }
+
+    if (type === "file_save_result") {
+      if (exTransfers[transfer_id]) doneExProgress(transfer_id);
+      if (msg.error) log(`[FILE] ✕ ${msg.error}`, "error");
+      else {
+        log(`[FILE] ✓ Saved: ${msg.path}`, "result");
+        // Refresh listing nếu explorer đang mở
+        if (document.getElementById("explorerModal").classList.contains("open")) {
+          navigateTo(exCurrentPath);
+        }
+      }
+    }
+  }
+
+  // ── Icon mapping ───────────────────────────────────────
+  function getFileIcon(ext) {
+    const icons = {
+      ".exe":".dll": "⚙",
+      ".zip":".rar":".7z":".tar":".gz": "🗜",
+      ".jpg":".jpeg":".png":".gif":".bmp":".webp":".svg": "🖼",
+      ".mp4":".mkv":".avi":".mov":".wmv": "🎬",
+      ".mp3":".wav":".flac":".aac": "🎵",
+      ".pdf": "📄",
+      ".doc":".docx": "📝",
+      ".xls":".xlsx": "📊",
+      ".ppt":".pptx": "📊",
+      ".txt":".log": "📃",
+      ".py": "🐍",
+      ".js":".ts":".jsx": "📜",
+      ".html":".htm": "🌐",
+      ".json": "📋",
+      ".db":".sqlite": "🗄",
+    };
+    for (const [key, icon] of Object.entries(icons)) {
+      if (key.split(":").includes(ext)) return icon;
+    }
+    return "📄";
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+
 </script>
 
 <!-- FILE TRANSFER PANEL -->
@@ -1039,6 +1659,73 @@
       <div id="transferHistory">
         <div style="color:var(--muted);font-size:12px;text-align:center;padding:20px 0">No transfers yet</div>
       </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     EXPLORER MODAL
+═══════════════════════════════════════════════════ -->
+<div class="modal-backdrop" id="explorerModal" onclick="closeExplorer(event)">
+  <div class="explorer-modal" onclick="event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="ex-header">
+      <div class="ex-title">🗂 FILE EXPLORER</div>
+      <div class="ex-path-bar">
+        <span class="ex-path-icon">📂</span>
+        <input class="ex-path-input" id="exPathInput" placeholder="Path…"
+               onkeydown="if(event.key==='Enter') navigateTo(this.value)">
+      </div>
+      <button class="ex-close-btn" onclick="closeExplorer()">✕ Close</button>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="ex-toolbar">
+      <button class="ex-btn" onclick="exNavBack()" id="exBtnBack" title="Back">← Back</button>
+      <button class="ex-btn" onclick="navigateTo(exCurrentPath)" title="Refresh">↺ Refresh</button>
+      <div class="ex-sep"></div>
+      <button class="ex-btn primary" onclick="exDownloadSelected()" id="exBtnDownload" disabled>
+        ↓ Download
+      </button>
+      <button class="ex-btn" onclick="document.getElementById('exUploadInput').click()" id="exBtnUpload">
+        ↑ Upload Here
+      </button>
+      <input type="file" id="exUploadInput" style="display:none" multiple
+             onchange="exUploadFiles(event)">
+      <div class="ex-sep"></div>
+      <span class="ex-select-info" id="exSelectInfo">No selection</span>
+    </div>
+
+    <!-- Body -->
+    <div class="ex-body">
+
+      <!-- Sidebar drives -->
+      <div class="ex-sidebar">
+        <div class="ex-sidebar-label">Drives</div>
+        <div id="exDriveList"></div>
+        <div class="ex-sidebar-label" style="margin-top:8px">Quick</div>
+        <div class="ex-drive" onclick="navigateTo('.')">🏠 Home</div>
+        <div class="ex-drive" onclick="navigateTo('..')">↑ Up</div>
+      </div>
+
+      <!-- File list -->
+      <div class="ex-filelist" id="exFileList">
+        <div class="ex-loading"><div class="spinner"></div> Loading…</div>
+      </div>
+
+    </div>
+
+    <!-- Status bar -->
+    <div class="ex-statusbar">
+      <span id="exStatusText">Ready</span>
+      <div class="ex-progress" id="exProgress">
+        <span id="exProgressLabel" style="white-space:nowrap;font-size:10px"></span>
+        <div class="ex-prog-bar"><div class="ex-prog-fill" id="exProgFill"></div></div>
+        <span id="exProgressPct" style="min-width:30px">0%</span>
+      </div>
+      <span id="exItemCount" style="color:var(--muted)"></span>
     </div>
 
   </div>
