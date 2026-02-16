@@ -4,1731 +4,867 @@
 <meta charset="UTF-8">
 <title>Admin Panel</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@700;800&display=swap');
 
-  :root {
-    --bg:       #080b10;
-    --surface:  #0d1117;
-    --border:   #1a2233;
-    --accent:   #00e5ff;
-    --accent2:  #ff3366;
-    --green:    #00ff88;
-    --muted:    #3d4f66;
-    --text:     #c9d8ef;
-    --mono:     'JetBrains Mono', monospace;
-    --sans:     'Syne', sans-serif;
-  }
+:root {
+  --bg:      #080b10;
+  --surf:    #0d1117;
+  --surf2:   #0a0f18;
+  --border:  #1a2233;
+  --accent:  #00e5ff;
+  --red:     #ff3366;
+  --green:   #00ff88;
+  --yellow:  #ffbb00;
+  --muted:   #3d4f66;
+  --text:    #c9d8ef;
+  --mono:    'JetBrains Mono', monospace;
+  --sans:    'Syne', sans-serif;
+  --ex-w:    380px;   /* explorer panel width */
+}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--mono); height: 100vh; display: flex; overflow: hidden; }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--mono);
-    height: 100vh;
-    display: flex;
-    overflow: hidden;
-  }
+/* ══ SCROLLBAR ══════════════════════════════════════ */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-  /* SIDEBAR */
-  .sidebar {
-    width: 220px;
-    min-width: 220px;
-    background: var(--surface);
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-  }
+/* ══ SIDEBAR (client list) ══════════════════════════ */
+.sidebar {
+  width: 200px; min-width: 200px;
+  background: var(--surf);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+}
+.sidebar-hdr {
+  padding: 16px 14px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.logo {
+  font-family: var(--sans); font-weight: 800; font-size: 14px;
+  color: var(--accent); display: flex; align-items: center; gap: 8px;
+}
+.logo-dot {
+  width: 7px; height: 7px; background: var(--accent); border-radius: 50%;
+  box-shadow: 0 0 7px var(--accent); animation: pulse 2s infinite;
+}
+@keyframes pulse { 50% { opacity: .4; transform: scale(.6); } }
+.clients-lbl {
+  font-size: 9px; color: var(--muted); letter-spacing: .12em;
+  text-transform: uppercase; margin-top: 12px;
+}
+.client-list { flex: 1; overflow-y: auto; padding: 8px; }
+.client-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 10px; border-radius: 7px; cursor: pointer;
+  border: 1px solid transparent; margin-bottom: 3px;
+  transition: background .12s, border-color .12s;
+  font-size: 13px; font-weight: 600;
+}
+.client-item:hover { background: #111a28; }
+.client-item.active { background: #0a1929; border-color: var(--accent); }
+.cdot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; box-shadow: 0 0 5px var(--green); flex-shrink: 0; }
+.no-clients { color: var(--muted); font-size: 11px; text-align: center; padding: 16px 0; }
 
-  .sidebar-header {
-    padding: 18px 16px 14px;
-    border-bottom: 1px solid var(--border);
-  }
+/* ══ MAIN AREA ══════════════════════════════════════ */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
 
-  .logo {
-    font-family: var(--sans);
-    font-weight: 800;
-    font-size: 15px;
-    letter-spacing: 0.05em;
-    color: var(--accent);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+/* ══ TOPBAR ═════════════════════════════════════════ */
+.topbar {
+  display: flex; align-items: center; gap: 7px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surf); flex-shrink: 0; flex-wrap: wrap;
+}
+.btn {
+  font-family: var(--mono); font-size: 11px; font-weight: 600;
+  padding: 6px 12px; border: 1px solid var(--border); border-radius: 5px;
+  cursor: pointer; background: transparent; color: var(--text);
+  transition: all .12s; white-space: nowrap; letter-spacing: .03em;
+}
+.btn:hover { border-color: var(--accent); color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #000; font-weight: 700; }
+.btn.primary:hover { opacity: .85; }
+.btn.active-stream { background: rgba(0,255,136,.1); border-color: var(--green); color: var(--green); }
+.btn.files-active { border-color: var(--accent); color: var(--accent); background: rgba(0,229,255,.07); }
+.divider { width: 1px; height: 18px; background: var(--border); margin: 0 1px; }
+.cmd-input {
+  font-family: var(--mono); font-size: 12px;
+  background: #0a1120; border: 1px solid var(--border); border-radius: 5px;
+  padding: 6px 10px; color: var(--text); outline: none; flex: 1; max-width: 300px;
+  transition: border .12s;
+}
+.cmd-input:focus { border-color: var(--accent); }
+.cmd-input::placeholder { color: var(--muted); }
+.stat-badge {
+  background: #0d1a2a; border: 1px solid var(--border); border-radius: 4px;
+  padding: 3px 9px; font-size: 11px; font-weight: 600; min-width: 60px;
+  text-align: center; color: var(--muted); transition: color .3s, border-color .3s;
+}
+.stat-badge.good { color: var(--green); border-color: rgba(0,255,136,.3); }
+.stat-badge.mid  { color: var(--yellow); border-color: rgba(255,187,0,.3); }
+.stat-badge.low  { color: var(--red); border-color: rgba(255,51,102,.3); }
+.status-pill { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); margin-left: auto; }
+.sdot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
+.sdot.on { background: var(--green); box-shadow: 0 0 5px var(--green); }
 
-  .logo-dot {
-    width: 8px; height: 8px;
-    background: var(--accent);
-    border-radius: 50%;
-    box-shadow: 0 0 8px var(--accent);
-    animation: pulse 2s infinite;
-  }
+/* ══ WORKSPACE (viewer + explorer side by side) ══════ */
+.workspace { flex: 1; display: flex; overflow: hidden; }
 
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.4; transform: scale(0.6); }
-  }
+/* ══ VIEWER ═════════════════════════════════════════ */
+.viewer {
+  flex: 1; background: #04070d; display: flex;
+  align-items: center; justify-content: center;
+  position: relative; overflow: hidden; min-width: 0;
+}
+.screen-img { max-width: 100%; max-height: 100%; object-fit: contain; display: none; border-radius: 3px; }
+.screen-img.show { display: block; }
+.placeholder { display: flex; flex-direction: column; align-items: center; gap: 12px; color: var(--muted); }
+.ph-icon { font-size: 40px; opacity: .22; }
+.ph-text { font-family: var(--sans); font-size: 12px; letter-spacing: .06em; }
+.live-badge {
+  position: absolute; top: 10px; left: 10px; display: none;
+  align-items: center; gap: 5px;
+  background: rgba(0,0,0,.65); border: 1px solid rgba(0,255,136,.35);
+  border-radius: 20px; padding: 3px 10px 3px 7px;
+  font-size: 11px; color: var(--green); font-weight: 700; letter-spacing: .08em;
+  backdrop-filter: blur(6px);
+}
+.live-badge.show { display: flex; }
+.rec { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: blink 1s step-end infinite; }
+@keyframes blink { 50% { opacity: 0; } }
 
-  .clients-label {
-    font-size: 10px;
-    color: var(--muted);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    margin-top: 14px;
-  }
+/* ══ EXPLORER PANEL (VS Code style) ═════════════════ */
+.explorer-panel {
+  width: 0; min-width: 0; overflow: hidden;
+  background: var(--surf);
+  border-left: 1px solid transparent;
+  display: flex; flex-direction: column;
+  transition: width .22s cubic-bezier(.4,0,.2,1), border-color .22s;
+}
+.explorer-panel.open {
+  width: var(--ex-w); min-width: var(--ex-w);
+  border-left-color: var(--border);
+}
 
-  .client-list {
-    flex: 1;
-    overflow-y: auto;
-    padding: 10px;
-  }
+/* Explorer header */
+.ex-hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0; background: var(--surf2);
+}
+.ex-title {
+  font-family: var(--sans); font-weight: 800; font-size: 11px;
+  color: var(--muted); letter-spacing: .14em; text-transform: uppercase;
+}
+.ex-hdr-btns { display: flex; gap: 4px; }
+.ex-icon-btn {
+  background: none; border: none; color: var(--muted); cursor: pointer;
+  padding: 3px 6px; border-radius: 4px; font-size: 14px; line-height: 1;
+  transition: color .12s, background .12s;
+}
+.ex-icon-btn:hover { color: var(--text); background: #1a2233; }
 
-  .client-list::-webkit-scrollbar { width: 3px; }
-  .client-list::-webkit-scrollbar-thumb { background: var(--border); }
+/* Path bar */
+.ex-pathbar {
+  display: flex; align-items: center; gap: 0;
+  border-bottom: 1px solid var(--border); flex-shrink: 0;
+  background: var(--surf2);
+}
+.ex-back {
+  padding: 7px 10px; color: var(--muted); cursor: pointer;
+  font-size: 13px; border-right: 1px solid var(--border);
+  transition: color .12s; flex-shrink: 0;
+}
+.ex-back:hover { color: var(--accent); }
+.ex-path-input {
+  flex: 1; background: none; border: none; outline: none;
+  color: var(--text); font-family: var(--mono); font-size: 11px;
+  padding: 7px 10px; min-width: 0;
+}
+.ex-path-input::placeholder { color: var(--muted); }
+.ex-refresh { padding: 7px 10px; color: var(--muted); cursor: pointer; font-size: 13px; transition: color .12s; }
+.ex-refresh:hover { color: var(--accent); }
 
-  .client-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    border: 1px solid transparent;
-    margin-bottom: 4px;
-    transition: background 0.12s, border-color 0.12s;
-  }
+/* Drives bar */
+.ex-drives {
+  display: flex; gap: 4px; padding: 6px 10px; flex-wrap: wrap;
+  border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.ex-drive-pill {
+  font-size: 10px; font-weight: 600; padding: 3px 9px;
+  border: 1px solid var(--border); border-radius: 12px; cursor: pointer;
+  color: var(--muted); background: transparent; font-family: var(--mono);
+  transition: all .12s;
+}
+.ex-drive-pill:hover { border-color: var(--accent); color: var(--accent); }
 
-  .client-item:hover { background: #111a28; }
-  .client-item.active { background: #0a1929; border-color: var(--accent); }
+/* Toolbar */
+.ex-toolbar {
+  display: flex; align-items: center; gap: 6px; padding: 6px 10px;
+  border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.ex-btn {
+  font-family: var(--mono); font-size: 10px; font-weight: 600;
+  padding: 4px 10px; border: 1px solid var(--border); border-radius: 4px;
+  cursor: pointer; background: transparent; color: var(--text); white-space: nowrap;
+  transition: all .12s;
+}
+.ex-btn:hover { border-color: var(--accent); color: var(--accent); }
+.ex-btn.primary { background: var(--accent); border-color: var(--accent); color: #000; }
+.ex-btn.primary:hover { opacity: .85; }
+.ex-btn:disabled { opacity: .3; pointer-events: none; }
+.ex-sel-info { font-size: 10px; color: var(--muted); margin-left: auto; white-space: nowrap; }
 
-  .client-dot {
-    width: 7px; height: 7px;
-    background: var(--green);
-    border-radius: 50%;
-    box-shadow: 0 0 6px var(--green);
-    flex-shrink: 0;
-  }
+/* File list */
+.ex-filelist { flex: 1; overflow-y: auto; }
 
-  .client-id {
-    font-size: 14px;
-    font-weight: 600;
-  }
+.ex-row {
+  display: flex; align-items: center; gap: 0;
+  padding: 0; cursor: pointer;
+  border-left: 2px solid transparent;
+  transition: background .1s;
+  user-select: none;
+}
+.ex-row:hover { background: #111a28; }
+.ex-row.selected { background: #0a1929; border-left-color: var(--accent); }
+.ex-row.active-dir { background: rgba(0,229,255,.05); }
 
-  .no-clients {
-    color: var(--muted);
-    font-size: 12px;
-    text-align: center;
-    padding: 20px 0;
-  }
+.ex-row-icon { width: 32px; text-align: center; font-size: 14px; flex-shrink: 0; padding: 6px 0; }
+.ex-row-name {
+  flex: 1; font-size: 12px; padding: 6px 6px 6px 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
+}
+.ex-row-name.dir  { color: var(--accent); }
+.ex-row-name.parent { color: var(--muted); font-style: italic; }
+.ex-row-size { font-size: 10px; color: var(--muted); padding: 6px 10px 6px 6px; white-space: nowrap; flex-shrink: 0; }
 
-  /* MAIN */
-  .main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
+/* Transfer queue */
+.ex-transfers {
+  flex-shrink: 0; max-height: 200px; overflow-y: auto;
+  border-top: 1px solid var(--border);
+  background: var(--surf2);
+}
+.ex-transfer-hdr {
+  font-size: 9px; text-transform: uppercase; letter-spacing: .12em;
+  color: var(--muted); padding: 8px 12px 4px;
+}
+.transfer-item {
+  padding: 8px 12px; border-bottom: 1px solid rgba(26,34,51,.5);
+  font-size: 11px;
+}
+.t-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+.t-name { font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+.t-size { color: var(--muted); font-size: 10px; flex-shrink: 0; }
+.t-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 4px; }
+.t-fill { height: 100%; border-radius: 2px; transition: width .2s; background: var(--accent); width: 0%; }
+.t-fill.done { background: var(--green); }
+.t-fill.err  { background: var(--red); }
+.t-status { display: flex; justify-content: space-between; align-items: center; }
+.t-msg { font-size: 10px; color: var(--muted); }
+.t-dl { font-size: 10px; font-weight: 700; color: var(--accent); text-decoration: none; display: none; }
+.t-dl.show { display: inline; }
+.t-dl:hover { text-decoration: underline; }
+.no-transfers { font-size: 11px; color: var(--muted); text-align: center; padding: 12px; }
 
-  /* TOPBAR */
-  .topbar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 14px;
-    border-bottom: 1px solid var(--border);
-    background: var(--surface);
-    flex-shrink: 0;
-  }
+/* Loading spinner */
+.ex-loading { display: flex; align-items: center; justify-content: center; padding: 30px; gap: 10px; color: var(--muted); font-size: 12px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner { border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; width: 14px; height: 14px; animation: spin .7s linear infinite; flex-shrink: 0; }
 
-  .btn {
-    font-family: var(--mono);
-    font-size: 12px;
-    font-weight: 600;
-    padding: 7px 14px;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    cursor: pointer;
-    background: transparent;
-    color: var(--text);
-    transition: all 0.12s;
-    white-space: nowrap;
-  }
+/* Drop overlay */
+.drop-overlay {
+  display: none; position: absolute; inset: 0;
+  background: rgba(0,229,255,.08);
+  border: 2px dashed var(--accent);
+  border-radius: 4px; z-index: 10;
+  align-items: center; justify-content: center;
+  font-size: 14px; color: var(--accent); font-weight: 700;
+  pointer-events: none;
+}
+.drop-overlay.show { display: flex; }
 
-  .btn:hover { border-color: var(--accent); color: var(--accent); }
-
-  .btn.primary { background: var(--accent); border-color: var(--accent); color: #000; }
-  .btn.primary:hover { opacity: 0.85; }
-
-  .btn.stream-active { background: rgba(0,255,136,0.1); border-color: var(--green); color: var(--green); }
-
-  .cmd-input {
-    font-family: var(--mono);
-    font-size: 12px;
-    background: #0a1120;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 7px 12px;
-    color: var(--text);
-    outline: none;
-    flex: 1;
-    max-width: 340px;
-    transition: border 0.12s;
-  }
-  .cmd-input:focus { border-color: var(--accent); }
-  .cmd-input::placeholder { color: var(--muted); }
-
-  .divider { width: 1px; height: 20px; background: var(--border); margin: 0 2px; }
-
-  .stream-stats { display: flex; gap: 8px; align-items: center; }
-
-  .stat-badge {
-    background: #0d1a2a;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 3px 10px;
-    font-size: 11px;
-    font-weight: 600;
-    min-width: 64px;
-    text-align: center;
-    color: var(--muted);
-    transition: color 0.3s, border-color 0.3s;
-  }
-  .stat-badge.good { color: var(--green); border-color: rgba(0,255,136,0.3); }
-  .stat-badge.mid  { color: #ffbb00; border-color: rgba(255,187,0,0.3); }
-  .stat-badge.low  { color: var(--accent2); border-color: rgba(255,51,102,0.3); }
-
-  .status-pill {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px;
-    color: var(--muted);
-    margin-left: auto;
-  }
-
-  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
-  .status-dot.on { background: var(--green); box-shadow: 0 0 5px var(--green); }
-
-  /* VIEWER */
-  .viewer {
-    flex: 1;
-    background: #04070d;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .screen-img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-    display: none;
-    border-radius: 3px;
-  }
-  .screen-img.show { display: block; }
-
-  .placeholder {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 14px;
-    color: var(--muted);
-  }
-  .ph-icon { font-size: 44px; opacity: 0.25; }
-  .ph-text { font-family: var(--sans); font-size: 13px; letter-spacing: 0.06em; }
-
-  .live-badge {
-    position: absolute;
-    top: 12px; left: 12px;
-    display: none;
-    align-items: center;
-    gap: 6px;
-    background: rgba(0,0,0,0.65);
-    border: 1px solid rgba(0,255,136,0.35);
-    border-radius: 20px;
-    padding: 4px 12px 4px 8px;
-    font-size: 11px;
-    color: var(--green);
-    font-weight: 700;
-    backdrop-filter: blur(6px);
-    letter-spacing: 0.08em;
-  }
-  .live-badge.show { display: flex; }
-  .rec { width: 7px; height: 7px; background: var(--green); border-radius: 50%; animation: blink 1s step-end infinite; }
-  @keyframes blink { 50% { opacity: 0; } }
-
-  /* OUTPUT */
-  .output-panel {
-    height: 150px;
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-    padding: 10px 14px;
-    overflow-y: auto;
-    font-size: 11.5px;
-    line-height: 1.65;
-    flex-shrink: 0;
-  }
-  .output-panel::-webkit-scrollbar { width: 3px; }
-  .output-panel::-webkit-scrollbar-thumb { background: var(--border); }
-
-  .log { color: #5a7a99; }
-  .log.info   { color: var(--accent); }
-  .log.result { color: var(--green); }
-  .log.error  { color: var(--accent2); }
-  .log.ts     { color: var(--muted); font-size: 10px; }
-
-  /* FILE TRANSFER PANEL */
-  .ft-panel {
-    position: fixed;
-    top: 0; right: 0;
-    width: 360px;
-    height: 100vh;
-    background: var(--surface);
-    border-left: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    transform: translateX(100%);
-    transition: transform 0.25s cubic-bezier(.4,0,.2,1);
-    z-index: 100;
-    box-shadow: -8px 0 32px rgba(0,0,0,0.5);
-  }
-  .ft-panel.open { transform: translateX(0); }
-
-  .ft-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 16px;
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-  }
-  .ft-title {
-    font-family: var(--sans);
-    font-weight: 700;
-    font-size: 14px;
-    color: var(--accent);
-    letter-spacing: 0.06em;
-  }
-  .ft-close {
-    background: none;
-    border: none;
-    color: var(--muted);
-    cursor: pointer;
-    font-size: 16px;
-    padding: 2px 6px;
-    border-radius: 4px;
-    transition: color 0.12s;
-  }
-  .ft-close:hover { color: var(--text); }
-
-  /* Tabs */
-  .ft-tabs {
-    display: flex;
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-  }
-  .ft-tab {
-    flex: 1;
-    padding: 10px;
-    text-align: center;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    color: var(--muted);
-    border-bottom: 2px solid transparent;
-    transition: all 0.15s;
-  }
-  .ft-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
-
-  .ft-body { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
-  .ft-body::-webkit-scrollbar { width: 3px; }
-  .ft-body::-webkit-scrollbar-thumb { background: var(--border); }
-
-  /* Tab sections */
-  .ft-section { display: none; }
-  .ft-section.active { display: flex; flex-direction: column; gap: 10px; }
-
-  /* Drag & Drop zone */
-  .drop-zone {
-    border: 2px dashed var(--border);
-    border-radius: 10px;
-    padding: 28px 20px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.15s;
-    color: var(--muted);
-    font-size: 12px;
-  }
-  .drop-zone:hover, .drop-zone.drag-over {
-    border-color: var(--accent);
-    background: rgba(0,229,255,0.04);
-    color: var(--accent);
-  }
-  .drop-icon { font-size: 28px; margin-bottom: 8px; }
-  .drop-hint { font-size: 11px; margin-top: 6px; color: var(--muted); }
-
-  /* Remote path input */
-  .ft-input {
-    font-family: var(--mono);
-    font-size: 12px;
-    background: #0a1120;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 8px 10px;
-    color: var(--text);
-    outline: none;
-    width: 100%;
-    transition: border 0.12s;
-  }
-  .ft-input:focus { border-color: var(--accent); }
-  .ft-input::placeholder { color: var(--muted); }
-
-  .ft-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
-
-  /* Transfer items */
-  .transfer-item {
-    background: #0a1120;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 12px;
-    font-size: 12px;
-  }
-  .transfer-name {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-    font-weight: 600;
-    color: var(--text);
-  }
-  .transfer-size { color: var(--muted); font-size: 11px; }
-
-  .progress-bar {
-    height: 4px;
-    background: var(--border);
-    border-radius: 2px;
-    overflow: hidden;
-    margin-bottom: 6px;
-  }
-  .progress-fill {
-    height: 100%;
-    background: var(--accent);
-    border-radius: 2px;
-    transition: width 0.2s ease;
-    width: 0%;
-  }
-  .progress-fill.done { background: var(--green); }
-  .progress-fill.error { background: var(--accent2); }
-
-  .transfer-status {
-    font-size: 10px;
-    color: var(--muted);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .download-link {
-    color: var(--accent);
-    text-decoration: none;
-    font-size: 11px;
-    font-weight: 600;
-    display: none;
-  }
-  .download-link.show { display: inline; }
-  .download-link:hover { text-decoration: underline; }
-
-  /* Toggle button */
-  .btn.files-btn { position: relative; }
-  .files-badge {
-    position: absolute;
-    top: -4px; right: -4px;
-    background: var(--accent2);
-    color: #fff;
-    font-size: 9px;
-    font-weight: 700;
-    border-radius: 8px;
-    padding: 1px 5px;
-    display: none;
-  }
-  .files-badge.show { display: block; }
-
-  /* ══════════════════════════════════════════
-     EXPLORER MODAL
-  ══════════════════════════════════════════ */
-  .modal-backdrop {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.7);
-    backdrop-filter: blur(4px);
-    z-index: 200;
-    align-items: center;
-    justify-content: center;
-  }
-  .modal-backdrop.open { display: flex; }
-
-  .explorer-modal {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    width: 900px;
-    max-width: 95vw;
-    height: 600px;
-    max-height: 90vh;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 24px 80px rgba(0,0,0,0.7);
-    overflow: hidden;
-  }
-
-  /* Header */
-  .ex-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 14px 16px;
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-    background: #0a1018;
-  }
-  .ex-title {
-    font-family: var(--sans);
-    font-weight: 800;
-    font-size: 13px;
-    color: var(--accent);
-    letter-spacing: 0.08em;
-    white-space: nowrap;
-  }
-  .ex-path-bar {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    background: #080d14;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 0 10px;
-    gap: 6px;
-    overflow: hidden;
-    min-width: 0;
-  }
-  .ex-path-icon { color: var(--muted); font-size: 12px; flex-shrink: 0; }
-  .ex-path-input {
-    background: none;
-    border: none;
-    outline: none;
-    color: var(--text);
-    font-family: var(--mono);
-    font-size: 12px;
-    width: 100%;
-    padding: 7px 0;
-  }
-  .ex-close-btn {
-    background: none;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    border-radius: 6px;
-    padding: 5px 10px;
-    cursor: pointer;
-    font-size: 12px;
-    white-space: nowrap;
-    transition: all 0.12s;
-  }
-  .ex-close-btn:hover { border-color: var(--accent2); color: var(--accent2); }
-
-  /* Toolbar */
-  .ex-toolbar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 14px;
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-    flex-wrap: wrap;
-  }
-  .ex-btn {
-    font-family: var(--mono);
-    font-size: 11px;
-    font-weight: 600;
-    padding: 5px 12px;
-    border: 1px solid var(--border);
-    border-radius: 5px;
-    cursor: pointer;
-    background: transparent;
-    color: var(--text);
-    transition: all 0.12s;
-    white-space: nowrap;
-  }
-  .ex-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .ex-btn.primary { background: var(--accent); border-color: var(--accent); color: #000; }
-  .ex-btn.primary:hover { opacity: 0.85; }
-  .ex-btn.danger { border-color: rgba(255,51,102,.5); color: var(--accent2); }
-  .ex-btn.danger:hover { background: rgba(255,51,102,.1); }
-  .ex-btn:disabled { opacity: 0.35; pointer-events: none; }
-
-  .ex-sep { width: 1px; height: 16px; background: var(--border); }
-  .ex-select-info { font-size: 11px; color: var(--muted); margin-left: auto; }
-
-  /* Body: sidebar + file list */
-  .ex-body {
-    flex: 1;
-    display: flex;
-    overflow: hidden;
-  }
-
-  /* Sidebar: drives + bookmarks */
-  .ex-sidebar {
-    width: 150px;
-    min-width: 150px;
-    border-right: 1px solid var(--border);
-    overflow-y: auto;
-    padding: 10px 6px;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-  .ex-sidebar::-webkit-scrollbar { width: 3px; }
-  .ex-sidebar::-webkit-scrollbar-thumb { background: var(--border); }
-  .ex-sidebar-label {
-    font-size: 9px;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: var(--muted);
-    padding: 8px 6px 4px;
-  }
-  .ex-drive {
-    padding: 7px 8px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 12px;
-    color: var(--text);
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    transition: background 0.1s;
-  }
-  .ex-drive:hover { background: #111a28; }
-  .ex-drive.active { background: #0a1929; color: var(--accent); }
-
-  /* File list */
-  .ex-filelist {
-    flex: 1;
-    overflow-y: auto;
-    padding: 6px;
-  }
-  .ex-filelist::-webkit-scrollbar { width: 4px; }
-  .ex-filelist::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-  .ex-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-  }
-  .ex-table thead th {
-    text-align: left;
-    padding: 6px 10px;
-    color: var(--muted);
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    border-bottom: 1px solid var(--border);
-    position: sticky;
-    top: 0;
-    background: var(--surface);
-    cursor: pointer;
-    user-select: none;
-    font-weight: 600;
-  }
-  .ex-table thead th:hover { color: var(--accent); }
-
-  .ex-row {
-    cursor: pointer;
-    border-radius: 5px;
-    transition: background 0.1s;
-  }
-  .ex-row:hover td { background: #111a28; }
-  .ex-row.selected td { background: #0a1929; }
-  .ex-row.selected td:first-child { border-left: 2px solid var(--accent); }
-
-  .ex-row td {
-    padding: 7px 10px;
-    color: var(--text);
-    vertical-align: middle;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 300px;
-  }
-  .ex-row td:first-child { border-left: 2px solid transparent; border-radius: 5px 0 0 5px; }
-
-  .ex-icon { margin-right: 7px; font-size: 14px; }
-  .ex-name { font-weight: 500; }
-  .ex-name.dir { color: var(--accent); }
-  .ex-name.parent { color: var(--muted); font-style: italic; }
-  .ex-size { color: var(--muted); text-align: right; min-width: 70px; }
-  .ex-date { color: var(--muted); min-width: 120px; }
-
-  /* Status bar */
-  .ex-statusbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 7px 14px;
-    border-top: 1px solid var(--border);
-    font-size: 11px;
-    color: var(--muted);
-    flex-shrink: 0;
-    gap: 10px;
-  }
-  .ex-progress {
-    flex: 1;
-    max-width: 250px;
-    display: none;
-    align-items: center;
-    gap: 8px;
-  }
-  .ex-progress.show { display: flex; }
-  .ex-prog-bar { flex: 1; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
-  .ex-prog-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.2s; }
-  .ex-prog-fill.done { background: var(--green); }
-
-  /* Upload drop zone in explorer */
-  .ex-dropzone {
-    border: 2px dashed var(--border);
-    border-radius: 8px;
-    padding: 20px;
-    text-align: center;
-    cursor: pointer;
-    font-size: 12px;
-    color: var(--muted);
-    margin: 8px;
-    transition: all 0.15s;
-  }
-  .ex-dropzone:hover, .ex-dropzone.drag-over {
-    border-color: var(--accent);
-    color: var(--accent);
-    background: rgba(0,229,255,0.03);
-  }
-  .ex-loading {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    color: var(--muted);
-    gap: 8px;
-    font-size: 13px;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .spinner { border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; width: 16px; height: 16px; animation: spin 0.8s linear infinite; }
+/* ══ OUTPUT LOG ═════════════════════════════════════ */
+.output-panel {
+  height: 130px; background: var(--surf);
+  border-top: 1px solid var(--border);
+  padding: 8px 12px; overflow-y: auto;
+  font-size: 11px; line-height: 1.65; flex-shrink: 0;
+}
+.log { color: #4a6a8a; }
+.log.info   { color: var(--accent); }
+.log.result { color: var(--green); }
+.log.error  { color: var(--red); }
+.log.ts     { color: var(--muted); font-size: 9px; margin-bottom: 1px; }
 </style>
 </head>
 <body>
 
+<!-- ══ CLIENT SIDEBAR ══════════════════════════════════ -->
 <div class="sidebar">
-  <div class="sidebar-header">
-    <div class="logo"><span class="logo-dot"></span>CTRL PANEL</div>
-    <div class="clients-label">Online Clients</div>
+  <div class="sidebar-hdr">
+    <div class="logo"><span class="logo-dot"></span>CTRL</div>
+    <div class="clients-lbl">Online Clients</div>
   </div>
   <div class="client-list" id="clientList">
     <div class="no-clients">No clients online</div>
   </div>
 </div>
 
+<!-- ══ MAIN ════════════════════════════════════════════ -->
 <div class="main">
+
+  <!-- TOPBAR -->
   <div class="topbar">
-    <button class="btn primary" id="streamBtn" onclick="toggleStream()">▶ Live Stream</button>
-    <button class="btn" onclick="requestScreenshot()">⎙ Snapshot</button>
+    <button class="btn primary" id="streamBtn" onclick="toggleStream()">▶ Stream</button>
+    <button class="btn" onclick="reqScreenshot()">⎙ Snap</button>
     <div class="divider"></div>
-    <input class="cmd-input" id="cmdInput" placeholder="Shell command…"
-           onkeydown="if(event.key==='Enter')sendCommand()">
-    <button class="btn" onclick="sendCommand()">Run</button>
+    <input class="cmd-input" id="cmdInput" placeholder="Shell command…" onkeydown="if(event.key==='Enter')sendCmd()">
+    <button class="btn" onclick="sendCmd()">Run</button>
     <div class="divider"></div>
-    <button class="btn files-btn" onclick="openExplorer()" title="File Explorer">
-      📁 Files
-      <span class="files-badge" id="filesBadge">0</span>
-    </button>
+    <button class="btn" id="filesBtn" onclick="toggleExplorer()">📁 Files</button>
     <div class="divider"></div>
-    <div class="stream-stats">
-      <div class="stat-badge" id="fpsBadge">-- FPS</div>
-      <div class="stat-badge" id="latBadge">-- ms</div>
-    </div>
+    <div class="stat-badge" id="fpsBadge">-- FPS</div>
+    <div class="stat-badge" id="latBadge">-- ms</div>
     <div class="status-pill">
-      <div class="status-dot" id="statusDot"></div>
-      <span id="statusText">Connecting…</span>
+      <div class="sdot" id="sdot"></div>
+      <span id="stxt">Connecting…</span>
     </div>
   </div>
 
-  <div class="viewer">
-    <div class="placeholder" id="placeholder">
-      <div class="ph-icon">🖥</div>
-      <div class="ph-text">Select a client to begin</div>
-    </div>
-    <img class="screen-img" id="screenImg" alt="">
-    <div class="live-badge" id="liveBadge"><div class="rec"></div>LIVE</div>
-  </div>
-
-  <div class="output-panel" id="output">
-    <div class="log info">[SYSTEM] Panel ready</div>
-  </div>
-</div>
-
-<script>
-  let selectedClient = null;
-  let isStreaming     = false;
-  let frameCount      = 0;
-  let fpsTimer        = null;
-  let lastFrameTime   = 0;
-
-  const ws = new WebSocket(
-    (location.protocol === 'https:' ? 'wss:' : 'ws:') + '//' + location.host + '/ws/admin'
-  );
-
-  const $clientList = document.getElementById('clientList');
-  const $screenImg  = document.getElementById('screenImg');
-  const $ph         = document.getElementById('placeholder');
-  const $statusDot  = document.getElementById('statusDot');
-  const $statusTxt  = document.getElementById('statusText');
-  const $streamBtn  = document.getElementById('streamBtn');
-  const $liveBadge  = document.getElementById('liveBadge');
-  const $fpsBadge   = document.getElementById('fpsBadge');
-  const $latBadge   = document.getElementById('latBadge');
-  const $output     = document.getElementById('output');
-
-  ws.onopen = () => {
-    $statusDot.classList.add('on');
-    $statusTxt.textContent = 'Connected';
-    log('WebSocket connected', 'info');
-  };
-
-  ws.onclose = () => {
-    $statusDot.classList.remove('on');
-    $statusTxt.textContent = 'Disconnected';
-    _stopStream(false);
-    log('WebSocket disconnected', 'error');
-  };
-
-  ws.onmessage = ({ data }) => {
-    let msg;
-    try { msg = JSON.parse(data); } catch { return; }
-
-    const { type, client_id } = msg;
-
-    if (type === 'clients') {
-      renderClients(msg.clients);
-      return;
-    }
-
-    // File transfer messages
-    const ftTypes = ['file_transfer_start','file_chunk','file_transfer_done','file_transfer_error','file_save_result'];
-    if (ftTypes.includes(type)) {
-      handleFileTransferMsg(msg);
-      handleExplorerMsg(msg);    // Explorer cũng cần theo dõi transfers
-      return;
-    }
-
-    // Explorer directory/drives messages
-    if (type === "directory_list" || type === "drives_list") {
-      handleExplorerMsg(msg);
-      return;
-    }
-
-    if (type === 'client_info' && client_id === selectedClient) {
-      const s = msg.sysinfo || {};
-      log(`[#${client_id}] ${s.platform} | CPU ${s.cpu_percent}% | RAM ${s.memory_percent}%`, 'info');
-      return;
-    }
-
-    if (type === 'stream_frame' && client_id === selectedClient) {
-      const now = performance.now();
-      if (lastFrameTime) {
-        $latBadge.textContent = Math.round(now - lastFrameTime) + ' ms';
-      }
-      lastFrameTime = now;
-      frameCount++;
-      $screenImg.src = 'data:image/jpeg;base64,' + msg.image;
-      showScreen();
-      return;
-    }
-
-    if (type === 'screenshot' && client_id === selectedClient) {
-      $screenImg.src = 'data:image/jpeg;base64,' + msg.image;
-      showScreen();
-      log(`[#${client_id}] Snapshot received`, 'info');
-      return;
-    }
-
-    if (type === 'command_result' && client_id === selectedClient) {
-      log(msg.output, 'result');
-      return;
-    }
-
-    if (type === 'stream_stopped' && client_id === selectedClient) {
-      _stopStream(false);
-      log(`[#${client_id}] Stream stopped: ${msg.reason}`, 'error');
-      return;
-    }
-  };
-
-  // ── Client list ───────────────────────────────────────────
-  function renderClients(clients) {
-    if (!clients.length) {
-      $clientList.innerHTML = '<div class="no-clients">No clients online</div>';
-      if (selectedClient) { selectedClient = null; _stopStream(false); hideScreen(); }
-      return;
-    }
-
-    $clientList.innerHTML = '';
-    clients.forEach(id => {
-      const div = document.createElement('div');
-      div.className = 'client-item' + (id === selectedClient ? ' active' : '');
-      div.innerHTML = `<div class="client-dot"></div><div class="client-id">#${id}</div>`;
-      div.onclick = () => selectClient(id);
-      $clientList.appendChild(div);
-    });
-  }
-
-  function selectClient(id) {
-    if (id === selectedClient) return;
-
-    // Stop stream trên client cũ
-    if (isStreaming && selectedClient) {
-      ws.send(JSON.stringify({ type: 'stop_stream', client_id: selectedClient }));
-      isStreaming = false;
-    }
-
-    selectedClient = id;
-
-    document.querySelectorAll('.client-item').forEach(el => {
-      el.classList.toggle('active', el.querySelector('.client-id').textContent === '#' + id);
-    });
-
-    log(`[SELECTED] #${id}`, 'info');
-    startStream(); // auto-stream khi chọn client
-  }
-
-  // ── Stream ────────────────────────────────────────────────
-  function toggleStream() {
-    if (isStreaming) _stopStream(true);
-    else startStream();
-  }
-
-  function startStream() {
-    if (!selectedClient) { log('Select a client first', 'error'); return; }
-    if (isStreaming) return;
-
-    ws.send(JSON.stringify({ type: 'start_stream', client_id: selectedClient }));
-    isStreaming   = true;
-    frameCount    = 0;
-    lastFrameTime = 0;
-
-    $streamBtn.textContent = '⏹ Stop Stream';
-    $streamBtn.className = 'btn stream-active';
-    $liveBadge.classList.add('show');
-
-    // FPS counter — cập nhật mỗi giây
-    fpsTimer = setInterval(() => {
-      const fps = frameCount;
-      frameCount = 0;
-      $fpsBadge.textContent = fps + ' FPS';
-      $fpsBadge.className = 'stat-badge ' + (fps >= 15 ? 'good' : fps >= 8 ? 'mid' : 'low');
-    }, 1000);
-
-    log(`[STREAM] Started → #${selectedClient}`, 'info');
-  }
-
-  function _stopStream(sendMsg) {
-    if (sendMsg && selectedClient) {
-      try { ws.send(JSON.stringify({ type: 'stop_stream', client_id: selectedClient })); } catch {}
-    }
-    isStreaming = false;
-    clearInterval(fpsTimer);
-    fpsTimer = null;
-    frameCount = 0;
-
-    $streamBtn.textContent = '▶ Live Stream';
-    $streamBtn.className = 'btn primary';
-    $liveBadge.classList.remove('show');
-    $fpsBadge.textContent = '-- FPS';
-    $fpsBadge.className = 'stat-badge';
-    $latBadge.textContent = '-- ms';
-  }
-
-  // ── Actions ───────────────────────────────────────────────
-  function requestScreenshot() {
-    if (!selectedClient) { log('Select a client first', 'error'); return; }
-    ws.send(JSON.stringify({ type: 'request_screenshot', client_id: selectedClient }));
-  }
-
-  function sendCommand() {
-    if (!selectedClient) { log('Select a client first', 'error'); return; }
-    const cmd = document.getElementById('cmdInput').value.trim();
-    if (!cmd) return;
-    ws.send(JSON.stringify({ type: 'command', client_id: selectedClient, command: cmd }));
-    log('$ ' + cmd, 'log');
-    document.getElementById('cmdInput').value = '';
-  }
-
-  // ── UI ────────────────────────────────────────────────────
-  function showScreen() {
-    $screenImg.classList.add('show');
-    $ph.style.display = 'none';
-  }
-
-  function hideScreen() {
-    $screenImg.classList.remove('show');
-    $ph.style.display = 'flex';
-  }
-
-  function log(msg, cls = '') {
-    const ts = document.createElement('div');
-    ts.className = 'log ts';
-    ts.textContent = new Date().toLocaleTimeString();
-
-    const el = document.createElement('div');
-    el.className = 'log ' + cls;
-    el.textContent = msg;
-
-    $output.append(ts, el);
-    $output.scrollTop = $output.scrollHeight;
-
-    // Trim log
-    while ($output.children.length > 300) $output.removeChild($output.firstChild);
-  }
-
-  // ── FILE TRANSFER ──────────────────────────────────────────
-  const CHUNK_SIZE = 512 * 1024; // 512KB
-  let transfers = {};            // transfer_id → {el, fill, statusEl, dlLink, chunks, totalChunks, filename}
-  let activeTransferCount = 0;
-  let ftPanelOpen = false;
-
-  function toggleFtPanel() {
-    ftPanelOpen = !ftPanelOpen;
-    document.getElementById('ftPanel').classList.toggle('open', ftPanelOpen);
-    if (ftPanelOpen) {
-      document.getElementById('filesBadge').classList.remove('show');
-      document.getElementById('filesBadge').textContent = '0';
-      activeTransferCount = 0;
-    }
-  }
-
-  function switchFtTab(tab) {
-    ['download','upload','history'].forEach(t => {
-      document.getElementById('section' + t.charAt(0).toUpperCase() + t.slice(1)).classList.toggle('active', t === tab);
-      document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1)).classList.toggle('active', t === tab);
-    });
-  }
-
-  // ── Drag & Drop ─────────────────────────────────────────────
-  function onDragOver(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('drag-over'); }
-  function onDragLeave(e) { document.getElementById('dropZone').classList.remove('drag-over'); }
-  function onDrop(e) {
-    e.preventDefault();
-    document.getElementById('dropZone').classList.remove('drag-over');
-    const file = e.dataTransfer.files[0];
-    if (file) sendFileToClient(file);
-  }
-  function onFileSelected(e) {
-    const file = e.target.files[0];
-    if (file) sendFileToClient(file);
-    e.target.value = '';
-  }
-
-  // ── Admin → Client: gửi file xuống ─────────────────────────
-  async function sendFileToClient(file) {
-    if (!selectedClient) { log('Select a client first', 'error'); return; }
-
-    const transferId = Math.random().toString(36).slice(2,10);
-    const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
-    const saveDir = document.getElementById('clientSaveDir').value || '.';
-
-    const el = createTransferItem('upload', transferId, file.name, file.size, document.getElementById('uploadTransfers'));
-    transfers[transferId] = el;
-    bumpBadge();
-
-    // Gửi header
-    ws.send(JSON.stringify({
-      type: 'send_file_to_client',
-      client_id: selectedClient,
-      transfer_id: transferId,
-      filename: file.name,
-      file_size: file.size,
-      total_chunks: totalChunks,
-      save_dir: saveDir
-    }));
-
-    // Đọc và gửi từng chunk
-    const reader = new FileReader();
-    for (let i = 0; i < totalChunks; i++) {
-      const start = i * CHUNK_SIZE;
-      const blob  = file.slice(start, start + CHUNK_SIZE);
-
-      const b64 = await readChunkAsBase64(blob);
-
-      ws.send(JSON.stringify({
-        type: 'send_chunk_to_client',
-        client_id: selectedClient,
-        transfer_id: transferId,
-        chunk_idx: i,
-        total_chunks: totalChunks,
-        data: b64
-      }));
-
-      updateProgress(el, i + 1, totalChunks);
-      await new Promise(r => setTimeout(r, 0)); // yield
-    }
-
-    // Done
-    ws.send(JSON.stringify({
-      type: 'finish_file_to_client',
-      client_id: selectedClient,
-      transfer_id: transferId,
-      filename: file.name,
-      file_size: file.size
-    }));
-
-    setDone(el, 'Sent — waiting for client confirmation…');
-    addHistory(file.name, file.size, 'sent');
-  }
-
-  function readChunkAsBase64(blob) {
-    return new Promise((resolve, reject) => {
-      const r = new FileReader();
-      r.onload = () => resolve(r.result.split(',')[1]);
-      r.onerror = reject;
-      r.readAsDataURL(blob);
-    });
-  }
-
-  // ── Admin yêu cầu Client gửi file lên ──────────────────────
-  function requestFileFromClient() {
-    if (!selectedClient) { log('Select a client first', 'error'); return; }
-    const remotePath = document.getElementById('remotePathInput').value.trim();
-    if (!remotePath) { log('Enter remote file path', 'error'); return; }
-
-    const transferId = Math.random().toString(36).slice(2,10);
-    ws.send(JSON.stringify({
-      type: 'request_file_upload',
-      client_id: selectedClient,
-      path: remotePath,
-      transfer_id: transferId
-    }));
-
-    // Tạo UI placeholder
-    const el = createTransferItem('download', transferId, remotePath.split(/[\/]/).pop(), null,
-                                  document.getElementById('downloadTransfers'));
-    transfers[transferId] = el;
-    bumpBadge();
-    el.statusEl.textContent = 'Requesting…';
-    log(`[FILE] Fetching: ${remotePath}`, 'info');
-  }
-
-  // ── Xử lý messages file transfer từ server ─────────────────
-  function handleFileTransferMsg(msg) {
-    const { type, transfer_id, filename, file_size, total_chunks, chunk_idx, error } = msg;
-
-    if (type === 'file_transfer_start') {
-      // Client bắt đầu gửi file lên
-      if (!transfers[transfer_id]) {
-        const el = createTransferItem('download', transfer_id, filename, file_size,
-                                     document.getElementById('downloadTransfers'));
-        transfers[transfer_id] = el;
-        bumpBadge();
-      }
-      transfers[transfer_id].totalChunks = total_chunks;
-      transfers[transfer_id].chunks      = {};
-      transfers[transfer_id].filename    = filename;
-      transfers[transfer_id].fileSize    = file_size;
-      const el = transfers[transfer_id];
-      el.statusEl.textContent = `0/${total_chunks} chunks`;
-      el.nameEl.textContent   = filename;
-      el.sizeEl.textContent   = formatSize(file_size);
-    }
-
-    else if (type === 'file_chunk') {
-      const el = transfers[transfer_id];
-      if (!el) return;
-      el.chunks = el.chunks || {};
-      el.chunks[chunk_idx] = msg.data || '';  // data not forwarded for perf, just track count
-      const received = Object.keys(el.chunks).length;
-      updateProgress(el, received, el.totalChunks);
-      el.statusEl.textContent = `${received}/${el.totalChunks} chunks`;
-    }
-
-    else if (type === 'file_transfer_done') {
-      const el = transfers[transfer_id];
-      if (!el) return;
-      setDone(el, 'Complete — click to download');
-      el.dlLink.href = `/download/${transfer_id}`;
-      el.dlLink.download = el.filename || filename;
-      el.dlLink.classList.add('show');
-      addHistory(el.filename || filename, el.fileSize || file_size, 'received');
-      log(`[FILE] Ready: ${el.filename || filename} — /download/${transfer_id}`, 'result');
-    }
-
-    else if (type === 'file_transfer_error') {
-      const el = transfers[transfer_id];
-      if (el) setError(el, error || 'Transfer failed');
-      log(`[FILE] Error: ${error}`, 'error');
-    }
-
-    else if (type === 'file_save_result') {
-      const el = transfers[transfer_id];
-      if (el) {
-        if (msg.error) setError(el, msg.error);
-        else setDone(el, `Saved: ${msg.path}`);
-      }
-      log(`[FILE] Client saved: ${msg.path || msg.error}`, msg.error ? 'error' : 'result');
-    }
-  }
-
-  // ── UI helpers ─────────────────────────────────────────────
-  function createTransferItem(dir, id, name, size, container) {
-    const div = document.createElement('div');
-    div.className = 'transfer-item';
-    div.id = 'transfer-' + id;
-    div.innerHTML = `
-      <div class="transfer-name">
-        <span class="t-name">${name}</span>
-        <span class="transfer-size t-size">${size ? formatSize(size) : '…'}</span>
+  <!-- WORKSPACE -->
+  <div class="workspace">
+
+    <!-- VIEWER -->
+    <div class="viewer" id="viewer"
+         ondragover="onViewerDragOver(event)"
+         ondragleave="onViewerDragLeave(event)"
+         ondrop="onViewerDrop(event)">
+      <div class="placeholder" id="placeholder">
+        <div class="ph-icon">🖥</div>
+        <div class="ph-text">Select a client to begin</div>
       </div>
-      <div class="progress-bar"><div class="progress-fill" id="fill-${id}"></div></div>
-      <div class="transfer-status">
-        <span id="status-${id}">Connecting…</span>
-        <a class="download-link" id="dl-${id}" target="_blank">⬇ Download</a>
-      </div>`;
-    container.insertBefore(div, container.firstChild);
-
-    return {
-      el: div,
-      fill: document.getElementById('fill-' + id),
-      statusEl: document.getElementById('status-' + id),
-      dlLink: document.getElementById('dl-' + id),
-      nameEl: div.querySelector('.t-name'),
-      sizeEl: div.querySelector('.t-size'),
-      chunks: {},
-      totalChunks: 0,
-      filename: name,
-      fileSize: size
-    };
-  }
-
-  function updateProgress(el, received, total) {
-    if (!total) return;
-    const pct = Math.round(received / total * 100);
-    el.fill.style.width = pct + '%';
-  }
-
-  function setDone(el, msg) {
-    el.fill.style.width = '100%';
-    el.fill.classList.add('done');
-    el.statusEl.textContent = msg;
-  }
-
-  function setError(el, msg) {
-    el.fill.classList.add('error');
-    el.statusEl.textContent = '✕ ' + msg;
-    el.statusEl.style.color = 'var(--accent2)';
-  }
-
-  function bumpBadge() {
-    activeTransferCount++;
-    if (!ftPanelOpen) {
-      const b = document.getElementById('filesBadge');
-      b.textContent = activeTransferCount;
-      b.classList.add('show');
-    }
-  }
-
-  function formatSize(bytes) {
-    if (!bytes) return '?';
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1048576) return (bytes/1024).toFixed(1) + ' KB';
-    return (bytes/1048576).toFixed(2) + ' MB';
-  }
-
-  function addHistory(name, size, dir) {
-    const h = document.getElementById('transferHistory');
-    const placeholder = h.querySelector('div[style]');
-    if (placeholder) placeholder.remove();
-
-    const d = document.createElement('div');
-    d.style.cssText = 'font-size:11px;padding:6px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;';
-    d.innerHTML = `<span style="color:var(--text)">${dir === 'sent' ? '↑' : '↓'} ${name}</span>
-                   <span style="color:var(--muted)">${formatSize(size)}</span>`;
-    h.insertBefore(d, h.firstChild);
-  }
-
-
-  // ════════════════════════════════════════════════════════
-  //  FILE EXPLORER
-  // ════════════════════════════════════════════════════════
-  let exCurrentPath  = ".";
-  let exHistory      = [];
-  let exSelected     = new Set();   // selected paths
-  let exItems        = [];          // current listing
-  let exSortCol      = "name";
-  let exSortAsc      = true;
-  let exTransfers    = {};          // transfer_id → progress state
-
-  function openExplorer() {
-    if (!selectedClient) { log("Select a client first", "error"); return; }
-    document.getElementById("explorerModal").classList.add("open");
-    // Load drives
-    ws.send(JSON.stringify({ type: "get_drives", client_id: selectedClient }));
-    // Navigate to home
-    navigateTo(".");
-  }
-
-  function closeExplorer(e) {
-    if (e && e.target !== document.getElementById("explorerModal")) return;
-    document.getElementById("explorerModal").classList.remove("open");
-  }
-
-  function navigateTo(path) {
-    if (!selectedClient) return;
-    if (path !== exCurrentPath) exHistory.push(exCurrentPath);
-    exCurrentPath = path;
-    exSelected.clear();
-    updateSelectUI();
-    document.getElementById("exPathInput").value = path;
-    document.getElementById("exFileList").innerHTML =
-      '<div class="ex-loading"><div class="spinner"></div> Loading…</div>';
-    document.getElementById("exStatusText").textContent = "Loading…";
-    ws.send(JSON.stringify({ type: "list_directory", client_id: selectedClient, path: path }));
-  }
-
-  function exNavBack() {
-    if (exHistory.length) navigateTo(exHistory.pop());
-  }
-
-  // ── Render drives ──────────────────────────────────────
-  function renderDrives(drives) {
-    const list = document.getElementById("exDriveList");
-    list.innerHTML = drives.map(d => `
-      <div class="ex-drive" onclick="navigateTo(\`${d.path}\`)">
-        💾 ${d.name}
-      </div>`).join("");
-  }
-
-  // ── Render file listing ────────────────────────────────
-  function renderListing(data) {
-    const items  = data.items || [];
-    const path   = data.path  || exCurrentPath;
-    const sep    = data.sep   || "/";
-    exCurrentPath = path;
-    exItems = items;
-    exSelected.clear();
-    updateSelectUI();
-
-    document.getElementById("exPathInput").value  = path;
-    document.getElementById("exStatusText").textContent = path;
-    document.getElementById("exItemCount").textContent =
-      `${items.filter(i => i.type !== "parent").length} items`;
-
-    if (data.error) {
-      document.getElementById("exFileList").innerHTML =
-        `<div style="color:var(--accent2);padding:20px;font-size:13px">⚠ ${data.error}</div>`;
-      return;
-    }
-
-    // Sort
-    const sorted = [...items].sort((a, b) => {
-      if (a.type === "parent") return -1;
-      if (b.type === "parent") return  1;
-      if (a.type !== b.type) return a.type === "dir" ? -1 : 1;
-      let va = a[exSortCol] ?? "", vb = b[exSortCol] ?? "";
-      if (typeof va === "string") va = va.toLowerCase();
-      if (typeof vb === "string") vb = vb.toLowerCase();
-      return exSortAsc ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1);
-    });
-
-    const tbody = sorted.map((item, idx) => {
-      const isParent = item.type === "parent";
-      const isDir    = item.type === "dir";
-      const icon     = isParent ? "↩" : isDir ? "📁" : getFileIcon(item.ext);
-      const nameClass = isParent ? "parent" : isDir ? "dir" : "";
-      const sizeStr  = isParent ? "" : isDir
-        ? `${item.size} items`
-        : formatSize(item.size);
-      const selClass = exSelected.has(item.path) ? "selected" : "";
-
-      return `<tr class="ex-row ${selClass}" data-path="${escHtml(item.path)}"
-               data-type="${item.type}" data-name="${escHtml(item.name)}"
-               ondblclick="exRowDblClick(this)"
-               onclick="exRowClick(this, event)">
-        <td><span class="ex-icon">${icon}</span><span class="ex-name ${nameClass}">${escHtml(item.name)}</span></td>
-        <td class="ex-size">${sizeStr}</td>
-        <td class="ex-date">${item.modified || ""}</td>
-      </tr>`;
-    }).join("");
-
-    document.getElementById("exFileList").innerHTML = `
-      <table class="ex-table">
-        <thead>
-          <tr>
-            <th onclick="exSort('name')" style="width:55%">Name ${exSortCol==="name"?(exSortAsc?"▲":"▼"):""}</th>
-            <th onclick="exSort('size')" style="width:15%;text-align:right">Size ${exSortCol==="size"?(exSortAsc?"▲":"▼"):""}</th>
-            <th onclick="exSort('modified')" style="width:25%">Modified ${exSortCol==="modified"?(exSortAsc?"▲":"▼"):""}</th>
-          </tr>
-        </thead>
-        <tbody>${tbody}</tbody>
-      </table>`;
-  }
-
-  function exSort(col) {
-    if (exSortCol === col) exSortAsc = !exSortAsc;
-    else { exSortCol = col; exSortAsc = true; }
-    // re-render với items hiện tại
-    renderListing({ items: exItems, path: exCurrentPath, sep: "/" });
-  }
-
-  // ── Row interactions ───────────────────────────────────
-  function exRowDblClick(row) {
-    const type = row.dataset.type;
-    const path = row.dataset.path;
-    if (type === "dir" || type === "parent") {
-      navigateTo(path);
-    }
-    // double-click file → download
-    else {
-      exSelected.clear();
-      exSelected.add(path);
-      exDownloadSelected();
-    }
-  }
-
-  function exRowClick(row, event) {
-    const path = row.dataset.path;
-    if (row.dataset.type === "parent") return;
-
-    if (event.ctrlKey || event.metaKey) {
-      // Multi-select
-      if (exSelected.has(path)) exSelected.delete(path);
-      else exSelected.add(path);
-    } else if (event.shiftKey && exSelected.size) {
-      // Range select
-      const rows = [...document.querySelectorAll(".ex-row")];
-      const selRow = rows.indexOf(row);
-      const firstSel = rows.findIndex(r => exSelected.has(r.dataset.path));
-      const [lo, hi] = [Math.min(selRow, firstSel), Math.max(selRow, firstSel)];
-      for (let i = lo; i <= hi; i++) {
-        if (rows[i].dataset.path) exSelected.add(rows[i].dataset.path);
-      }
-    } else {
-      exSelected.clear();
-      exSelected.add(path);
-    }
-
-    // Update visual
-    document.querySelectorAll(".ex-row").forEach(r => {
-      r.classList.toggle("selected", exSelected.has(r.dataset.path));
-    });
-    updateSelectUI();
-  }
-
-  function updateSelectUI() {
-    const count = exSelected.size;
-    document.getElementById("exSelectInfo").textContent =
-      count ? `${count} item${count > 1 ? "s" : ""} selected` : "No selection";
-    document.getElementById("exBtnDownload").disabled = count === 0;
-  }
-
-  // ── Download selected ──────────────────────────────────
-  function exDownloadSelected() {
-    if (!exSelected.size || !selectedClient) return;
-    exSelected.forEach(path => {
-      const tid = Math.random().toString(36).slice(2, 10);
-      const name = path.split(/[\/]/).pop();
-      // Hiện progress trong statusbar
-      showExProgress(tid, `Fetching ${name}…`);
-      ws.send(JSON.stringify({
-        type: "request_file_upload",
-        client_id: selectedClient,
-        path: path,
-        transfer_id: tid
-      }));
-      log(`[FILE] ↓ Fetching: ${path}`, "info");
-    });
-  }
-
-  // ── Upload files to current directory ─────────────────
-  async function exUploadFiles(event) {
-    const files = [...event.target.files];
-    if (!files.length || !selectedClient) return;
-    event.target.value = "";
-
-    for (const file of files) {
-      const tid = Math.random().toString(36).slice(2, 10);
-      const totalChunks = Math.ceil(file.size / CHUNK_SIZE) || 1;
-      showExProgress(tid, `Uploading ${file.name}…`);
-
-      ws.send(JSON.stringify({
-        type: "send_file_to_client",
-        client_id: selectedClient,
-        transfer_id: tid,
-        filename: file.name,
-        file_size: file.size,
-        total_chunks: totalChunks,
-        save_dir: exCurrentPath
-      }));
-
-      for (let i = 0; i < totalChunks; i++) {
-        const blob = file.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
-        const b64  = await readChunkAsBase64(blob);
-        ws.send(JSON.stringify({
-          type: "send_chunk_to_client",
-          client_id: selectedClient,
-          transfer_id: tid,
-          chunk_idx: i,
-          total_chunks: totalChunks,
-          data: b64
-        }));
-        updateExProgress(tid, i + 1, totalChunks);
-        await new Promise(r => setTimeout(r, 0));
-      }
-
-      ws.send(JSON.stringify({
-        type: "finish_file_to_client",
-        client_id: selectedClient,
-        transfer_id: tid,
-        filename: file.name,
-        file_size: file.size
-      }));
-
-      log(`[FILE] ↑ Sent: ${file.name} → ${exCurrentPath}`, "info");
-    }
-  }
-
-  // ── Explorer progress bar ──────────────────────────────
-  function showExProgress(tid, label) {
-    exTransfers[tid] = { label, chunks: 0, total: 0 };
-    const el = document.getElementById("exProgress");
-    el.classList.add("show");
-    document.getElementById("exProgressLabel").textContent = label;
-    document.getElementById("exProgFill").style.width = "0%";
-    document.getElementById("exProgressPct").textContent = "0%";
-    document.getElementById("exProgFill").classList.remove("done");
-  }
-
-  function updateExProgress(tid, received, total) {
-    if (!exTransfers[tid]) return;
-    const pct = Math.round(received / total * 100);
-    document.getElementById("exProgFill").style.width = pct + "%";
-    document.getElementById("exProgressPct").textContent = pct + "%";
-  }
-
-  function doneExProgress(tid) {
-    document.getElementById("exProgFill").classList.add("done");
-    document.getElementById("exProgressPct").textContent = "100%";
-    setTimeout(() => {
-      document.getElementById("exProgress").classList.remove("show");
-      delete exTransfers[tid];
-    }, 2000);
-  }
-
-  // ── Handle incoming msgs for explorer ─────────────────
-  function handleExplorerMsg(msg) {
-    const { type, data, transfer_id } = msg;
-
-    if (type === "directory_list" && data) {
-      if (document.getElementById("explorerModal").classList.contains("open")) {
-        renderListing(data);
-      }
-    }
-
-    if (type === "drives_list" && data) {
-      renderDrives(data);
-    }
-
-    if (type === "file_transfer_progress") {
-      if (exTransfers[transfer_id]) {
-        document.getElementById("exProgressLabel").textContent = msg.message || "Processing…";
-      }
-    }
-
-    if (type === "file_transfer_start" && exTransfers[transfer_id]) {
-      exTransfers[transfer_id].total = msg.total_chunks;
-    }
-
-    if (type === "file_chunk" && exTransfers[transfer_id]) {
-      const t = exTransfers[transfer_id];
-      t.chunks = (t.chunks || 0) + 1;
-      updateExProgress(transfer_id, t.chunks, t.total || 1);
-    }
-
-    if (type === "file_transfer_done" && exTransfers[transfer_id]) {
-      doneExProgress(transfer_id);
-      log(`[FILE] ✓ ${msg.filename} — ready`, "result");
-    }
-
-    if (type === "file_save_result") {
-      if (exTransfers[transfer_id]) doneExProgress(transfer_id);
-      if (msg.error) log(`[FILE] ✕ ${msg.error}`, "error");
-      else {
-        log(`[FILE] ✓ Saved: ${msg.path}`, "result");
-        // Refresh listing nếu explorer đang mở
-        if (document.getElementById("explorerModal").classList.contains("open")) {
-          navigateTo(exCurrentPath);
-        }
-      }
-    }
-  }
-
-  // ── Icon mapping ───────────────────────────────────────
-  function getFileIcon(ext) {
-    const icons = {
-      ".exe":".dll": "⚙",
-      ".zip":".rar":".7z":".tar":".gz": "🗜",
-      ".jpg":".jpeg":".png":".gif":".bmp":".webp":".svg": "🖼",
-      ".mp4":".mkv":".avi":".mov":".wmv": "🎬",
-      ".mp3":".wav":".flac":".aac": "🎵",
-      ".pdf": "📄",
-      ".doc":".docx": "📝",
-      ".xls":".xlsx": "📊",
-      ".ppt":".pptx": "📊",
-      ".txt":".log": "📃",
-      ".py": "🐍",
-      ".js":".ts":".jsx": "📜",
-      ".html":".htm": "🌐",
-      ".json": "📋",
-      ".db":".sqlite": "🗄",
-    };
-    for (const [key, icon] of Object.entries(icons)) {
-      if (key.split(":").includes(ext)) return icon;
-    }
-    return "📄";
-  }
-
-  function escHtml(s) {
-    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-  }
-
-</script>
-
-<!-- FILE TRANSFER PANEL -->
-<div class="ft-panel" id="ftPanel">
-  <div class="ft-header">
-    <div class="ft-title">📁 FILE TRANSFER</div>
-    <button class="ft-close" onclick="toggleFtPanel()">✕</button>
-  </div>
-
-  <div class="ft-tabs">
-    <div class="ft-tab active" onclick="switchFtTab('download')" id="tabDownload">↓ Get File</div>
-    <div class="ft-tab" onclick="switchFtTab('upload')" id="tabUpload">↑ Send File</div>
-    <div class="ft-tab" onclick="switchFtTab('history')" id="tabHistory">History</div>
-  </div>
-
-  <div class="ft-body">
-
-    <!-- TAB: Get file từ Client về Admin -->
-    <div class="ft-section active" id="sectionDownload">
-      <div class="ft-label">Remote file path</div>
-      <input class="ft-input" id="remotePathInput" placeholder="C:\Users\user\file.txt">
-      <div class="ft-label" style="margin-top:4px">Save to (Client side)</div>
-      <input class="ft-input" id="saveDirInput" placeholder=". (thư mục hiện tại)">
-      <button class="btn primary" style="width:100%;margin-top:4px" onclick="requestFileFromClient()">
-        ↓ Fetch from Client
-      </button>
-      <div id="downloadTransfers"></div>
+      <img class="screen-img" id="screenImg" alt="">
+      <div class="live-badge" id="liveBadge"><div class="rec"></div>LIVE</div>
+      <div class="drop-overlay" id="dropOverlay">Drop file to upload here</div>
     </div>
 
-    <!-- TAB: Gửi file từ Admin xuống Client -->
-    <div class="ft-section" id="sectionUpload">
-      <div
-        class="drop-zone" id="dropZone"
-        onclick="document.getElementById('fileInput').click()"
-        ondragover="onDragOver(event)"
-        ondragleave="onDragLeave(event)"
-        ondrop="onDrop(event)"
-      >
-        <div class="drop-icon">⬆</div>
-        <div>Click or drag file here</div>
-        <div class="drop-hint">File sẽ được gửi đến máy Client</div>
+    <!-- ══ EXPLORER PANEL ══════════════════════════════ -->
+    <div class="explorer-panel" id="explorerPanel">
+
+      <!-- Header -->
+      <div class="ex-hdr">
+        <div class="ex-title">Explorer</div>
+        <div class="ex-hdr-btns">
+          <button class="ex-icon-btn" title="Upload file" onclick="document.getElementById('uploadInput').click()">↑</button>
+          <button class="ex-icon-btn" title="Close" onclick="toggleExplorer()">✕</button>
+        </div>
       </div>
-      <input type="file" id="fileInput" style="display:none" onchange="onFileSelected(event)">
+      <input type="file" id="uploadInput" style="display:none" multiple onchange="uploadFiles(event)">
 
-      <div class="ft-label">Save to (Client side)</div>
-      <input class="ft-input" id="clientSaveDir" placeholder=". (thư mục hiện tại)">
-
-      <div id="uploadTransfers"></div>
-    </div>
-
-    <!-- TAB: History -->
-    <div class="ft-section" id="sectionHistory">
-      <div id="transferHistory">
-        <div style="color:var(--muted);font-size:12px;text-align:center;padding:20px 0">No transfers yet</div>
+      <!-- Path bar -->
+      <div class="ex-pathbar">
+        <div class="ex-back" onclick="navBack()" title="Back">←</div>
+        <input class="ex-path-input" id="exPath" placeholder="Path…" onkeydown="if(event.key==='Enter')navTo(this.value)">
+        <div class="ex-refresh" onclick="navTo(exCurPath)" title="Refresh">↺</div>
       </div>
-    </div>
 
-  </div>
-</div>
+      <!-- Drives -->
+      <div class="ex-drives" id="exDrives"></div>
 
-<!-- ═══════════════════════════════════════════════════
-     EXPLORER MODAL
-═══════════════════════════════════════════════════ -->
-<div class="modal-backdrop" id="explorerModal" onclick="closeExplorer(event)">
-  <div class="explorer-modal" onclick="event.stopPropagation()">
-
-    <!-- Header -->
-    <div class="ex-header">
-      <div class="ex-title">🗂 FILE EXPLORER</div>
-      <div class="ex-path-bar">
-        <span class="ex-path-icon">📂</span>
-        <input class="ex-path-input" id="exPathInput" placeholder="Path…"
-               onkeydown="if(event.key==='Enter') navigateTo(this.value)">
-      </div>
-      <button class="ex-close-btn" onclick="closeExplorer()">✕ Close</button>
-    </div>
-
-    <!-- Toolbar -->
-    <div class="ex-toolbar">
-      <button class="ex-btn" onclick="exNavBack()" id="exBtnBack" title="Back">← Back</button>
-      <button class="ex-btn" onclick="navigateTo(exCurrentPath)" title="Refresh">↺ Refresh</button>
-      <div class="ex-sep"></div>
-      <button class="ex-btn primary" onclick="exDownloadSelected()" id="exBtnDownload" disabled>
-        ↓ Download
-      </button>
-      <button class="ex-btn" onclick="document.getElementById('exUploadInput').click()" id="exBtnUpload">
-        ↑ Upload Here
-      </button>
-      <input type="file" id="exUploadInput" style="display:none" multiple
-             onchange="exUploadFiles(event)">
-      <div class="ex-sep"></div>
-      <span class="ex-select-info" id="exSelectInfo">No selection</span>
-    </div>
-
-    <!-- Body -->
-    <div class="ex-body">
-
-      <!-- Sidebar drives -->
-      <div class="ex-sidebar">
-        <div class="ex-sidebar-label">Drives</div>
-        <div id="exDriveList"></div>
-        <div class="ex-sidebar-label" style="margin-top:8px">Quick</div>
-        <div class="ex-drive" onclick="navigateTo('.')">🏠 Home</div>
-        <div class="ex-drive" onclick="navigateTo('..')">↑ Up</div>
+      <!-- Toolbar -->
+      <div class="ex-toolbar">
+        <button class="ex-btn primary" id="exDlBtn" disabled onclick="downloadSelected()">↓ Download</button>
+        <button class="ex-btn" onclick="document.getElementById('uploadInput').click()">↑ Upload</button>
+        <span class="ex-sel-info" id="exSelInfo">–</span>
       </div>
 
       <!-- File list -->
-      <div class="ex-filelist" id="exFileList">
-        <div class="ex-loading"><div class="spinner"></div> Loading…</div>
+      <div class="ex-filelist" id="exFilelist" style="position:relative">
+        <div class="ex-loading"><div class="spinner"></div>Waiting for client…</div>
       </div>
 
-    </div>
-
-    <!-- Status bar -->
-    <div class="ex-statusbar">
-      <span id="exStatusText">Ready</span>
-      <div class="ex-progress" id="exProgress">
-        <span id="exProgressLabel" style="white-space:nowrap;font-size:10px"></span>
-        <div class="ex-prog-bar"><div class="ex-prog-fill" id="exProgFill"></div></div>
-        <span id="exProgressPct" style="min-width:30px">0%</span>
+      <!-- Transfer queue -->
+      <div class="ex-transfers" id="exTransfers">
+        <div class="ex-transfer-hdr">Transfers</div>
+        <div class="no-transfers" id="noTransfers">No active transfers</div>
       </div>
-      <span id="exItemCount" style="color:var(--muted)"></span>
-    </div>
 
+    </div><!-- /explorer-panel -->
+
+  </div><!-- /workspace -->
+
+  <!-- OUTPUT LOG -->
+  <div class="output-panel" id="output">
+    <div class="log info">[SYSTEM] Panel ready</div>
   </div>
-</div>
+
+</div><!-- /main -->
+
+<script>
+// ════════════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════════════
+let selClient    = null;
+let isStreaming  = false;
+let frameCount   = 0;
+let fpsTimer     = null;
+let lastFrameTs  = 0;
+let exOpen       = false;
+let exCurPath    = '.';
+let exHistory    = [];
+let exSelected   = new Set();
+let exItems      = [];
+let activeXfers  = {};       // tid → { el, fill, msg, dl, chunks, total }
+const CHUNK      = 512*1024; // 512KB
+
+// ════════════════════════════════════════════════════════════
+//  WEBSOCKET
+// ════════════════════════════════════════════════════════════
+const ws = new WebSocket(
+  (location.protocol==='https:'?'wss:':'ws:') + '//' + location.host + '/ws/admin'
+);
+
+const $sdot   = document.getElementById('sdot');
+const $stxt   = document.getElementById('stxt');
+const $stream = document.getElementById('streamBtn');
+const $live   = document.getElementById('liveBadge');
+const $fps    = document.getElementById('fpsBadge');
+const $lat    = document.getElementById('latBadge');
+const $img    = document.getElementById('screenImg');
+const $ph     = document.getElementById('placeholder');
+const $out    = document.getElementById('output');
+
+ws.onopen = () => { $sdot.classList.add('on'); $stxt.textContent='Connected'; log('Connected','info'); };
+ws.onclose= () => { $sdot.classList.remove('on'); $stxt.textContent='Disconnected'; _stopStream(false); log('Disconnected','error'); };
+
+ws.onmessage = ({data}) => {
+  let msg; try { msg=JSON.parse(data); } catch { return; }
+  const {type, client_id} = msg;
+
+  if (type==='clients')         { renderClients(msg.clients); return; }
+  if (type==='client_info' && client_id===selClient) {
+    const s=msg.sysinfo||{}; log(`[#${client_id}] ${s.platform} CPU:${s.cpu_percent}% RAM:${s.memory_percent}%`,'info'); return;
+  }
+  if (type==='stream_frame' && client_id===selClient) {
+    const now=performance.now();
+    if(lastFrameTs) $lat.textContent=Math.round(now-lastFrameTs)+'ms';
+    lastFrameTs=now; frameCount++;
+    $img.src='data:image/jpeg;base64,'+msg.image; showScreen(); return;
+  }
+  if (type==='screenshot' && client_id===selClient) {
+    $img.src='data:image/jpeg;base64,'+msg.image; showScreen(); log(`Snapshot received`,'info'); return;
+  }
+  if (type==='command_result' && client_id===selClient) { log(msg.output,'result'); return; }
+  if (type==='stream_stopped'  && client_id===selClient) { _stopStream(false); log(`Stream stopped: ${msg.reason}`,'error'); return; }
+
+  // ── Explorer ─────────────────────────────────────────────
+  if (type==='directory_list') { renderDir(msg.data); return; }
+  if (type==='drives_list')    { renderDrives(msg.data); return; }
+
+  // ── File transfers ────────────────────────────────────────
+  if (type==='folder_transfer_start') { onFolderStart(msg); return; }
+  if (type==='folder_transfer_done')  { onFolderDone(msg);  return; }
+  if (type==='file_transfer_start')   { onXferStart(msg);   return; }
+  if (type==='file_chunk')            { onXferChunk(msg);   return; }
+  if (type==='file_transfer_done')    { onXferDone(msg);    return; }
+  if (type==='file_transfer_error')   { onXferError(msg);   return; }
+  if (type==='file_transfer_progress'){ onXferProgress(msg);return; }
+  if (type==='file_save_result')      { onSaveResult(msg);  return; }
+};
+
+// ════════════════════════════════════════════════════════════
+//  CLIENTS
+// ════════════════════════════════════════════════════════════
+function renderClients(clients) {
+  const el = document.getElementById('clientList');
+  if (!clients.length) {
+    el.innerHTML='<div class="no-clients">No clients online</div>';
+    if (selClient && !clients.includes(selClient)) { selClient=null; _stopStream(false); hideScreen(); }
+    return;
+  }
+  el.innerHTML='';
+  clients.forEach(id => {
+    const d=document.createElement('div');
+    d.className='client-item'+(id===selClient?' active':'');
+    d.innerHTML=`<div class="cdot"></div>#${id}`;
+    d.onclick=()=>selectClient(id);
+    el.appendChild(d);
+  });
+}
+
+function selectClient(id) {
+  if(id===selClient) return;
+  if(isStreaming && selClient) ws.send(JSON.stringify({type:'stop_stream',client_id:selClient}));
+  isStreaming=false;
+  selClient=id;
+  document.querySelectorAll('.client-item').forEach(e=>e.classList.toggle('active',e.textContent.trim()==='#'+id));
+  log(`[#${id}] Selected`,'info');
+  if(exOpen) { reqDrives(); navTo('.'); }
+  startStream();
+}
+
+// ════════════════════════════════════════════════════════════
+//  STREAM
+// ════════════════════════════════════════════════════════════
+function toggleStream() { isStreaming ? _stopStream(true) : startStream(); }
+
+function startStream() {
+  if(!selClient||isStreaming) return;
+  ws.send(JSON.stringify({type:'start_stream',client_id:selClient}));
+  isStreaming=true; frameCount=0; lastFrameTs=0;
+  $stream.textContent='⏹ Stop'; $stream.className='btn active-stream';
+  $live.classList.add('show');
+  fpsTimer=setInterval(()=>{
+    const f=frameCount; frameCount=0;
+    $fps.textContent=f+' FPS';
+    $fps.className='stat-badge '+(f>=15?'good':f>=8?'mid':'low');
+  },1000);
+  log(`[STREAM] → #${selClient}`,'info');
+}
+
+function _stopStream(send) {
+  if(send && selClient) try{ws.send(JSON.stringify({type:'stop_stream',client_id:selClient}));}catch{}
+  isStreaming=false; clearInterval(fpsTimer); fpsTimer=null; frameCount=0;
+  $stream.textContent='▶ Stream'; $stream.className='btn primary';
+  $live.classList.remove('show');
+  $fps.textContent='-- FPS'; $fps.className='stat-badge';
+  $lat.textContent='-- ms';
+}
+
+function reqScreenshot() {
+  if(!selClient){log('Select a client','error');return;}
+  ws.send(JSON.stringify({type:'request_screenshot',client_id:selClient}));
+}
+
+function sendCmd() {
+  if(!selClient){log('Select a client','error');return;}
+  const v=document.getElementById('cmdInput').value.trim(); if(!v) return;
+  ws.send(JSON.stringify({type:'command',client_id:selClient,command:v}));
+  log('$ '+v,'log');
+  document.getElementById('cmdInput').value='';
+}
+
+function showScreen() { $img.classList.add('show'); $ph.style.display='none'; }
+function hideScreen() { $img.classList.remove('show'); $ph.style.display='flex'; }
+
+// ════════════════════════════════════════════════════════════
+//  EXPLORER PANEL
+// ════════════════════════════════════════════════════════════
+function toggleExplorer() {
+  exOpen=!exOpen;
+  document.getElementById('explorerPanel').classList.toggle('open',exOpen);
+  document.getElementById('filesBtn').classList.toggle('files-active',exOpen);
+  if(exOpen && selClient) { reqDrives(); navTo(exCurPath); }
+}
+
+function reqDrives() {
+  if(!selClient) return;
+  ws.send(JSON.stringify({type:'get_drives',client_id:selClient}));
+}
+
+function navTo(path) {
+  if(!selClient) return;
+  if(path!==exCurPath) exHistory.push(exCurPath);
+  exCurPath=path;
+  exSelected.clear(); updateSel();
+  document.getElementById('exPath').value=path;
+  document.getElementById('exFilelist').innerHTML='<div class="ex-loading"><div class="spinner"></div>Loading…</div>';
+  ws.send(JSON.stringify({type:'list_directory',client_id:selClient,path}));
+}
+
+function navBack() { if(exHistory.length) navTo(exHistory.pop()); }
+
+function renderDrives(drives=[]) {
+  document.getElementById('exDrives').innerHTML = drives.map(d=>
+    `<button class="ex-drive-pill" onclick="navTo('${esc(d.path)}')">${d.name}</button>`
+  ).join('');
+}
+
+function renderDir(data) {
+  if(!data) return;
+  const items = data.items || [];
+  const path  = data.path  || exCurPath;
+  exCurPath=path; exItems=items;
+  exSelected.clear(); updateSel();
+  document.getElementById('exPath').value=path;
+
+  if(data.error) {
+    document.getElementById('exFilelist').innerHTML=
+      `<div style="color:var(--red);padding:16px;font-size:12px">⚠ ${data.error}</div>`;
+    return;
+  }
+
+  const rows = items.map(item => {
+    const isDir   = item.type==='dir';
+    const isPar   = item.type==='parent';
+    const icon    = isPar?'↩':isDir?'📁':fileIcon(item.ext||'');
+    const nc      = isPar?'parent':isDir?'dir':'';
+    const size    = isPar?'':isDir?`${item.size} items`:fmtSize(item.size);
+    return `<div class="ex-row" data-path="${esc(item.path)}" data-type="${item.type}"
+               ondblclick="rowDbl(this)" onclick="rowClick(this,event)">
+      <div class="ex-row-icon">${icon}</div>
+      <div class="ex-row-name ${nc}" title="${esc(item.name)}">${esc(item.name)}</div>
+      <div class="ex-row-size">${size}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('exFilelist').innerHTML = rows ||
+    '<div style="color:var(--muted);padding:20px;font-size:12px;text-align:center">Empty folder</div>';
+}
+
+function rowDbl(el) {
+  const {type, path} = el.dataset;
+  if(type==='dir'||type==='parent') navTo(path);
+  else { exSelected.clear(); exSelected.add(path); updateSel(); downloadSelected(); }
+}
+
+function rowClick(el, e) {
+  const {path, type} = el.dataset;
+  if(type==='parent') return;
+  if(e.ctrlKey||e.metaKey) { exSelected.has(path)?exSelected.delete(path):exSelected.add(path); }
+  else if(e.shiftKey && exSelected.size) {
+    const rows=[...document.querySelectorAll('.ex-row')];
+    const a=rows.indexOf(el), b=rows.findIndex(r=>exSelected.has(r.dataset.path));
+    for(let i=Math.min(a,b);i<=Math.max(a,b);i++) if(rows[i].dataset.path) exSelected.add(rows[i].dataset.path);
+  } else { exSelected.clear(); exSelected.add(path); }
+  document.querySelectorAll('.ex-row').forEach(r=>r.classList.toggle('selected',exSelected.has(r.dataset.path)));
+  updateSel();
+}
+
+function updateSel() {
+  const n=exSelected.size;
+  document.getElementById('exSelInfo').textContent=n?`${n} selected`:'–';
+  document.getElementById('exDlBtn').disabled=!n;
+}
+
+// ── Download: Client → Admin ───────────────────────────────
+function downloadSelected() {
+  if(!exSelected.size||!selClient) return;
+  exSelected.forEach(path=>{
+    const tid=randId();
+    const name=path.split(/[\\/]/).pop();
+    mkXferItem(tid, name, null, 'down');
+    ws.send(JSON.stringify({type:'request_file_upload',client_id:selClient,path,transfer_id:tid}));
+    log(`↓ Fetching: ${path}`,'info');
+  });
+}
+
+// ── Upload: Admin → Client (into current explorer dir) ─────
+async function uploadFiles(e) {
+  const files=[...e.target.files]; e.target.value='';
+  if(!files.length||!selClient) return;
+  for(const file of files) await sendOneFile(file, exCurPath);
+}
+
+async function sendOneFile(file, saveDir) {
+  const tid=randId();
+  const total=Math.ceil(file.size/CHUNK)||1;
+  mkXferItem(tid, file.name, file.size, 'up');
+  ws.send(JSON.stringify({type:'send_file_to_client',client_id:selClient,transfer_id:tid,
+    filename:file.name,file_size:file.size,total_chunks:total,save_dir:saveDir}));
+  for(let i=0;i<total;i++){
+    const b64=await readB64(file.slice(i*CHUNK,(i+1)*CHUNK));
+    ws.send(JSON.stringify({type:'send_chunk_to_client',client_id:selClient,transfer_id:tid,
+      chunk_idx:i,total_chunks:total,data:b64}));
+    xferProgress(tid,i+1,total);
+    await tick();
+  }
+  ws.send(JSON.stringify({type:'finish_file_to_client',client_id:selClient,transfer_id:tid,
+    filename:file.name,file_size:file.size}));
+  log(`↑ Sent: ${file.name} → ${saveDir}`,'info');
+}
+
+// ── Drag & drop onto viewer → upload to current dir ─────────
+function onViewerDragOver(e) {
+  if(!exOpen||!selClient) return;
+  e.preventDefault();
+  document.getElementById('dropOverlay').classList.add('show');
+  document.getElementById('dropOverlay').textContent=`Drop to upload → ${exCurPath}`;
+}
+function onViewerDragLeave() { document.getElementById('dropOverlay').classList.remove('show'); }
+function onViewerDrop(e) {
+  e.preventDefault();
+  document.getElementById('dropOverlay').classList.remove('show');
+  if(!exOpen||!selClient) return;
+  [...(e.dataTransfer.files||[])].forEach(f=>sendOneFile(f,exCurPath));
+}
+
+// ════════════════════════════════════════════════════════════
+//  TRANSFER HANDLERS (incoming from server)
+// ════════════════════════════════════════════════════════════
+function onFolderStart(msg) {
+  // folder_transfer_start — tạo 1 item đại diện cho cả folder
+  const {transfer_id:tid, folder_name, total_files} = msg;
+  mkXferItem(tid, `📁 ${folder_name}/`, null, 'down', `0/${total_files} files`);
+}
+
+function onFolderDone(msg) {
+  const {transfer_id:tid, folder_name, total_files} = msg;
+  const x=activeXfers[tid];
+  if(!x) return;
+  setXferDone(tid);
+  x.msg.textContent=`${total_files} files received`;
+  // Tạo download link cho folder — chỉ available qua server endpoint
+  x.dl.href=`/download_folder/${tid}`;
+  x.dl.textContent='⬇ Download zip';
+  x.dl.classList.add('show');
+  log(`↓ Folder done: ${folder_name} (${total_files} files)`,'result');
+  // Refresh explorer nếu đang mở
+  if(exOpen) setTimeout(()=>navTo(exCurPath), 800);
+}
+
+function onXferStart(msg) {
+  const {transfer_id:tid, filename, file_size, total_chunks, total_files, file_index, is_folder} = msg;
+  if(is_folder && activeXfers[tid]) {
+    // Cập nhật progress item folder đã có
+    const x=activeXfers[tid];
+    const fi=file_index+1;
+    x.msg.textContent=`[${fi}/${total_files}] ${filename.split(/[\\/]/).pop()}`;
+    x.fill.style.width='0%';
+    // track chunk state riêng cho file hiện tại
+    x.curChunks=0; x.curTotal=total_chunks;
+    return;
+  }
+  // File đơn
+  if(!activeXfers[tid]) mkXferItem(tid, filename, file_size, 'down');
+  const x=activeXfers[tid];
+  if(x){ x.total=total_chunks; x.chunks=0; }
+}
+
+function onXferChunk(msg) {
+  const {transfer_id:tid, chunk_idx, total_chunks} = msg;
+  const x=activeXfers[tid]; if(!x) return;
+  if(x.curTotal!=null) {
+    // folder mode: progress per file
+    x.curChunks=(x.curChunks||0)+1;
+    xferProgress(tid, x.curChunks, x.curTotal);
+  } else {
+    x.chunks=(x.chunks||0)+1;
+    xferProgress(tid, x.chunks, x.total||total_chunks);
+  }
+}
+
+function onXferDone(msg) {
+  const {transfer_id:tid, filename, file_index, total_files, is_folder} = msg;
+  if(is_folder) return; // folder done xử lý bởi onFolderDone
+  setXferDone(tid);
+  const x=activeXfers[tid]; if(!x) return;
+  x.dl.href=`/download/${tid}`;
+  x.dl.textContent='⬇ Download';
+  x.dl.classList.add('show');
+  log(`↓ Ready: ${filename}`,'result');
+}
+
+function onXferError(msg) {
+  const {transfer_id:tid, error} = msg;
+  const x=activeXfers[tid]; if(!x) return;
+  x.fill.classList.add('err'); x.fill.style.width='100%';
+  x.msg.textContent='✕ '+error;
+  x.msg.style.color='var(--red)';
+  log(`Transfer error: ${error}`,'error');
+}
+
+function onXferProgress(msg) {
+  const {transfer_id:tid} = msg;
+  const x=activeXfers[tid]; if(!x) return;
+  x.msg.textContent=msg.message||'…';
+}
+
+function onSaveResult(msg) {
+  const {transfer_id:tid, path, error} = msg;
+  const x=activeXfers[tid];
+  if(x){ if(error){x.fill.classList.add('err');x.msg.textContent='✕ '+error;}else{setXferDone(tid);x.msg.textContent='Saved: '+path;} }
+  if(error) log(`Save error: ${error}`,'error');
+  else { log(`↑ Saved: ${path}`,'result'); if(exOpen) setTimeout(()=>navTo(exCurPath),600); }
+}
+
+// ════════════════════════════════════════════════════════════
+//  TRANSFER UI HELPERS
+// ════════════════════════════════════════════════════════════
+function mkXferItem(tid, name, size, dir, initMsg='') {
+  document.getElementById('noTransfers')?.remove();
+  const el=document.createElement('div'); el.className='transfer-item'; el.id='xfer-'+tid;
+  el.innerHTML=`
+    <div class="t-row">
+      <span class="t-name" title="${esc(name)}">${dir==='up'?'↑':'↓'} ${esc(name)}</span>
+      <span class="t-size">${size!=null?fmtSize(size):''}</span>
+    </div>
+    <div class="t-bar"><div class="t-fill" id="fill-${tid}"></div></div>
+    <div class="t-status">
+      <span class="t-msg" id="msg-${tid}">${initMsg||'Starting…'}</span>
+      <a class="t-dl" id="dl-${tid}" target="_blank"></a>
+    </div>`;
+  document.getElementById('exTransfers').appendChild(el);
+  activeXfers[tid]={
+    el, fill:document.getElementById('fill-'+tid),
+    msg:document.getElementById('msg-'+tid),
+    dl:document.getElementById('dl-'+tid),
+    chunks:0, total:0
+  };
+}
+
+function xferProgress(tid, done, total) {
+  const x=activeXfers[tid]; if(!x||!total) return;
+  const pct=Math.round(done/total*100);
+  x.fill.style.width=pct+'%';
+  if(!x.curTotal) x.msg.textContent=pct+'%'; // solo file
+}
+
+function setXferDone(tid) {
+  const x=activeXfers[tid]; if(!x) return;
+  x.fill.style.width='100%'; x.fill.classList.add('done');
+}
+
+// ════════════════════════════════════════════════════════════
+//  UTILS
+// ════════════════════════════════════════════════════════════
+function fileIcon(ext) {
+  const m={
+    '.exe':'⚙','.dll':'⚙','.bat':'⚙','.sh':'⚙',
+    '.zip':'🗜','.rar':'🗜','.7z':'🗜','.tar':'🗜','.gz':'🗜',
+    '.jpg':'🖼','.jpeg':'🖼','.png':'🖼','.gif':'🖼','.bmp':'🖼','.svg':'🖼','.webp':'🖼',
+    '.mp4':'🎬','.mkv':'🎬','.avi':'🎬','.mov':'🎬',
+    '.mp3':'🎵','.wav':'🎵','.flac':'🎵','.aac':'🎵',
+    '.pdf':'📄','.doc':'📝','.docx':'📝','.xls':'📊','.xlsx':'📊',
+    '.txt':'📃','.log':'📃','.md':'📃',
+    '.py':'🐍','.js':'📜','.ts':'📜','.html':'🌐','.css':'🎨',
+    '.json':'📋','.xml':'📋','.csv':'📊',
+    '.db':'🗄','.sqlite':'🗄','.sql':'🗄',
+  };
+  return m[ext]||'📄';
+}
+
+function fmtSize(b) {
+  if(b==null||b==='') return '';
+  if(b<1024) return b+' B';
+  if(b<1048576) return (b/1024).toFixed(1)+' KB';
+  return (b/1048576).toFixed(2)+' MB';
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function randId() { return Math.random().toString(36).slice(2,10); }
+
+function readB64(blob) {
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=()=>res(r.result.split(',')[1]);
+    r.onerror=rej; r.readAsDataURL(blob);
+  });
+}
+
+function tick() { return new Promise(r=>setTimeout(r,0)); }
+
+function log(msg, cls='') {
+  const ts=document.createElement('div'); ts.className='log ts';
+  ts.textContent=new Date().toLocaleTimeString();
+  const el=document.createElement('div'); el.className='log '+cls;
+  el.textContent=msg;
+  $out.append(ts,el); $out.scrollTop=$out.scrollHeight;
+  while($out.children.length>300) $out.removeChild($out.firstChild);
+}
+</script>
 </body>
 </html>
