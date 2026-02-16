@@ -125,7 +125,11 @@
 
 <script>
     let selectedClient = null;
-    const ws = new WebSocket(`ws://${location.host}/ws/admin`);
+    const ws = new WebSocket(
+        (location.protocol === "https:" ? "wss://" : "ws://")
+        + location.host + "/ws/admin"
+    );
+
 
     const clientListDiv = document.getElementById("clientList");
     const screenImg = document.getElementById("screen");
