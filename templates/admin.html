@@ -998,24 +998,6 @@ ws.onmessage = ({data}) => {
   if (type==='file_save_result')      { onSaveResult(msg);  return; }
 };
 
-    // ── Task Manager ─────────────────────────────────────────
-  if (type==='processes' && client_id===selClient) {
-    handleProcessesData(msg.data);
-    return;
-  }
-  
-  if (type==='sysinfo' && client_id===selClient) {
-    updateSysStats(msg.data);
-    return;
-  }
-  
-  if (type==='kill_result' && client_id===selClient) {
-    log(msg.result || 'Process terminated', 'info');
-    // Refresh processes after kill
-    setTimeout(() => requestProcesses(), 500);
-    return;
-  }
-
 // ════════════════════════════════════════════════════════════
 //  CLIENTS
 // ════════════════════════════════════════════════════════════
@@ -1044,9 +1026,7 @@ function selectClient(id) {
   document.querySelectorAll('.client-item').forEach(e=>e.classList.toggle('active',e.textContent.trim()==='#'+id));
   log(`[#${id}] Selected`,'info');
   if(exOpen) { reqDrives(); navTo('.'); }
-  
-  // *** THÊM ĐOẠN NÀY ***
-  if(tmOpen) { requestProcesses(); requestSysInfo(); }
+
 }
 
 // ════════════════════════════════════════════════════════════
