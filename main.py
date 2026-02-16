@@ -374,6 +374,13 @@ async def client_ws(websocket: WebSocket, client_id: str):
                     "sysinfo": message.get("sysinfo")
                 })
 
+            elif msg_type == "delete_result":
+                await broadcast_to_admins({
+                    "type": "delete_result",
+                    "client_id": client_id,
+                    "results": message.get("results")
+                })
+
             # ── Other data (sysinfo, processes, files…) ───────────
             else:
                 await broadcast_to_admins({
@@ -541,6 +548,12 @@ async def admin_ws(websocket: WebSocket):
                         "transfer_id": message.get("transfer_id"),
                         "filename": message.get("filename"),
                         "file_size": message.get("file_size")
+                    }))
+            elif msg_type == "delete_files":
+                if client_id in clients:
+                    await clients[client_id].send_text(json.dumps({
+                        "type": "delete_files",
+                        "paths": message.get("paths")
                     }))
 
     except WebSocketDisconnect:
