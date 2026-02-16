@@ -234,6 +234,12 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
   text-overflow: ellipsis;
   font-family: var(--mono);
 }
+
+.ex-path-display:focus {
+  border-color: var(--accent);
+  background: #0a1120;
+}
+
 .ex-refresh-btn {
   font-size: 16px;
   padding: 4px 8px;
@@ -1295,6 +1301,18 @@ function startStream() {
   log(`Started streaming from ${selClient}`, 'info');
 }
 
+function handlePathKeydown(event) {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    const newPath = event.target.value.trim();
+    if (newPath && newPath !== exPath) {
+      exNavigate(newPath);
+    }
+  }
+}
+
+
+
 function stopStream() {
   if (!ws || ws.readyState !== WebSocket.OPEN) return;
 
@@ -1535,7 +1553,7 @@ function handleDirectoryList(data, path) {
   exPath = data.path || path;
   exFiles = data.items || [];
   
-  document.getElementById('exPath').textContent = exPath;
+  document.getElementById('exPath').value = exPath;
   
   const container = document.getElementById('exFileList');
   
