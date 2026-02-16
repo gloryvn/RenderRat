@@ -217,85 +217,103 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
 .ex-btn.primary { background: var(--accent); border-color: var(--accent); color: #000; }
 .ex-btn.primary:hover { opacity: .85; }
 .ex-btn:disabled { opacity: .3; pointer-events: none; }
-.ex-sel-info { font-size: 10px; color: var(--muted); margin-left: auto; white-space: nowrap; }
+.ex-sel-info { font-size: 10px; color: var(--muted); margin-left: auto; }
 
 /* File list */
-.ex-filelist { flex: 1; overflow-y: auto; }
-
+.ex-filelist {
+  flex: 1; overflow-y: auto;
+}
 .ex-row {
-  display: flex; align-items: center; gap: 0;
-  padding: 0; cursor: pointer;
+  display: flex; align-items: center; padding: 6px 10px;
+  cursor: pointer; transition: background .08s;
   border-left: 2px solid transparent;
-  transition: background .1s;
-  user-select: none;
 }
-.ex-row:hover { background: #111a28; }
-.ex-row.selected { background: #0a1929; border-left-color: var(--accent); }
-.ex-row.active-dir { background: rgba(0,229,255,.05); }
-
-.ex-row-icon { width: 32px; text-align: center; font-size: 14px; flex-shrink: 0; padding: 6px 0; }
-.ex-row-name {
-  flex: 1; font-size: 12px; padding: 6px 6px 6px 0;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
-}
-.ex-row-name.dir  { color: var(--accent); }
+.ex-row:hover { background: #0f1823; }
+.ex-row.selected { background: #152030; border-left-color: var(--accent); }
+.ex-row-icon { width: 24px; text-align: center; font-size: 15px; flex-shrink: 0; }
+.ex-row-name { flex: 1; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .ex-row-name.parent { color: var(--muted); font-style: italic; }
-.ex-row-size { font-size: 10px; color: var(--muted); padding: 6px 10px 6px 6px; white-space: nowrap; flex-shrink: 0; }
+.ex-row-name.dir { font-weight: 600; color: var(--accent); }
+.ex-row-size { font-size: 10px; color: var(--muted); width: 70px; text-align: right; flex-shrink: 0; }
+
+/* Loading */
+.ex-loading {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 30px 20px; color: var(--muted);
+}
+.spinner {
+  width: 24px; height: 24px;
+  border: 3px solid var(--border); border-top-color: var(--accent);
+  border-radius: 50%; animation: spin .8s linear infinite; margin-bottom: 12px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 /* Transfer queue */
 .ex-transfers {
-  flex-shrink: 0; max-height: 200px; overflow-y: auto;
-  border-top: 1px solid var(--border);
-  background: var(--surf2);
+  border-top: 1px solid var(--border); flex-shrink: 0;
+  max-height: 200px; overflow-y: auto; background: var(--surf2);
 }
+.ex-transfer-hdr {
+  padding: 8px 10px; font-size: 10px; color: var(--muted);
+  letter-spacing: .12em; text-transform: uppercase; font-weight: 700;
+  border-bottom: 1px solid var(--border);
 }
- 
-.transfer-item {
-  padding: 8px 12px; border-bottom: 1px solid rgba(26,34,51,.5);
-  font-size: 11px;
+.no-transfers {
+  padding: 14px 10px; font-size: 11px; color: var(--muted); text-align: center;
+}
+.xfer-item {
+  padding: 8px 10px; border-bottom: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 4px;
+}
+.xfer-name {
+  font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-weight: 600;
+}
+.xfer-bar {
+  height: 4px; background: var(--border); border-radius: 2px; overflow: hidden;
+  position: relative;
+}
+.xfer-bar-fill {
+  height: 100%; background: var(--accent); border-radius: 2px;
+  transition: width .15s; position: absolute; left: 0; top: 0;
+}
+.xfer-status {
+  font-size: 10px; color: var(--muted); display: flex; justify-content: space-between;
 }
 
-.t-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
-.t-name { font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
-.t-size { color: var(--muted); font-size: 10px; flex-shrink: 0; }
-.t-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 4px; }
-.t-fill { height: 100%; border-radius: 2px; transition: width .2s; background: var(--accent); width: 0%; }
-.t-fill.done { background: var(--green); }
-.t-fill.err  { background: var(--red); }
-.t-status { display: flex; justify-content: space-between; align-items: center; }
-.t-msg { font-size: 10px; color: var(--muted); }
-.t-dl { font-size: 10px; font-weight: 700; color: var(--accent); text-decoration: none; display: none; }
-.t-dl.show { display: inline; }
-.t-dl:hover { text-decoration: underline; }
-.no-transfers { font-size: 11px; color: var(--muted); text-align: center; padding: 12px; }
-.ex-transfers { font-size: 11px; color: var(--muted); text-align: left; padding: 12px; }
-
-
-
-
-/* Loading spinner */
-.ex-loading { display: flex; align-items: center; justify-content: center; padding: 30px; gap: 10px; color: var(--muted); font-size: 12px; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.spinner { border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; width: 14px; height: 14px; animation: spin .7s linear infinite; flex-shrink: 0; }
-
- 
-.drop-overlay.show { display: flex; }
-
-
-
-
-
-
-
-
+/* ══ CONSOLE LOG ═══════════════════════════════════ */
+.console {
+  background: var(--surf); border-top: 1px solid var(--border); flex-shrink: 0;
+  max-height: 200px; display: flex; flex-direction: column;
+}
+.console-hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 7px 10px; border-bottom: 1px solid var(--border); background: var(--surf2);
+}
+.console-title {
+  font-family: var(--sans); font-weight: 800; font-size: 10px;
+  color: var(--muted); letter-spacing: .14em; text-transform: uppercase;
+}
+.console-clear {
+  font-size: 10px; cursor: pointer; color: var(--muted);
+  padding: 2px 8px; border: 1px solid var(--border); border-radius: 3px;
+  transition: all .12s; font-weight: 600; background: transparent;
+}
+.console-clear:hover { border-color: var(--accent); color: var(--accent); }
+.console-output {
+  flex: 1; overflow-y: auto; padding: 6px 10px; font-size: 11px; line-height: 1.5;
+  font-family: var(--mono);
+}
+.console-output .log-line { padding: 2px 0; }
+.console-output .log-line.log { color: var(--text); }
+.console-output .log-line.info { color: var(--accent); }
+.console-output .log-line.result { color: var(--green); }
+.console-output .log-line.warn { color: var(--yellow); }
+.console-output .log-line.error { color: var(--red); }
 
 
 /* ══ TASK MANAGER PANEL ═════════════════════════════ */
 .task-manager-panel {
-  position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
   width: 0;
   min-width: 0;
   overflow: hidden;
@@ -303,253 +321,325 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
   border-left: 1px solid transparent;
   display: flex;
   flex-direction: column;
-  transition: width .25s cubic-bezier(.4,0,.2,1), border-color .25s;
-  z-index: 101;
+  transition: width .22s cubic-bezier(.4,0,.2,1), border-color .22s;
 }
+
 .task-manager-panel.open {
-  width: 750px;
-  min-width: 750px;
+  width: 700px;
+  min-width: 700px;
   border-left-color: var(--border);
 }
+
+/* TM Header */
 .tm-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: 10px 12px;
   border-bottom: 1px solid var(--border);
-  background: var(--surf2);
   flex-shrink: 0;
+  background: var(--surf2);
 }
+
 .tm-title {
   font-family: var(--sans);
   font-weight: 800;
-  font-size: 13px;
-  color: var(--purple);
-  letter-spacing: .12em;
-  text-transform: uppercase;
+  font-size: 12px;
+  color: var(--text);
+  letter-spacing: .08em;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
+
 .tm-title-icon {
   font-size: 16px;
 }
+
 .tm-close {
   background: none;
   border: none;
   color: var(--muted);
   cursor: pointer;
-  font-size: 20px;
   padding: 4px 8px;
-  transition: color .12s;
+  border-radius: 4px;
+  font-size: 18px;
   line-height: 1;
+  transition: color .12s, background .12s;
 }
-.tm-close:hover { color: var(--red); }
+
+.tm-close:hover {
+  color: var(--text);
+  background: #1a2233;
+}
+
+/* TM Stats */
 .tm-stats {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 12px;
-  padding: 12px 16px;
+  padding: 12px;
   border-bottom: 1px solid var(--border);
-  background: var(--surf);
-  flex-shrink: 0;
-}
-.tm-stat-card {
-  flex: 1;
   background: var(--surf2);
+}
+
+.tm-stat-card {
+  background: var(--surf);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 10px 12px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
+
 .tm-stat-label {
-  font-size: 9px;
+  font-size: 10px;
   color: var(--muted);
   letter-spacing: .08em;
   text-transform: uppercase;
   font-weight: 600;
 }
+
 .tm-stat-value {
-  font-size: 18px;
+  font-size: 24px;
   font-weight: 700;
-  color: var(--text);
+  font-family: var(--mono);
 }
+
 .tm-stat-value.cpu { color: var(--accent); }
-.tm-stat-value.mem { color: var(--green); }
-.tm-stat-value.proc { color: var(--purple); }
+.tm-stat-value.mem { color: var(--yellow); }
+.tm-stat-value.proc { color: var(--green); }
+
+/* TM Controls */
 .tm-controls {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 16px;
+  padding: 10px 12px;
   border-bottom: 1px solid var(--border);
-  background: var(--surf);
-  flex-shrink: 0;
+  flex-wrap: wrap;
 }
+
 .tm-search {
   flex: 1;
+  min-width: 200px;
   font-family: var(--mono);
-  font-size: 12px;
-  background: var(--surf2);
+  font-size: 11px;
+  background: var(--surf);
   border: 1px solid var(--border);
   border-radius: 5px;
-  padding: 7px 12px;
+  padding: 6px 10px;
   color: var(--text);
   outline: none;
-  transition: border-color .2s;
+  transition: border .12s;
 }
+
 .tm-search:focus {
   border-color: var(--accent);
 }
+
 .tm-search::placeholder {
   color: var(--muted);
 }
-.tm-sort-btn {
+
+.tm-sort-btn,
+.tm-refresh-btn {
   font-family: var(--mono);
   font-size: 10px;
   font-weight: 600;
-  padding: 7px 12px;
+  padding: 6px 12px;
   border: 1px solid var(--border);
   border-radius: 5px;
   cursor: pointer;
   background: transparent;
   color: var(--text);
-  transition: all .12s;
   white-space: nowrap;
-}
-.tm-sort-btn:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-.tm-sort-btn.active {
-  background: rgba(0,229,255,.08);
-  border-color: var(--accent);
-  color: var(--accent);
-}
-.tm-refresh-btn {
-  font-family: var(--mono);
-  font-size: 18px;
-  padding: 4px 10px;
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  cursor: pointer;
-  background: transparent;
-  color: var(--muted);
   transition: all .12s;
-  line-height: 1;
 }
+
+.tm-sort-btn:hover,
 .tm-refresh-btn:hover {
   border-color: var(--accent);
   color: var(--accent);
-  transform: rotate(90deg);
 }
+
+.tm-sort-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #000;
+}
+
+/* TM Table Container */
 .tm-table-container {
   flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: auto;
+  background: var(--bg);
 }
+
+.tm-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: var(--muted);
+  gap: 12px;
+}
+
+.tm-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: var(--muted);
+}
+
+.tm-empty-icon {
+  font-size: 48px;
+  opacity: 0.3;
+  margin-bottom: 12px;
+}
+
+.tm-empty-text {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* TM Table */
 .tm-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 11px;
 }
+
 .tm-table thead {
   position: sticky;
   top: 0;
   background: var(--surf);
   z-index: 10;
-  border-bottom: 2px solid var(--border);
 }
+
 .tm-table th {
-  text-align: left;
   padding: 10px 12px;
+  text-align: left;
   font-weight: 700;
   color: var(--muted);
-  font-size: 10px;
   letter-spacing: .08em;
   text-transform: uppercase;
-  border-bottom: 1px solid var(--border);
-  cursor: pointer;
-  transition: color .12s;
+  font-size: 10px;
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
   user-select: none;
 }
-.tm-table th:hover {
+
+.tm-table th.sortable {
+  cursor: pointer;
+  transition: color .12s;
+}
+
+.tm-table th.sortable:hover {
   color: var(--accent);
 }
+
 .tm-table th.sortable::after {
-  content: ' ↕';
-  opacity: .3;
+  content: '';
+  margin-left: 6px;
+  opacity: 0.3;
 }
+
 .tm-table th.sort-asc::after {
-  content: ' ↑';
+  content: '▲';
   opacity: 1;
   color: var(--accent);
 }
+
 .tm-table th.sort-desc::after {
-  content: ' ↓';
+  content: '▼';
   opacity: 1;
   color: var(--accent);
 }
+
 .tm-table tbody tr {
-  border-bottom: 1px solid rgba(26,34,51,.4);
-  transition: background .12s;
+  border-bottom: 1px solid var(--border);
+  transition: background .08s;
   cursor: pointer;
 }
+
 .tm-table tbody tr:hover {
-  background: #111a28;
+  background: #0f1823;
 }
+
 .tm-table tbody tr.selected {
-  background: rgba(187,102,255,.08);
-  border-left: 3px solid var(--purple);
+  background: #152030;
+  border-left: 3px solid var(--accent);
 }
+
 .tm-table td {
-  padding: 10px 12px;
+  padding: 8px 12px;
   color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 200px;
 }
+
 .tm-table td.pid {
-  font-weight: 700;
-  color: var(--accent);
   font-family: var(--mono);
+  font-weight: 600;
+  color: var(--muted);
 }
+
 .tm-table td.name {
   font-weight: 600;
-  max-width: 180px;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+
 .tm-table td.cpu,
 .tm-table td.memory {
   font-family: var(--mono);
   font-weight: 600;
 }
-.tm-table td.cpu.high { color: var(--red); }
-.tm-table td.cpu.mid { color: var(--yellow); }
+
 .tm-table td.cpu.low { color: var(--green); }
-.tm-table td.memory.high { color: var(--red); }
-.tm-table td.memory.mid { color: var(--yellow); }
+.tm-table td.cpu.mid { color: var(--yellow); }
+.tm-table td.cpu.high { color: var(--red); }
+
 .tm-table td.memory.low { color: var(--green); }
+.tm-table td.memory.mid { color: var(--yellow); }
+.tm-table td.memory.high { color: var(--red); }
+
 .tm-table td.status {
+  font-family: var(--mono);
   font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
+  text-transform: lowercase;
 }
+
 .tm-table td.status.running { color: var(--green); }
 .tm-table td.status.sleeping { color: var(--muted); }
-.tm-table td.path {
-  max-width: 250px;
-  font-size: 10px;
-  color: var(--muted);
-}
+
 .tm-table td.user {
-  max-width: 100px;
+  color: var(--muted);
   font-size: 10px;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+
+.tm-table td.path {
+  color: var(--muted);
+  font-size: 10px;
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .tm-table td.actions {
   text-align: right;
 }
+
 .tm-end-btn {
   font-family: var(--mono);
   font-size: 10px;
@@ -560,202 +650,156 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
   cursor: pointer;
   background: transparent;
   color: var(--red);
+  border-color: var(--red);
   transition: all .12s;
 }
+
 .tm-end-btn:hover {
-  background: rgba(255,51,102,.12);
-  border-color: var(--red);
+  background: var(--red);
+  color: #000;
 }
+
+/* TM Details Panel */
 .tm-details {
+  border-top: 1px solid var(--border);
+  background: var(--surf2);
+  padding: 12px;
   max-height: 0;
   overflow: hidden;
-  border-top: 1px solid transparent;
-  background: var(--surf2);
-  transition: max-height .3s ease-out, border-color .3s;
+  transition: max-height .3s ease-out;
 }
+
 .tm-details.show {
   max-height: 400px;
-  border-top-color: var(--border);
 }
+
 .tm-details-title {
   font-family: var(--sans);
-  font-weight: 700;
-  font-size: 12px;
-  color: var(--purple);
-  letter-spacing: .08em;
+  font-weight: 800;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: .14em;
   text-transform: uppercase;
-  padding: 12px 16px 8px;
+  margin-bottom: 12px;
 }
+
 .tm-details-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
-  padding: 0 16px 12px;
+  margin-bottom: 12px;
 }
+
 .tm-detail-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  background: var(--surf);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px;
 }
+
 .tm-detail-label {
   font-size: 9px;
   color: var(--muted);
   letter-spacing: .08em;
   text-transform: uppercase;
   font-weight: 600;
+  margin-bottom: 4px;
 }
+
 .tm-detail-value {
   font-size: 13px;
   font-weight: 600;
+  font-family: var(--mono);
   color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  word-break: break-word;
 }
+
 .tm-detail-value.path {
-  font-size: 11px;
-  word-break: break-all;
-  white-space: normal;
+  font-size: 10px;
+  color: var(--muted);
 }
+
 .tm-details-actions {
   display: flex;
   gap: 8px;
-  padding: 0 16px 16px;
+  flex-wrap: wrap;
 }
+
 .tm-detail-btn {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
-  padding: 7px 14px;
+  padding: 6px 12px;
   border: 1px solid var(--border);
   border-radius: 5px;
   cursor: pointer;
   background: transparent;
   color: var(--text);
+  white-space: nowrap;
   transition: all .12s;
-  flex: 1;
 }
+
 .tm-detail-btn:hover {
   border-color: var(--accent);
   color: var(--accent);
-  background: rgba(0,229,255,.08);
 }
+
 .tm-detail-btn.danger {
   border-color: var(--red);
   color: var(--red);
 }
+
 .tm-detail-btn.danger:hover {
-  background: rgba(255,51,102,.12);
-}
-.tm-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  color: var(--muted);
-}
-.tm-empty-icon {
-  font-size: 48px;
-  opacity: .2;
-  margin-bottom: 16px;
-}
-.tm-empty-text {
-  font-size: 13px;
-  font-family: var(--sans);
-  letter-spacing: .05em;
-}
-.tm-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40px;
-  gap: 12px;
-  color: var(--muted);
-  font-size: 13px;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-.spinner {
-  border: 3px solid var(--border);
-  border-top-color: var(--purple);
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  animation: spin .7s linear infinite;
-  flex-shrink: 0;
+  background: var(--red);
+  color: #000;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* ══ OUTPUT LOG ═════════════════════════════════════ */
-.output-panel {
-  height: 130px; background: var(--surf);
-  border-top: 1px solid var(--border);
-  padding: 8px 12px; overflow-y: auto;
-  font-size: 11px; line-height: 1.65; flex-shrink: 0;
-}
-.log { color: #4a6a8a; }
-.log.info   { color: var(--accent); }
-.log.result { color: var(--green); }
-.log.error  { color: var(--red); }
-.log.ts     { color: var(--muted); font-size: 9px; margin-bottom: 1px; }
 </style>
 </head>
 <body>
 
-<!-- ══ CLIENT SIDEBAR ══════════════════════════════════ -->
+<!-- ══ SIDEBAR ══════════════════════════════════════════ -->
 <div class="sidebar">
   <div class="sidebar-hdr">
-    <div class="logo"><span class="logo-dot"></span>GLORYVN</div>
-    <div class="clients-lbl">Online Clients</div>
+    <div class="logo">
+      <div class="logo-dot"></div>
+      CONTROL
+    </div>
+    <div class="clients-lbl">Connected Clients</div>
   </div>
   <div class="client-list" id="clientList">
     <div class="no-clients">No clients online</div>
   </div>
 </div>
 
-<!-- ══ MAIN ════════════════════════════════════════════ -->
+<!-- ══ MAIN AREA ════════════════════════════════════════ -->
 <div class="main">
 
   <!-- TOPBAR -->
   <div class="topbar">
     <button class="btn primary" id="streamBtn" onclick="toggleStream()">▶ Stream</button>
-    <button class="btn" onclick="reqScreenshot()">⎙ Snap</button>
-    <div class="divider"></div>
-    <input class="cmd-input" id="cmdInput" placeholder="Shell command…" onkeydown="if(event.key==='Enter')sendCmd()">
-    <button class="btn" onclick="sendCmd()">Run</button>
+    <button class="btn" onclick="reqScreenshot()">📸 Snapshot</button>
     <div class="divider"></div>
     <button class="btn" id="filesBtn" onclick="toggleExplorer()">📁 Files</button>
-    <button class="btn" id="taskBtn" onclick="toggleTaskManager()">⚙️ Tasks</button>
+    <button class="btn" id="taskManagerBtn" onclick="toggleTaskManager()">⚙️ Tasks</button>
+    <div class="divider"></div>
+    <input class="cmd-input" id="cmdInput" placeholder="$ run command…" onkeydown="if(event.key==='Enter')sendCmd()">
+    <button class="btn" onclick="sendCmd()">▶ Run</button>
     <div class="divider"></div>
     <div class="stat-badge" id="fpsBadge">-- FPS</div>
     <div class="stat-badge" id="latBadge">-- ms</div>
     <div class="status-pill">
       <div class="sdot" id="sdot"></div>
-      <span id="stxt">Connecting…</span>
+      <span id="stxt">Disconnected</span>
     </div>
-    <button class="btn-logout" onclick="window.location.href='/logout'">🚪 Logout</button>
+    <button class="btn-logout" onclick="window.location.href='/logout'">Logout</button>
   </div>
 
   <!-- WORKSPACE -->
   <div class="workspace">
 
     <!-- VIEWER -->
-    <div class="viewer" id="viewer"
-         ondragover="onViewerDragOver(event)"
-         ondragleave="onViewerDragLeave(event)"
-         ondrop="onViewerDrop(event)">
+    <div class="viewer">
       <div class="placeholder" id="placeholder">
         <div class="ph-icon">🖥</div>
         <div class="ph-text">Select a client to begin</div>
@@ -807,7 +851,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
 
     </div><!-- /explorer-panel -->
 
-        <div class="task-manager-panel" id="taskManagerPanel">
+    <div class="task-manager-panel" id="taskManagerPanel">
       
       <!-- Header -->
       <div class="tm-header">
@@ -899,44 +943,81 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
 
   </div><!-- /workspace -->
 
-
-
-
-
-  <!-- OUTPUT LOG -->
-  <div class="output-panel" id="output">
-    <div class="log info">[SYSTEM] Panel ready</div>
+  <!-- CONSOLE -->
+  <div class="console">
+    <div class="console-hdr">
+      <div class="console-title">Output</div>
+      <button class="console-clear" onclick="document.getElementById('output').innerHTML=''">Clear</button>
+    </div>
+    <div class="console-output" id="output"></div>
   </div>
 
 </div><!-- /main -->
 
- 
-
-
+<!-- ══════════════════════════════════════════════════════════════════════════════════ -->
 <script>
+
+function log(msg, type='log') {
+  const div = document.createElement('div');
+  div.className = 'log-line ' + type;
+  div.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg;
+  document.getElementById('output').appendChild(div);
+  div.scrollIntoView({behavior:'smooth'});
+}
+
+const esc = s => {
+  const el = document.createElement('div');
+  el.textContent = s;
+  return el.innerHTML;
+};
+
+function fmtSize(b) {
+  if(!b||b<0) return '–';
+  const k=1024;
+  if(b<k) return b+' B';
+  if(b<k*k) return (b/k).toFixed(1)+' KB';
+  if(b<k*k*k) return (b/k/k).toFixed(1)+' MB';
+  return (b/k/k/k).toFixed(2)+' GB';
+}
+
+function fileIcon(ext) {
+  const map={
+    'txt':'📝','md':'📝','log':'📝','doc':'📄','docx':'📄','pdf':'📕',
+    'xls':'📊','xlsx':'📊','csv':'📊','ppt':'📽','pptx':'📽',
+    'jpg':'🖼','jpeg':'🖼','png':'🖼','gif':'🖼','bmp':'🖼','svg':'🖼','ico':'🖼',
+    'mp3':'🎵','wav':'🎵','flac':'🎵','mp4':'🎬','avi':'🎬','mkv':'🎬',
+    'zip':'📦','rar':'📦','7z':'📦','tar':'📦','gz':'📦',
+    'exe':'⚙','msi':'⚙','bat':'⚙','sh':'⚙','py':'🐍','js':'🟨','html':'🌐','css':'🎨','json':'{}',
+  };
+  return map[ext.toLowerCase()] || '📄';
+}
+
 // ════════════════════════════════════════════════════════════
-//  STATE
+//  GLOBAL STATE
 // ════════════════════════════════════════════════════════════
-let selClient    = null;
-let isStreaming  = false;
-let frameCount   = 0;
-let fpsTimer     = null;
-let lastFrameTs  = 0;
-let exOpen       = false;
-let exCurPath    = '.';
-let exHistory    = [];
-let exSelected   = new Set();
-let exItems      = [];
-let activeXfers  = {};       // tid → { el, fill, msg, dl, chunks, total }
-const CHUNK      = 512*1024; // 512KB
-let tmOpen           = false;
-let fileOpen         = false;
-let processes        = [];
-let selectedProcess  = null;
-let sortField        = 'cpu';
-let sortDirection    = 'desc';
-let currentPath      = '';
-let pathHistory      = [];
+let selClient = null;
+let isStreaming = false;
+let frameCount = 0;
+let lastFrameTs = 0;
+let fpsTimer = null;
+
+// EXPLORER
+let exOpen = false;
+let exCurPath = '.';
+let exHistory = [];
+let exItems = [];
+let exSelected = new Set();
+
+// TASK MANAGER
+let tmOpen = false;
+let processes = [];
+let selectedProcess = null;
+let sortField = 'cpu';
+let sortDirection = 'desc';
+
+// TRANSFER
+const xfers = new Map();        // id → { name, progress, type:'file'|'folder', files: [name], total }
+const folderXfers = new Map();  // tid → { folder_name, total_files, received_files, filemap: {arcname:{chunks,total}} }
 
 
 
@@ -987,6 +1068,24 @@ ws.onmessage = ({data}) => {
   if (type==='file_content')   { handleFileContent(msg); return; }
   if (type==='write_file_result') { handleWriteFileResult(msg); return; }
 
+  // ── Task Manager ─────────────────────────────────────────
+  if (type==='processes' && client_id===selClient) {
+    handleProcessesData(msg.data);
+    return;
+  }
+  
+  if (type==='sysinfo' && client_id===selClient) {
+    updateSysStats(msg.data);
+    return;
+  }
+  
+  if (type==='kill_result' && client_id===selClient) {
+    log(msg.result || 'Process terminated', 'info');
+    // Refresh processes after kill
+    setTimeout(() => requestProcesses(), 500);
+    return;
+  }
+
   // ── File transfers ────────────────────────────────────────
   if (type==='folder_transfer_start') { onFolderStart(msg); return; }
   if (type==='folder_transfer_done')  { onFolderDone(msg);  return; }
@@ -1026,7 +1125,7 @@ function selectClient(id) {
   document.querySelectorAll('.client-item').forEach(e=>e.classList.toggle('active',e.textContent.trim()==='#'+id));
   log(`[#${id}] Selected`,'info');
   if(exOpen) { reqDrives(); navTo('.'); }
-  startStream();
+  if(tmOpen) { requestProcesses(); requestSysInfo(); }
 }
 
 // ════════════════════════════════════════════════════════════
@@ -1080,22 +1179,8 @@ function toggleExplorer() {
   exOpen=!exOpen;
   document.getElementById('explorerPanel').classList.toggle('open',exOpen);
   document.getElementById('filesBtn').classList.toggle('files-active',exOpen);
-  if(exOpen && selClient) { reqDrives(); navTo(exCurPath); }
-
-  if (exOpen)
-  {
-    tmOpen = false;
-    document.getElementById('taskManagerPanel').classList.remove('open');
-    document.getElementById('taskBtn').classList.remove('files-active');
-  }
+  if(exOpen && selClient) { reqDrives(); navTo('.'); }
 }
-
-
-
-
-
-
-
 
 function reqDrives() {
   if(!selClient) return;
@@ -1202,262 +1287,260 @@ function rowClick(el, e) {
 
 function updateSel() {
   const n=exSelected.size;
-  document.getElementById('exSelInfo').textContent=n?`${n} selected`:'–';
+  document.getElementById('exSelInfo').textContent = n?`${n} selected`:'–';
   document.getElementById('exDlBtn').disabled=!n;
 }
 
-// ── Download: Client → Admin ───────────────────────────────
 function downloadSelected() {
   if(!exSelected.size||!selClient) return;
-  exSelected.forEach(path=>{
-    const tid=randId();
-    const name=path.split(/[\\/]/).pop();
-    mkXferItem(tid, name, null, 'down');
-    ws.send(JSON.stringify({type:'request_file_upload',client_id:selClient,path,transfer_id:tid}));
-    log(`↓ Fetching: ${path}`,'info');
+  const items=[...exSelected].map(p=>exItems.find(i=>i.path===p)).filter(Boolean);
+  items.forEach(item=>{
+    const tid='xfer_'+Date.now()+'_'+Math.random().toString(36).slice(2,9);
+    xfers.set(tid,{name:item.name,progress:0,type:item.type,files:[],total:1});
+    ws.send(JSON.stringify({type:'request_file_upload',client_id:selClient,path:item.path,transfer_id:tid}));
+    updateXfers();
   });
+  log(`Download started: ${items.map(i=>i.name).join(', ')}`,'info');
 }
 
-// ── Upload: Admin → Client (into current explorer dir) ─────
-async function uploadFiles(e) {
-  const files=[...e.target.files]; e.target.value='';
-  if(!files.length||!selClient) return;
-  for(const file of files) await sendOneFile(file, exCurPath);
+function uploadFiles(e) {
+  if(!selClient) return;
+  const files=[...e.target.files];
+  files.forEach(file=>{
+    const reader=new FileReader();
+    reader.onload=async()=>{
+      const b64=reader.result.split(',')[1];
+      const tid='upload_'+Date.now()+'_'+Math.random().toString(36).slice(2,9);
+      const totalChunks=Math.ceil(b64.length/65536);
+      ws.send(JSON.stringify({type:'send_file_to_client',client_id:selClient,transfer_id:tid,filename:file.name,file_size:file.size,total_chunks:totalChunks,save_dir:exCurPath}));
+      for(let i=0;i<totalChunks;i++){
+        const chunk=b64.substring(i*65536,(i+1)*65536);
+        ws.send(JSON.stringify({type:'send_chunk_to_client',client_id:selClient,transfer_id:tid,chunk_idx:i,total_chunks:totalChunks,data:chunk}));
+      }
+      ws.send(JSON.stringify({type:'finish_file_to_client',client_id:selClient,transfer_id:tid,filename:file.name,file_size:file.size}));
+      log(`Uploaded: ${file.name}`,'info');
+    };
+    reader.readAsDataURL(file);
+  });
+  e.target.value='';
 }
 
-async function sendOneFile(file, saveDir) {
-  const tid=randId();
-  const total=Math.ceil(file.size/CHUNK)||1;
-  mkXferItem(tid, file.name, file.size, 'up');
-  ws.send(JSON.stringify({type:'send_file_to_client',client_id:selClient,transfer_id:tid,
-    filename:file.name,file_size:file.size,total_chunks:total,save_dir:saveDir}));
-  for(let i=0;i<total;i++){
-    const b64=await readB64(file.slice(i*CHUNK,(i+1)*CHUNK));
-    ws.send(JSON.stringify({type:'send_chunk_to_client',client_id:selClient,transfer_id:tid,
-      chunk_idx:i,total_chunks:total,data:b64}));
-    xferProgress(tid,i+1,total);
-    await tick();
-  }
-  ws.send(JSON.stringify({type:'finish_file_to_client',client_id:selClient,transfer_id:tid,
-    filename:file.name,file_size:file.size}));
-  log(`↑ Sent: ${file.name} → ${saveDir}`,'info');
-}
-
-// ── Drag & drop onto viewer → upload to current dir ─────────
-function onViewerDragOver(e) {
-  if(!exOpen||!selClient) return;
-  e.preventDefault();
-  document.getElementById('dropOverlay').classList.add('show');
-  document.getElementById('dropOverlay').textContent=`Drop to upload → ${exCurPath}`;
-}
-function onViewerDragLeave() { document.getElementById('dropOverlay').classList.remove('show'); }
-function onViewerDrop(e) {
-  e.preventDefault();
-  document.getElementById('dropOverlay').classList.remove('show');
-  if(!exOpen||!selClient) return;
-  [...(e.dataTransfer.files||[])].forEach(f=>sendOneFile(f,exCurPath));
-}
-
-// ════════════════════════════════════════════════════════════
-//  TRANSFER HANDLERS (incoming from server)
-// ════════════════════════════════════════════════════════════
-function onFolderStart(msg) {
-  // folder_transfer_start — tạo 1 item đại diện cho cả folder
-  const {transfer_id:tid, folder_name, total_files} = msg;
-  mkXferItem(tid, `📁 ${folder_name}/`, null, 'down', `0/${total_files} files`);
-}
-
-function onFolderDone(msg) {
-  const {transfer_id:tid, folder_name, total_files} = msg;
-  const x=activeXfers[tid];
-  if(!x) return;
-  setXferDone(tid);
-  x.msg.textContent=`${total_files} files received`;
-  // Tạo download link cho folder — chỉ available qua server endpoint
-  x.dl.href=`/download_folder/${tid}`;
-  x.dl.textContent='⬇ Download zip';
-  x.dl.classList.add('show');
-  log(`↓ Folder done: ${folder_name} (${total_files} files)`,'result');
-  // Refresh explorer nếu đang mở
-  if(exOpen) setTimeout(()=>navTo(exCurPath), 800);
-}
-
-function onXferStart(msg) {
-  const {transfer_id:tid, filename, file_size, total_chunks, total_files, file_index, is_folder} = msg;
-  if(is_folder && activeXfers[tid]) {
-    // Cập nhật progress item folder đã có
-    const x=activeXfers[tid];
-    const fi=file_index+1;
-    x.msg.textContent=`[${fi}/${total_files}] ${filename.split(/[\\/]/).pop()}`;
-    x.fill.style.width='0%';
-    // track chunk state riêng cho file hiện tại
-    x.curChunks=0; x.curTotal=total_chunks;
+function handleFileContent(msg) {
+  if(!msg.data) return;
+  const {content, error, encoding, size} = msg.data;
+  const fname = msg.path.split(/[\\/]/).pop();
+  
+  if(error) {
+    log(`Error reading ${fname}: ${error}`,'error');
     return;
   }
-  // File đơn
-  if(!activeXfers[tid]) mkXferItem(tid, filename, file_size, 'down');
-  const x=activeXfers[tid];
-  if(x){ x.total=total_chunks; x.chunks=0; }
+  
+  // Check if it's an image
+  const ext = fname.substring(fname.lastIndexOf('.')).toLowerCase();
+  const imageExts = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg', '.ico'];
+  
+  if(imageExts.includes(ext)) {
+    // Show image in viewer
+    $img.src = 'data:image/' + ext.slice(1) + ';base64,' + content;
+    showScreen();
+    log(`Image loaded: ${fname}`, 'info');
+  } else {
+    // Show text content in log
+    log(`Content of ${fname} (${fmtSize(size)}):\n${content.substring(0, 1000)}${content.length > 1000 ? '\n...(truncated)' : ''}`, 'result');
+  }
+}
+
+function handleWriteFileResult(msg) {
+  if(msg.success) {
+    log(`File saved: ${msg.path}`, 'info');
+  } else {
+    log(`Error saving file: ${msg.error}`, 'error');
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+//  FILE TRANSFER
+// ════════════════════════════════════════════════════════════
+function onXferStart(msg) {
+  const {transfer_id, filename, file_size, total_chunks} = msg;
+  xfers.set(transfer_id, {
+    name: filename,
+    progress: 0,
+    type: 'file',
+    files: [],
+    total: total_chunks,
+    chunks: {},
+    size: file_size
+  });
+  updateXfers();
 }
 
 function onXferChunk(msg) {
-  const {transfer_id:tid, chunk_idx, total_chunks} = msg;
-  const x=activeXfers[tid]; if(!x) return;
-  if(x.curTotal!=null) {
-    // folder mode: progress per file
-    x.curChunks=(x.curChunks||0)+1;
-    xferProgress(tid, x.curChunks, x.curTotal);
-  } else {
-    x.chunks=(x.chunks||0)+1;
-    xferProgress(tid, x.chunks, x.total||total_chunks);
-  }
+  const {transfer_id, chunk_idx, data} = msg;
+  const t = xfers.get(transfer_id);
+  if (!t) return;
+  
+  t.chunks[chunk_idx] = data;
+  t.progress = Object.keys(t.chunks).length / t.total;
+  updateXfers();
 }
 
 function onXferDone(msg) {
-  const {transfer_id:tid, filename, file_index, total_files, is_folder} = msg;
-  if(is_folder) return; // folder done xử lý bởi onFolderDone
-  setXferDone(tid);
-  const x=activeXfers[tid]; if(!x) return;
-  x.dl.href=`/download/${tid}`;
-  x.dl.textContent='⬇ Download';
-  x.dl.classList.add('show');
-  log(`↓ Ready: ${filename}`,'result');
+  const {transfer_id, filename, file_size} = msg;
+  const t = xfers.get(transfer_id);
+  if (!t) return;
+
+  // Assemble file
+  const chunks = [];
+  for (let i = 0; i < t.total; i++) {
+    if (!t.chunks[i]) {
+      log(`Missing chunk ${i} for ${filename}`, 'error');
+      xfers.delete(transfer_id);
+      updateXfers();
+      return;
+    }
+    chunks.push(t.chunks[i]);
+  }
+
+  const b64 = chunks.join('');
+  const bin = atob(b64);
+  const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  const blob = new Blob([arr], {type: 'application/octet-stream'});
+  
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  log(`Downloaded: ${filename} (${fmtSize(file_size)})`, 'info');
+  xfers.delete(transfer_id);
+  updateXfers();
 }
 
 function onXferError(msg) {
-  const {transfer_id:tid, error} = msg;
-  const x=activeXfers[tid]; if(!x) return;
-  x.fill.classList.add('err'); x.fill.style.width='100%';
-  x.msg.textContent='✕ '+error;
-  x.msg.style.color='var(--red)';
-  log(`Transfer error: ${error}`,'error');
+  log(`Transfer error: ${msg.error}`, 'error');
+  xfers.delete(msg.transfer_id);
+  updateXfers();
 }
 
 function onXferProgress(msg) {
-  const {transfer_id:tid} = msg;
-  const x=activeXfers[tid]; if(!x) return;
-  x.msg.textContent=msg.message||'…';
+  const t = xfers.get(msg.transfer_id);
+  if (t) {
+    t.progress = msg.progress;
+    updateXfers();
+  }
 }
 
-function onSaveResult(msg) {
-  const {transfer_id:tid, path, error} = msg;
-  const x=activeXfers[tid];
-  if(x){ if(error){x.fill.classList.add('err');x.msg.textContent='✕ '+error;}else{setXferDone(tid);x.msg.textContent='Saved: '+path;} }
-  if(error) log(`Save error: ${error}`,'error');
-  else { log(`↑ Saved: ${path}`,'result'); if(exOpen) setTimeout(()=>navTo(exCurPath),600); }
+function onFolderStart(msg) {
+  const {transfer_id, folder_name, total_files} = msg;
+  folderXfers.set(transfer_id, {
+    folder_name,
+    total_files,
+    received_files: 0,
+    filemap: {}
+  });
+  xfers.set(transfer_id, {
+    name: folder_name,
+    progress: 0,
+    type: 'folder',
+    files: [],
+    total: total_files
+  });
+  updateXfers();
 }
 
-// ════════════════════════════════════════════════════════════
-//  TRANSFER UI HELPERS
-// ════════════════════════════════════════════════════════════
-function mkXferItem(tid, name, size, dir, initMsg='') {
-  document.getElementById('noTransfers')?.remove();
-  const el=document.createElement('div'); el.className='transfer-item'; el.id='xfer-'+tid;
-  el.innerHTML=`
-    <div class="t-row">
-      <span class="t-name" title="${esc(name)}">${dir==='up'?'↑':'↓'} ${esc(name)}</span>
-      <span class="t-size">${size!=null?fmtSize(size):''}</span>
-    </div>
-    <div class="t-bar"><div class="t-fill" id="fill-${tid}"></div></div>
-    <div class="t-status">
-      <span class="t-msg" id="msg-${tid}">${initMsg||'Starting…'}</span>
-      <a class="t-dl" id="dl-${tid}" target="_blank"></a>
-    </div>`;
-  document.getElementById('exTransfers').appendChild(el);
-  activeXfers[tid]={
-    el, fill:document.getElementById('fill-'+tid),
-    msg:document.getElementById('msg-'+tid),
-    dl:document.getElementById('dl-'+tid),
-    chunks:0, total:0
-  };
-}
+function onFolderDone(msg) {
+  const {transfer_id, folder_name} = msg;
+  const t = folderXfers.get(transfer_id);
+  if (!t) return;
 
-function xferProgress(tid, done, total) {
-  const x=activeXfers[tid]; if(!x||!total) return;
-  const pct=Math.round(done/total*100);
-  x.fill.style.width=pct+'%';
-  if(!x.curTotal) x.msg.textContent=pct+'%'; // solo file
-}
+  // Create zip
+  import('https://cdn.jsdelivr.net/npm/jszip@3/dist/jszip.min.js').then(({default: JSZip}) => {
+    const zip = new JSZip();
+    
+    for (const [arcname, filedata] of Object.entries(t.filemap)) {
+      const chunks = [];
+      for (let i = 0; i < filedata.total; i++) {
+        if (!filedata.chunks[i]) continue;
+        chunks.push(filedata.chunks[i]);
+      }
+      const b64 = chunks.join('');
+      const bin = atob(b64);
+      const arr = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      zip.file(arcname, arr);
+    }
 
-function setXferDone(tid) {
-  const x=activeXfers[tid]; if(!x) return;
-  x.fill.style.width='100%'; x.fill.classList.add('done');
-}
-
-// ════════════════════════════════════════════════════════════
-//  UTILS
-// ════════════════════════════════════════════════════════════
-function fileIcon(ext) {
-  const m={
-    '.exe':'⚙','.dll':'⚙','.bat':'⚙','.sh':'⚙',
-    '.zip':'🗜','.rar':'🗜','.7z':'🗜','.tar':'🗜','.gz':'🗜',
-    '.jpg':'🖼','.jpeg':'🖼','.png':'🖼','.gif':'🖼','.bmp':'🖼','.svg':'🖼','.webp':'🖼',
-    '.mp4':'🎬','.mkv':'🎬','.avi':'🎬','.mov':'🎬',
-    '.mp3':'🎵','.wav':'🎵','.flac':'🎵','.aac':'🎵',
-    '.pdf':'📄','.doc':'📝','.docx':'📝','.xls':'📊','.xlsx':'📊',
-    '.txt':'📃','.log':'📃','.md':'📃',
-    '.py':'🐍','.js':'📜','.ts':'📜','.html':'🌐','.css':'🎨',
-    '.json':'📋','.xml':'📋','.csv':'📊',
-    '.db':'🗄','.sqlite':'🗄','.sql':'🗄',
-  };
-  return m[ext]||'📄';
-}
-
-function fmtSize(b) {
-  if(b==null||b==='') return '';
-  if(b<1024) return b+' B';
-  if(b<1048576) return (b/1024).toFixed(1)+' KB';
-  return (b/1048576).toFixed(2)+' MB';
-}
-
-function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-function randId() { return Math.random().toString(36).slice(2,10); }
-
-function readB64(blob) {
-  return new Promise((res,rej)=>{
-    const r=new FileReader();
-    r.onload=()=>res(r.result.split(',')[1]);
-    r.onerror=rej; r.readAsDataURL(blob);
+    zip.generateAsync({type: 'blob'}).then(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = folder_name + '.zip';
+      a.click();
+      URL.revokeObjectURL(url);
+      log(`Downloaded folder: ${folder_name}.zip`, 'info');
+      folderXfers.delete(transfer_id);
+      xfers.delete(transfer_id);
+      updateXfers();
+    });
   });
 }
 
-function tick() { return new Promise(r=>setTimeout(r,0)); }
-
-function log(msg, cls='') {
-  const ts=document.createElement('div'); ts.className='log ts';
-  ts.textContent=new Date().toLocaleTimeString();
-  const el=document.createElement('div'); el.className='log '+cls;
-  el.textContent=msg;
-  $out.append(ts,el); $out.scrollTop=$out.scrollHeight;
-  while($out.children.length>300) $out.removeChild($out.firstChild);
+function onSaveResult(msg) {
+  if (msg.path) {
+    log(`File saved on client: ${msg.path}`, 'info');
+  } else if (msg.error) {
+    log(`Error saving file: ${msg.error}`, 'error');
+  }
 }
- 
 
-
-
-function toggleTaskManager() {
-  tmOpen = !tmOpen;
-  const panel = document.getElementById('taskManagerPanel');
-  const btn = document.getElementById('taskBtn');
+function updateXfers() {
+  const container = document.getElementById('exTransfers');
+  const noXfers = document.getElementById('noTransfers');
   
-  if (tmOpen) {
-    // Tắt File Manager nếu đang mở
-    if (exOpen) {
-      exOpen = false;
-      document.getElementById('explorerPanel').classList.remove('open');
-      document.getElementById('filesBtn').classList.remove('files-active');
+  if (xfers.size === 0) {
+    noXfers.style.display = 'block';
+    container.querySelectorAll('.xfer-item').forEach(e => e.remove());
+    return;
+  }
+  
+  noXfers.style.display = 'none';
+  
+  xfers.forEach((t, id) => {
+    let el = container.querySelector(`[data-xfer="${id}"]`);
+    if (!el) {
+      el = document.createElement('div');
+      el.className = 'xfer-item';
+      el.dataset.xfer = id;
+      container.appendChild(el);
     }
     
-    panel.classList.add('open');
-    btn.classList.add('task-active');
-    if (selClient) {
-      requestProcesses();
-      requestSysInfo();
-    }
-  } else {
-    panel.classList.remove('open');
-    btn.classList.remove('task-active');
+    const pct = Math.round(t.progress * 100);
+    el.innerHTML = `
+      <div class="xfer-name">${esc(t.name)}</div>
+      <div class="xfer-bar"><div class="xfer-bar-fill" style="width:${pct}%"></div></div>
+      <div class="xfer-status">
+        <span>${t.type === 'folder' ? `${t.files.length}/${t.total} files` : 'Downloading'}</span>
+        <span>${pct}%</span>
+      </div>
+    `;
+  });
+}
+
+// ════════════════════════════════════════════════════════════
+//  TASK MANAGER
+// ════════════════════════════════════════════════════════════
+function toggleTaskManager() {
+  tmOpen = !tmOpen;
+  document.getElementById('taskManagerPanel').classList.toggle('open', tmOpen);
+  document.getElementById('taskManagerBtn').classList.toggle('files-active', tmOpen);
+  
+  if (tmOpen && selClient) {
+    requestProcesses();
+    requestSysInfo();
   }
 }
 
