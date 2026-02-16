@@ -1,135 +1,56 @@
+import os
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from typing import Dict
-import random
-import json
 
 app = FastAPI()
 
+# Lưu client đang online
 clients: Dict[str, WebSocket] = {}
-admins: list[WebSocket] = []
 
-def generate_client_id():
-    """Generate a unique 4-digit ID"""
-    while True:
-        client_id = f"{random.randint(1000, 9999)}"
-        if client_id not in clients:
-            return client_id
-
+# Healthcheck cho Railway
 @app.get("/")
 async def root():
-    return {"status": "Server is running", "clients": len(clients), "admins": len(admins)}
+    return {"status": "server running"}
 
-@app.get("/clients")
-async def get_clients():
-    return {"clients": list(clients.keys())}
-
-# =========================
-# CLIENT CONNECT
-# =========================
-@app.websocket("/ws/client")
-async def client_ws(websocket: WebSocket):
+# Client kết nối
+@app.websocket("/ws/client/{client_id}")
+async def client_ws(websocket: WebSocket, client_id: str):
     await websocket.accept()
-    
-    # Generate unique ID for client
-    client_id = generate_client_id()
     clients[client_id] = websocket
-    
-    # Send ID to client
-    await websocket.send_json({
-        "type": "id_assigned",
-        "client_id": client_id
-    })
-    
-    print(f"✅ Client {client_id} connected")
-    
-    # Notify all admins about new client
-    for admin in admins:
-        try:
-            await admin.send_json({
-                "type": "client_list",
-                "clients": list(clients.keys())
-            })
-        except:
-            pass
-    
+    print(f"Client {client_id} connected")
+
     try:
         while True:
             data = await websocket.receive_text()
-            
-            # If it's a ping, ignore
-            if data == "ping":
-                continue
-            
-            # If client sends image -> forward to all admins
-            for admin in admins:
-                try:
-                    await admin.send_json({
-                        "type": "screenshot",
-                        "client_id": client_id,
-                        "image": data
-                    })
-                except:
-                    pass
+            print(f"From {client_id}: {data}")
 
     except WebSocketDisconnect:
+        print(f"Client {client_id} disconnected")
         clients.pop(client_id, None)
-        print(f"❌ Client {client_id} disconnected")
-        
-        # Notify all admins about disconnection immediately
-        disconnected_admins = []
-        for admin in admins[:]:  # Use slice to iterate over copy
-            try:
-                await admin.send_json({
-                    "type": "client_list",
-                    "clients": list(clients.keys())
-                })
-            except Exception as e:
-                # Remove disconnected admin
-                disconnected_admins.append(admin)
-        
-        # Clean up disconnected admins
-        for admin in disconnected_admins:
-            if admin in admins:
-                admins.remove(admin)
 
-
-# =========================
-# ADMIN CONNECT
-# =========================
+# Admin gửi lệnh tới client
 @app.websocket("/ws/admin")
 async def admin_ws(websocket: WebSocket):
     await websocket.accept()
-    admins.append(websocket)
-    print("👤 Admin connected")
-    
-    # Send current client list to newly connected admin
-    await websocket.send_json({
-        "type": "client_list",
-        "clients": list(clients.keys())
-    })
-    
+    print("Admin connected")
+
     try:
         while True:
             data = await websocket.receive_json()
+            client_id = data.get("client_id")
+            message = data.get("message")
 
-            # data = {"action": "take_photo", "client_id": "1234"}
-            # or data = {"action": "stream_frame", "client_id": "1234", "quality": "medium"}
-            if data.get("action") == "take_photo":
-                client_id = data.get("client_id")
-                if client_id in clients:
-                    await clients[client_id].send_text("take_photo")
-                    print(f"📸 Screenshot requested for client {client_id}")
-            
-            elif data.get("action") == "stream_frame":
-                client_id = data.get("client_id")
-                quality = data.get("quality", "medium")
-                if client_id in clients:
-                    await clients[client_id].send_json({
-                        "action": "stream_frame",
-                        "quality": quality
-                    })
-
+            if client_id in clients:
+                await clients[client_id].send_text(message)
+                await websocket.send_text("Sent")
+            else:
+                await websocket.send_text("Client not found")
 
     except WebSocketDisconnect:
-        admins.remove(websocket)
-        print("👤 Admin disconnected")
+        print("Admin disconnected")
+
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
