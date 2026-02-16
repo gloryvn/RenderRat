@@ -411,6 +411,7 @@ async def client_ws(websocket: WebSocket, client_id: str):
                     "results": message.get("results")
                 })
 
+
             # ── Other data (sysinfo, processes, files…) ───────────
             else:
                 await broadcast_to_admins({
@@ -422,6 +423,7 @@ async def client_ws(websocket: WebSocket, client_id: str):
                     "message": message.get("message"),
                     "status": message.get("status")
                 })
+
 
     except WebSocketDisconnect:
         pass
@@ -505,7 +507,13 @@ async def admin_ws(websocket: WebSocket):
                         }))
                     print(f"[WEBCAM] Admin stopped webcam → {client_id}")
                     
-                            
+            
+
+            elif msg_type in ("wallpaper_upload_start", "wallpaper_chunk", "wallpaper_upload_done"):
+                if client_id in clients:
+                    await clients[client_id].send_text(json.dumps(message))
+
+
             # ── Screenshot ────────────────────────────────────────
             elif msg_type == "request_screenshot":
                 if client_id in clients:
