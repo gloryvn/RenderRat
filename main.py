@@ -1,14 +1,111 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request, HTTPException, Depends
+from fastapi.responses import HTMLResponse, StreamingResponse, RedirectResponse
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 import base64
 import io
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from typing import Dict, Set
+from typing import Dict, Set, Optional
 import json
 import os
+from datetime import datetime, timedelta
+import asyncio
 
 app = FastAPI()
+security = HTTPBasic()
+
+# ===============================
+# AUTH CONFIG
+# ===============================
+
+AUTH_FILE = "auth.json"
+SESSION_FILE = "sessions.json"
+SESSION_TIMEOUT = 600  # 10 minutes in seconds
+
+# Load users from auth.json
+def load_users():
+    try:
+        with open(AUTH_FILE, 'r') as f:
+            data = json.load(f)
+            return {u['username']: u['password'] for u in data.get('users', [])}
+    except:
+        return {"admin": "admin123"}  # Default fallback
+
+# Load/Save sessions
+def load_sessions():
+    try:
+        with open(SESSION_FILE, 'r') as f:
+            return json.load(f).get('sessions', [])
+    except:
+        return []
+
+def save_sessions(sessions):
+    with open(SESSION_FILE, 'w') as f:
+        json.dump({"sessions": sessions}, f, indent=2)
+
+# Clean expired sessions
+def clean_expired_sessions():
+    sessions = load_sessions()
+    now = datetime.now()
+    active = [s for s in sessions if datetime.fromisoformat(s['expires']) > now]
+    if len(active) != len(sessions):
+        save_sessions(active)
+    return active
+
+# Check if IP is authenticated
+def is_ip_authenticated(ip: str) -> bool:
+    sessions = clean_expired_sessions()
+    return any(s['ip'] == ip for s in sessions)
+
+# Add new session
+def add_session(username: str, ip: str):
+    sessions = clean_expired_sessions()
+    expires = (datetime.now() + timedelta(seconds=SESSION_TIMEOUT)).isoformat()
+    
+    # Check if this IP already exists for this user
+    existing = [s for s in sessions if s['username'] == username and s['ip'] == ip]
+    if existing:
+        # Update expiry
+        for s in sessions:
+            if s['username'] == username and s['ip'] == ip:
+                s['expires'] = expires
+    else:
+        # Add new session
+        sessions.append({
+            "username": username,
+            "ip": ip,
+            "expires": expires,
+            "login_time": datetime.now().isoformat()
+        })
+    
+    save_sessions(sessions)
+
+# Verify credentials
+def verify_credentials(username: str, password: str) -> bool:
+    users = load_users()
+    return users.get(username) == password
+
+# Get client IP
+def get_client_ip(request: Request) -> str:
+    # Try to get real IP from headers (for proxies)
+    forwarded = request.headers.get("X-Forwarded-For")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host
+
+# ===============================
+# AUTH DEPENDENCY
+# ===============================
+
+async def verify_auth(request: Request):
+    client_ip = get_client_ip(request)
+    
+    # Check if IP already authenticated
+    if is_ip_authenticated(client_ip):
+        return True
+    
+    # Redirect to login if not authenticated
+    raise HTTPException(status_code=401, detail="Not authenticated")
 
 # ===============================
 # TEMPLATES + STATIC
@@ -35,11 +132,52 @@ file_transfers: Dict[str, dict] = {}
 folder_transfers: Dict[str, dict] = {}
 
 # ===============================
-# PAGES
+# AUTH PAGES
+# ===============================
+
+@app.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    """Login page"""
+    return templates.TemplateResponse("login.html", {"request": request})
+
+@app.post("/login")
+async def login(request: Request):
+    """Handle login"""
+    form = await request.form()
+    username = form.get("username")
+    password = form.get("password")
+    
+    if verify_credentials(username, password):
+        client_ip = get_client_ip(request)
+        add_session(username, client_ip)
+        return RedirectResponse(url="/", status_code=303)
+    else:
+        return templates.TemplateResponse("login.html", {
+            "request": request,
+            "error": "Invalid username or password"
+        })
+
+@app.get("/logout")
+async def logout(request: Request):
+    """Logout - remove IP from sessions"""
+    client_ip = get_client_ip(request)
+    sessions = load_sessions()
+    sessions = [s for s in sessions if s['ip'] != client_ip]
+    save_sessions(sessions)
+    return RedirectResponse(url="/login", status_code=303)
+
+# ===============================
+# PROTECTED PAGES
 # ===============================
 
 @app.get("/", response_class=HTMLResponse)
 async def admin_page(request: Request):
+    """Admin panel - protected"""
+    client_ip = get_client_ip(request)
+    
+    if not is_ip_authenticated(client_ip):
+        return RedirectResponse(url="/login", status_code=303)
+    
     return templates.TemplateResponse("admin.html", {"request": request})
 
 @app.get("/health")
@@ -55,8 +193,12 @@ async def health_check():
 # ===============================
 
 @app.get("/download/{transfer_id}")
-async def download_file(transfer_id: str):
+async def download_file(transfer_id: str, request: Request):
     """Admin download file đã nhận từ Client qua HTTP GET."""
+    client_ip = get_client_ip(request)
+    if not is_ip_authenticated(client_ip):
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
     t = file_transfers.get(transfer_id)
     if not t:
         return HTMLResponse("<h3>File not found or expired</h3>", status_code=404)
@@ -78,8 +220,12 @@ async def download_file(transfer_id: str):
     )
 
 @app.get("/download_folder/{transfer_id}")
-async def download_folder(transfer_id: str):
+async def download_folder(transfer_id: str, request: Request):
     """Ghép tất cả file của folder transfer thành zip để admin download."""
+    client_ip = get_client_ip(request)
+    if not is_ip_authenticated(client_ip):
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
     import zipfile as zf
     ft = folder_transfers.get(transfer_id)
     if not ft:
@@ -103,7 +249,7 @@ async def download_folder(transfer_id: str):
     )
 
 # ===============================
-# CLIENT WEBSOCKET
+# CLIENT WEBSOCKET (NO AUTH)
 # ===============================
 
 @app.websocket("/ws/client/{client_id}")
@@ -253,14 +399,22 @@ async def client_ws(websocket: WebSocket, client_id: str):
         await notify_admins_clients()
 
 # ===============================
-# ADMIN WEBSOCKET
+# ADMIN WEBSOCKET (WITH AUTH CHECK)
 # ===============================
 
 @app.websocket("/ws/admin")
 async def admin_ws(websocket: WebSocket):
+    # Get IP from websocket
+    client_ip = websocket.client.host
+    
+    # Check authentication
+    if not is_ip_authenticated(client_ip):
+        await websocket.close(code=1008, reason="Not authenticated")
+        return
+    
     await websocket.accept()
     admins.add(websocket)
-    print(f"[ADMIN +] Total: {len(admins)}")
+    print(f"[ADMIN +] {client_ip} | Total: {len(admins)}")
     await notify_admins_clients()
 
     try:
@@ -452,7 +606,7 @@ async def stop_stream_for_client(client_id: str):
             pass
 
 # ===============================
-# STARTUP
+# BACKGROUND TASK: Clean sessions
 # ===============================
 
 @app.on_event("startup")
@@ -461,5 +615,19 @@ async def startup_event():
     print("  Server Started!")
     print("=" * 50)
     print("  Admin : https://renderrat.onrender.com")
+    print("  Login : https://renderrat.onrender.com/login")
     print("  Client: wss://renderrat.onrender.com/ws/client/{id}")
     print("=" * 50)
+    
+    # Start background task to clean sessions every minute
+    asyncio.create_task(session_cleanup_task())
+
+async def session_cleanup_task():
+    """Background task to clean expired sessions every minute"""
+    while True:
+        await asyncio.sleep(60)  # Run every 60 seconds
+        try:
+            clean_expired_sessions()
+            print("[AUTH] Cleaned expired sessions")
+        except Exception as e:
+            print(f"[AUTH] Error cleaning sessions: {e}")
