@@ -3,6 +3,7 @@ from typing import Dict
 import random
 import json
 
+
 app = FastAPI()
 
 clients: Dict[str, WebSocket] = {}
@@ -115,3 +116,4 @@ async def admin_ws(websocket: WebSocket):
     except WebSocketDisconnect:
         admins.remove(websocket)
         print("👤 Admin disconnected")
+
