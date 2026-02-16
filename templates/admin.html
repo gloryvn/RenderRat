@@ -925,7 +925,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
       <!-- Path Bar -->
       <div class="ex-pathbar">
         <button class="ex-back-btn" id="exBackBtn" onclick="exGoBack()" disabled>←</button>
-        <div class="ex-path-display" id="exPath">~</div>
+        <input type="text" class="ex-path-display" id="exPath" value="C:\" onkeydown="handlePathKeydown(event)">
         <button class="ex-refresh-btn" onclick="exRefresh()">↻</button>
       </div>
 
