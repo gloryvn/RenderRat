@@ -140,8 +140,8 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
 .rec { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: blink 1s step-end infinite; }
 @keyframes blink { 50% { opacity: 0; } }
 
-/* ══ FILE MANAGER PANEL ═════════════════════════════ */
-.file-panel {
+/* ══ FILE EXPLORER PANEL ═══════════════════════════ */
+.explorer-panel {
   position: absolute;
   right: 0;
   top: 0;
@@ -156,12 +156,14 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
   transition: width .25s cubic-bezier(.4,0,.2,1), border-color .25s;
   z-index: 100;
 }
-.file-panel.open {
-  width: 450px;
-  min-width: 450px;
+.explorer-panel.open {
+  width: 380px;
+  min-width: 380px;
   border-left-color: var(--border);
 }
-.file-panel-header {
+
+/* Explorer Header */
+.ex-hdr {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -170,18 +172,15 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
   background: var(--surf2);
   flex-shrink: 0;
 }
-.file-panel-title {
+.ex-title {
   font-family: var(--sans);
   font-weight: 800;
   font-size: 13px;
   color: var(--accent);
   letter-spacing: .12em;
   text-transform: uppercase;
-  display: flex;
-  align-items: center;
-  gap: 10px;
 }
-.file-panel-close {
+.ex-close {
   background: none;
   border: none;
   color: var(--muted);
@@ -191,18 +190,19 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
   transition: color .12s;
   line-height: 1;
 }
-.file-panel-close:hover { color: var(--red); }
-.file-nav {
+.ex-close:hover { color: var(--red); }
+
+/* Path Bar */
+.ex-pathbar {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 16px;
+  padding: 8px 12px;
   border-bottom: 1px solid var(--border);
   background: var(--surf);
   flex-shrink: 0;
 }
-.file-nav-btn {
-  font-family: var(--mono);
+.ex-back-btn {
   font-size: 16px;
   padding: 4px 8px;
   border: 1px solid var(--border);
@@ -213,92 +213,214 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
   transition: all .12s;
   line-height: 1;
 }
-.file-nav-btn:hover {
+.ex-back-btn:hover {
   border-color: var(--accent);
   color: var(--accent);
 }
-.file-nav-btn:disabled {
+.ex-back-btn:disabled {
   opacity: .3;
   cursor: not-allowed;
 }
-.file-path {
+.ex-path-display {
   flex: 1;
-  font-family: var(--mono);
   font-size: 11px;
+  color: var(--text);
   background: var(--surf2);
   border: 1px solid var(--border);
   border-radius: 5px;
   padding: 6px 10px;
-  color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-family: var(--mono);
 }
-.file-list {
+.ex-refresh-btn {
+  font-size: 16px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--muted);
+  transition: all .12s;
+  line-height: 1;
+}
+.ex-refresh-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Drives Bar */
+.ex-drives {
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+.ex-drive-pill {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text);
+  transition: all .12s;
+  font-family: var(--mono);
+}
+.ex-drive-pill:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(0,229,255,.08);
+}
+
+/* Toolbar */
+.ex-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surf);
+  flex-shrink: 0;
+}
+.ex-btn {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text);
+  transition: all .12s;
+  white-space: nowrap;
+}
+.ex-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.ex-btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #000;
+}
+.ex-btn.primary:hover {
+  opacity: .85;
+}
+.ex-btn:disabled {
+  opacity: .3;
+  cursor: not-allowed;
+}
+.ex-sel-info {
+  font-size: 10px;
+  color: var(--muted);
+  margin-left: auto;
+}
+
+/* File List */
+.ex-filelist {
   flex: 1;
   overflow-y: auto;
-  padding: 8px;
 }
-.file-item {
+.ex-row {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 8px 12px;
-  border-radius: 6px;
   cursor: pointer;
-  border: 1px solid transparent;
-  margin-bottom: 2px;
-  transition: all .12s;
-  font-size: 12px;
+  border-left: 2px solid transparent;
+  transition: background .12s;
+  user-select: none;
 }
-.file-item:hover {
+.ex-row:hover {
   background: #111a28;
-  border-color: var(--border);
 }
-.file-item-icon {
+.ex-row.selected {
+  background: #0a1929;
+  border-left-color: var(--accent);
+}
+.ex-row-icon {
   font-size: 16px;
   flex-shrink: 0;
   width: 20px;
   text-align: center;
 }
-.file-item-info {
+.ex-row-name {
   flex: 1;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   min-width: 0;
 }
-.file-item-name {
+.ex-row-name.dir {
+  color: var(--accent);
+  font-weight: 600;
+}
+.ex-row-name.parent {
+  color: var(--muted);
+  font-style: italic;
+}
+.ex-row-size {
+  font-size: 10px;
+  color: var(--muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Transfer Queue */
+.ex-transfers {
+  max-height: 150px;
+  overflow-y: auto;
+  border-top: 1px solid var(--border);
+  background: var(--surf2);
+  flex-shrink: 0;
+}
+.ex-transfer-item {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(26,34,51,.4);
+}
+.ex-transfer-name {
+  font-size: 11px;
   font-weight: 600;
   color: var(--text);
+  margin-bottom: 6px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.file-item-meta {
+.ex-transfer-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ex-progress-bar {
+  flex: 1;
+  height: 4px;
+  background: var(--surf);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.ex-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width .3s;
+}
+.ex-transfer-percent {
   font-size: 10px;
   color: var(--muted);
-  margin-top: 2px;
+  min-width: 35px;
+  text-align: right;
 }
-.file-item-actions {
-  display: flex;
-  gap: 6px;
-  opacity: 0;
-  transition: opacity .12s;
-}
-.file-item:hover .file-item-actions {
-  opacity: 1;
-}
-.file-action-btn {
-  font-size: 14px;
-  padding: 4px 6px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  color: var(--muted);
-  transition: color .12s;
-}
-.file-action-btn:hover {
-  color: var(--accent);
-}
-.file-empty {
+
+/* Empty State */
+.ex-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -306,15 +428,26 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
   padding: 60px 20px;
   color: var(--muted);
 }
-.file-empty-icon {
+.ex-empty-icon {
   font-size: 48px;
   opacity: .2;
   margin-bottom: 16px;
 }
-.file-empty-text {
+.ex-empty-text {
   font-size: 13px;
   font-family: var(--sans);
   letter-spacing: .05em;
+}
+
+/* Loading */
+.ex-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 13px;
 }
 
 /* ══ TASK MANAGER PANEL ═════════════════════════════ */
@@ -755,7 +888,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
     <input class="cmd-input" id="cmdInput" placeholder="Shell command…" onkeydown="if(event.key==='Enter')sendCmd()">
     <button class="btn" onclick="sendCmd()">Run</button>
     <div class="divider"></div>
-    <button class="btn" id="filesBtn" onclick="toggleFileManager()">📁 Files</button>
+    <button class="btn" id="filesBtn" onclick="toggleExplorer()">📁 Files</button>
     <button class="btn" id="taskBtn" onclick="toggleTaskManager()">⚙️ Tasks</button>
     <div class="divider"></div>
     <div class="stat-badge" id="fpsBadge">-- FPS</div>
@@ -780,35 +913,53 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
       <div class="live-badge" id="liveBadge"><div class="rec"></div>LIVE</div>
     </div>
 
-    <!-- ══ FILE MANAGER PANEL ══════════════════════════ -->
-    <div class="file-panel" id="filePanel">
+    <!-- ══ FILE EXPLORER PANEL ══════════════════════════ -->
+    <div class="explorer-panel" id="explorerPanel">
       
       <!-- Header -->
-      <div class="file-panel-header">
-        <div class="file-panel-title">
-          <span>📁</span>
-          <span>File Explorer</span>
-        </div>
-        <button class="file-panel-close" onclick="toggleFileManager()">×</button>
+      <div class="ex-hdr">
+        <div class="ex-title">📁 FILE EXPLORER</div>
+        <button class="ex-close" onclick="toggleExplorer()">×</button>
       </div>
 
-      <!-- Navigation -->
-      <div class="file-nav">
-        <button class="file-nav-btn" id="btnBack" onclick="goBack()" disabled>←</button>
-        <button class="file-nav-btn" id="btnUp" onclick="goUp()">↑</button>
-        <button class="file-nav-btn" onclick="refreshFiles()">↻</button>
-        <div class="file-path" id="currentPath">~</div>
+      <!-- Path Bar -->
+      <div class="ex-pathbar">
+        <button class="ex-back-btn" id="exBackBtn" onclick="exGoBack()" disabled>←</button>
+        <div class="ex-path-display" id="exPath">~</div>
+        <button class="ex-refresh-btn" onclick="exRefresh()">↻</button>
+      </div>
+
+      <!-- Drives -->
+      <div class="ex-drives" id="exDrives"></div>
+
+      <!-- Toolbar -->
+      <div class="ex-toolbar">
+        <button class="ex-btn primary" onclick="exDownload()" id="exDownloadBtn" disabled>
+          ⬇ Download
+        </button>
+        <button class="ex-btn" onclick="exView()" id="exViewBtn" disabled>
+          👁 View
+        </button>
+        <button class="ex-btn" onclick="exUpload()">
+          ⬆ Upload
+        </button>
+        <div class="ex-sel-info" id="exSelInfo">No selection</div>
       </div>
 
       <!-- File List -->
-      <div class="file-list" id="fileList">
-        <div class="file-empty">
-          <div class="file-empty-icon">📂</div>
-          <div class="file-empty-text">Select a client and click refresh</div>
+      <div class="ex-filelist" id="exFileList">
+        <div class="ex-empty">
+          <div class="ex-empty-icon">📂</div>
+          <div class="ex-empty-text">Select a client and click refresh</div>
         </div>
       </div>
 
-    </div><!-- /file-panel -->
+      <!-- Transfer Queue (hidden when empty) -->
+      <div class="ex-transfers" id="exTransfers" style="display: none;"></div>
+
+    </div><!-- /explorer-panel -->
+
+
 
     <!-- ══ TASK MANAGER PANEL ══════════════════════════ -->
     <div class="task-manager-panel" id="taskManagerPanel">
@@ -927,6 +1078,13 @@ let sortField        = 'cpu';
 let sortDirection    = 'desc';
 let currentPath      = '';
 let pathHistory      = [];
+let exOpen = false;
+let exPath = '';
+let exHistory = [];
+let exSelected = new Set();
+let exDrives = [];
+let exFiles = [];
+let exTransfers = {};
 
 // ════════════════════════════════════════════════════════════
 //  WEBSOCKET CONNECTION
@@ -1028,6 +1186,24 @@ function handleMessage(msg) {
         handleFileContent(msg.data, msg.path);
       }
       break;
+
+    case 'file_transfer_start':
+      if (msg.client_id === selClient) {
+        handleFileTransferStart(msg);
+      }
+      break;
+
+    case 'file_chunk':
+      if (msg.client_id === selClient) {
+        handleFileChunk(msg);
+      }
+      break;
+
+    case 'file_transfer_done':
+      if (msg.client_id === selClient) {
+        handleFileTransferDone(msg);
+      }
+      break;
   }
 }
 
@@ -1055,6 +1231,11 @@ function selectClient(id) {
   
   if (isStreaming) {
     stopStream();
+  }
+
+  if (exOpen) {
+    exRequestDrives();
+    exRefresh();
   }
 
   selClient = id;
@@ -1252,14 +1433,17 @@ function sendCmd() {
 }
 
 // ════════════════════════════════════════════════════════════
-//  FILE MANAGER
+//  FILE EXPLORER
 // ════════════════════════════════════════════════════════════
-function toggleFileManager() {
-  fileOpen = !fileOpen;
-  const panel = document.getElementById('filePanel');
+ 
+
+
+function toggleExplorer() {
+  exOpen = !exOpen;
+  const panel = document.getElementById('explorerPanel');
   const btn = document.getElementById('filesBtn');
   
-  if (fileOpen) {
+  if (exOpen) {
     // Tắt Task Manager nếu đang mở
     if (tmOpen) {
       tmOpen = false;
@@ -1269,8 +1453,10 @@ function toggleFileManager() {
     
     panel.classList.add('open');
     btn.classList.add('files-active');
+    
     if (selClient) {
-      refreshFiles();
+      exRequestDrives();
+      exRefresh();
     }
   } else {
     panel.classList.remove('open');
@@ -1278,18 +1464,27 @@ function toggleFileManager() {
   }
 }
 
-function refreshFiles() {
+function exRequestDrives() {
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
+  
+  ws.send(JSON.stringify({
+    type: 'get_drives',
+    client_id: selClient
+  }));
+}
+
+function exRefresh() {
   if (!selClient) {
     log('Please select a client first', 'warn');
     return;
   }
-
+  
   if (!ws || ws.readyState !== WebSocket.OPEN) {
     log('WebSocket not connected', 'error');
     return;
   }
 
-  const path = currentPath || '.';
+  const path = exPath || '.';
   
   ws.send(JSON.stringify({
     type: 'list_directory',
@@ -1297,84 +1492,349 @@ function refreshFiles() {
     path: path
   }));
 
-  log(`Listing directory: ${path}`, 'info');
+  log(`Listing: ${path}`, 'info');
+}
+
+function exGoBack() {
+  if (exHistory.length > 0) {
+    exPath = exHistory.pop();
+    exRefresh();
+    document.getElementById('exBackBtn').disabled = exHistory.length === 0;
+  }
+}
+
+function exNavigate(path) {
+  if (exPath) {
+    exHistory.push(exPath);
+    document.getElementById('exBackBtn').disabled = false;
+  }
+  exPath = path;
+  exSelected.clear();
+  exRefresh();
+}
+
+function handleDrivesList(drives) {
+  if (!drives || !Array.isArray(drives)) return;
+  
+  exDrives = drives;
+  const container = document.getElementById('exDrives');
+  
+  container.innerHTML = drives.map(d => `
+    <button class="ex-drive-pill" onclick="exNavigate('${d.path}')">
+      ${d.name}
+    </button>
+  `).join('');
 }
 
 function handleDirectoryList(data, path) {
   if (data.error) {
-    log(`Error listing directory: ${data.error}`, 'error');
+    log(`Error: ${data.error}`, 'error');
     return;
   }
 
-  currentPath = data.path || path;
-  document.getElementById('currentPath').textContent = currentPath;
-
-  const container = document.getElementById('fileList');
+  exPath = data.path || path;
+  exFiles = data.items || [];
   
-  if (!data.items || data.items.length === 0) {
+  document.getElementById('exPath').textContent = exPath;
+  
+  const container = document.getElementById('exFileList');
+  
+  if (exFiles.length === 0) {
     container.innerHTML = `
-      <div class="file-empty">
-        <div class="file-empty-icon">📂</div>
-        <div class="file-empty-text">Empty directory</div>
+      <div class="ex-empty">
+        <div class="ex-empty-icon">📂</div>
+        <div class="ex-empty-text">Empty directory</div>
       </div>
     `;
     return;
   }
 
-  const html = data.items.map(item => {
-    const icon = item.type === 'dir' ? '📁' : '📄';
-    const size = item.type === 'file' ? formatSize(item.size) : '';
-    const name = item.name;
+  const html = exFiles.map(item => {
+    const icon = item.type === 'parent' ? '⬆️' : 
+                 item.type === 'dir' ? '📁' : 
+                 getFileIcon(item.ext);
+    const nameClass = item.type === 'parent' ? 'parent' : 
+                      item.type === 'dir' ? 'dir' : '';
+    const size = item.type === 'file' ? formatBytes(item.size) : 
+                 item.type === 'dir' ? `${item.size} items` : '';
     
     return `
-      <div class="file-item" ondblclick="openItem('${name}', '${item.type}')">
-        <div class="file-item-icon">${icon}</div>
-        <div class="file-item-info">
-          <div class="file-item-name">${name}</div>
-          <div class="file-item-meta">${size}</div>
-        </div>
-        <div class="file-item-actions">
-          ${item.type === 'file' ? `<button class="file-action-btn" onclick="event.stopPropagation(); downloadFile('${name}')" title="Download">⬇️</button>` : ''}
-          <button class="file-action-btn" onclick="event.stopPropagation(); viewFile('${name}')" title="View">👁️</button>
-        </div>
+      <div class="ex-row" 
+           data-path="${item.path}" 
+           data-type="${item.type}"
+           data-name="${item.name}"
+           ondblclick="exRowDblClick(this)"
+           onclick="exRowClick(event, this)">
+        <div class="ex-row-icon">${icon}</div>
+        <div class="ex-row-name ${nameClass}">${item.name}</div>
+        <div class="ex-row-size">${size}</div>
       </div>
     `;
   }).join('');
 
   container.innerHTML = html;
+  exUpdateSelection();
 }
 
-function openItem(name, type) {
-  if (type === 'dir') {
-    pathHistory.push(currentPath);
-    const newPath = currentPath === '/' ? `/${name}` : `${currentPath}/${name}`;
-    currentPath = newPath;
-    refreshFiles();
-    document.getElementById('btnBack').disabled = false;
-  }
-}
-
-function goBack() {
-  if (pathHistory.length > 0) {
-    currentPath = pathHistory.pop();
-    refreshFiles();
-    if (pathHistory.length === 0) {
-      document.getElementById('btnBack').disabled = true;
+function exRowClick(event, row) {
+  const path = row.dataset.path;
+  
+  if (event.ctrlKey || event.metaKey) {
+    // Multi-select
+    if (exSelected.has(path)) {
+      exSelected.delete(path);
+    } else {
+      exSelected.add(path);
     }
+  } else {
+    // Single select
+    exSelected.clear();
+    exSelected.add(path);
+  }
+  
+  exUpdateSelection();
+}
+
+function exRowDblClick(row) {
+  const type = row.dataset.type;
+  const path = row.dataset.path;
+  
+  if (type === 'dir' || type === 'parent') {
+    exNavigate(path);
+  } else if (type === 'file') {
+    exView();
   }
 }
 
-function goUp() {
-  const parts = currentPath.split('/').filter(p => p);
-  if (parts.length > 0) {
-    parts.pop();
-    currentPath = '/' + parts.join('/');
-    if (!currentPath || currentPath === '/') currentPath = '.';
-    refreshFiles();
+function exUpdateSelection() {
+  // Update UI
+  document.querySelectorAll('.ex-row').forEach(row => {
+    const path = row.dataset.path;
+    row.classList.toggle('selected', exSelected.has(path));
+  });
+  
+  // Update toolbar
+  const count = exSelected.size;
+  const info = document.getElementById('exSelInfo');
+  const downloadBtn = document.getElementById('exDownloadBtn');
+  const viewBtn = document.getElementById('exViewBtn');
+  
+  if (count === 0) {
+    info.textContent = 'No selection';
+    downloadBtn.disabled = true;
+    viewBtn.disabled = true;
+  } else if (count === 1) {
+    const [path] = exSelected;
+    const item = exFiles.find(f => f.path === path);
+    info.textContent = item ? item.name : '1 selected';
+    downloadBtn.disabled = false;
+    viewBtn.disabled = item && item.type !== 'file';
+  } else {
+    info.textContent = `${count} selected`;
+    downloadBtn.disabled = false;
+    viewBtn.disabled = true;
   }
 }
 
-function formatSize(bytes) {
+function exDownload() {
+  if (exSelected.size === 0) return;
+  
+  if (!ws || ws.readyState !== WebSocket.OPEN) {
+    log('WebSocket not connected', 'error');
+    return;
+  }
+
+  exSelected.forEach(path => {
+    const item = exFiles.find(f => f.path === path);
+    if (!item) return;
+    
+    const transferId = 'dl_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    
+    ws.send(JSON.stringify({
+      type: 'request_file_upload',
+      client_id: selClient,
+      path: path,
+      transfer_id: transferId
+    }));
+
+    exTransfers[transferId] = {
+      name: item.name,
+      type: 'download',
+      progress: 0,
+      chunks: {},
+      totalChunks: 0
+    };
+    
+    log(`Requesting: ${item.name}`, 'info');
+  });
+}
+
+function exView() {
+  if (exSelected.size !== 1) return;
+  
+  const [path] = exSelected;
+  const item = exFiles.find(f => f.path === path);
+  
+  if (!item || item.type !== 'file') return;
+  
+  if (!ws || ws.readyState !== WebSocket.OPEN) {
+    log('WebSocket not connected', 'error');
+    return;
+  }
+
+  ws.send(JSON.stringify({
+    type: 'read_file',
+    client_id: selClient,
+    path: path
+  }));
+
+  log(`Reading: ${item.name}`, 'info');
+}
+
+function exUpload() {
+  log('Upload feature - coming soon', 'info');
+}
+
+function handleFileContent(content, path) {
+  if (!content) return;
+  
+  if (content.startsWith('[ERROR]')) {
+    log(content, 'error');
+    return;
+  }
+  
+  const filename = path.split(/[/\\]/).pop();
+  
+  // Create modal for viewing
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+  `;
+  
+  const viewer = document.createElement('div');
+  viewer.style.cssText = `
+    background: var(--surf);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    max-width: 90vw;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  `;
+  
+  viewer.innerHTML = `
+    <div style="padding: 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+      <div style="font-family: var(--sans); font-weight: 700; font-size: 13px; color: var(--accent);">${filename}</div>
+      <button onclick="this.closest('.modal').remove()" style="background: none; border: none; color: var(--muted); cursor: pointer; font-size: 20px;">×</button>
+    </div>
+    <pre style="flex: 1; overflow: auto; padding: 16px; margin: 0; font-family: var(--mono); font-size: 11px; line-height: 1.6;">${content}</pre>
+  `;
+  
+  modal.className = 'modal';
+  modal.appendChild(viewer);
+  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+  
+  document.body.appendChild(modal);
+}
+
+function handleFileTransferStart(msg) {
+  const tid = msg.transfer_id;
+  if (!exTransfers[tid]) {
+    exTransfers[tid] = {
+      name: msg.filename,
+      type: 'download',
+      progress: 0,
+      chunks: {},
+      totalChunks: msg.total_chunks
+    };
+  } else {
+    exTransfers[tid].totalChunks = msg.total_chunks;
+  }
+  
+  exRenderTransfers();
+}
+
+function handleFileChunk(msg) {
+  const tid = msg.transfer_id;
+  if (!exTransfers[tid]) return;
+  
+  exTransfers[tid].chunks[msg.chunk_idx] = msg.data;
+  exTransfers[tid].progress = (Object.keys(exTransfers[tid].chunks).length / exTransfers[tid].totalChunks) * 100;
+  
+  exRenderTransfers();
+}
+
+function handleFileTransferDone(msg) {
+  const tid = msg.transfer_id;
+  const transfer = exTransfers[tid];
+  if (!transfer) return;
+  
+  // Assemble file
+  const chunks = [];
+  for (let i = 0; i < transfer.totalChunks; i++) {
+    if (!transfer.chunks[i]) {
+      log(`Missing chunk ${i} for ${transfer.name}`, 'error');
+      return;
+    }
+    chunks.push(transfer.chunks[i]);
+  }
+  
+  // Convert to blob and download
+  const binary = atob(chunks.join(''));
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  
+  const blob = new Blob([bytes], { type: 'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+  
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = transfer.name;
+  a.click();
+  
+  URL.revokeObjectURL(url);
+  
+  // Remove transfer
+  delete exTransfers[tid];
+  exRenderTransfers();
+  
+  log(`Downloaded: ${transfer.name}`, 'result');
+}
+
+function exRenderTransfers() {
+  const container = document.getElementById('exTransfers');
+  const transfers = Object.values(exTransfers);
+  
+  if (transfers.length === 0) {
+    container.style.display = 'none';
+    return;
+  }
+  
+  container.style.display = 'block';
+  container.innerHTML = transfers.map(t => `
+    <div class="ex-transfer-item">
+      <div class="ex-transfer-name">${t.name}</div>
+      <div class="ex-transfer-progress">
+        <div class="ex-progress-bar">
+          <div class="ex-progress-fill" style="width: ${t.progress}%"></div>
+        </div>
+        <div class="ex-transfer-percent">${Math.round(t.progress)}%</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Helper functions
+function formatBytes(bytes) {
   if (bytes === 0) return '0 B';
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB'];
@@ -1382,14 +1842,19 @@ function formatSize(bytes) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-function downloadFile(filename) {
-  log(`Downloading: ${filename}`, 'info');
-  // Implementation needed
-}
-
-function viewFile(filename) {
-  log(`Viewing: ${filename}`, 'info');
-  // Implementation needed
+function getFileIcon(ext) {
+  const icons = {
+    '.txt': '📄', '.md': '📝', '.pdf': '📕',
+    '.doc': '📘', '.docx': '📘', '.xls': '📗', '.xlsx': '📗',
+    '.ppt': '📙', '.pptx': '📙',
+    '.jpg': '🖼', '.jpeg': '🖼', '.png': '🖼', '.gif': '🖼',
+    '.mp4': '🎬', '.avi': '🎬', '.mov': '🎬',
+    '.mp3': '🎵', '.wav': '🎵',
+    '.zip': '📦', '.rar': '📦', '.7z': '📦',
+    '.py': '🐍', '.js': '📜', '.html': '🌐', '.css': '🎨',
+    '.json': '⚙', '.xml': '⚙', '.yml': '⚙',
+  };
+  return icons[ext] || '📄';
 }
 
 // ════════════════════════════════════════════════════════════
@@ -1402,9 +1867,9 @@ function toggleTaskManager() {
   
   if (tmOpen) {
     // Tắt File Manager nếu đang mở
-    if (fileOpen) {
-      fileOpen = false;
-      document.getElementById('filePanel').classList.remove('open');
+    if (exOpen) {
+      exOpen = false;
+      document.getElementById('explorerPanel').classList.remove('open');
       document.getElementById('filesBtn').classList.remove('files-active');
     }
     
@@ -1692,6 +2157,12 @@ document.addEventListener('keydown', (e) => {
     e.preventDefault();
     requestProcesses();
   }
+
+  if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+    e.preventDefault();
+    toggleExplorer();
+  }
+
 });
 </script>
 
