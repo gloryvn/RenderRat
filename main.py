@@ -4,53 +4,57 @@ from typing import Dict
 app = FastAPI()
 
 clients: Dict[str, WebSocket] = {}
-latest_images: Dict[str, str] = {}   # Lưu ảnh base64
+admins: list[WebSocket] = []
 
 @app.get("/")
 async def root():
     return {"status": "Server is running"}
 
 # =========================
-# WebSocket Client
+# CLIENT CONNECT
 # =========================
-@app.websocket("/ws/{client_id}")
-async def websocket_endpoint(websocket: WebSocket, client_id: str):
+@app.websocket("/ws/client/{client_id}")
+async def client_ws(websocket: WebSocket, client_id: str):
     await websocket.accept()
     clients[client_id] = websocket
-    print(f"{client_id} connected")
+    print(f"Client {client_id} connected")
 
     try:
         while True:
             data = await websocket.receive_text()
 
-            # Heartbeat
-            if data == "ping":
-                await websocket.send_text("pong")
-
-            # Nếu không phải ping -> coi như ảnh base64
-            else:
-                print(f"Received image from {client_id}")
-                latest_images[client_id] = data
+            # Nếu client gửi ảnh → forward cho admin
+            for admin in admins:
+                await admin.send_json({
+                    "client_id": client_id,
+                    "image": data
+                })
 
     except WebSocketDisconnect:
-        print(f"{client_id} disconnected")
         clients.pop(client_id, None)
+        print(f"Client {client_id} disconnected")
+
 
 # =========================
-# Admin gửi lệnh chụp ảnh
+# ADMIN CONNECT
 # =========================
-@app.post("/admin/request-photo/{client_id}")
-async def request_photo(client_id: str):
-    if client_id in clients:
-        await clients[client_id].send_text("take_photo")
-        return {"status": "sent"}
-    return {"status": "client offline"}
+@app.websocket("/ws/admin")
+async def admin_ws(websocket: WebSocket):
+    await websocket.accept()
+    admins.append(websocket)
+    print("Admin connected")
 
-# =========================
-# Admin lấy ảnh
-# =========================
-@app.get("/admin/get-photo/{client_id}")
-async def get_photo(client_id: str):
-    if client_id in latest_images:
-        return {"image": latest_images[client_id]}
-    return {"image": None}
+    try:
+        while True:
+            data = await websocket.receive_json()
+
+            # data = {"action": "take_photo", "client_id": "pc01"}
+
+            if data["action"] == "take_photo":
+                client_id = data["client_id"]
+                if client_id in clients:
+                    await clients[client_id].send_text("take_photo")
+
+    except WebSocketDisconnect:
+        admins.remove(websocket)
+        print("Admin disconnected")
