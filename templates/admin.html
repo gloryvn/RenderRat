@@ -787,6 +787,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
 
       <!-- Toolbar -->
       <div class="ex-toolbar">
+        <button class="ex-btn" id="exDeleteBtn" disabled onclick="deleteSelected()">🗑 Delete</button>
         <button class="ex-btn primary" id="exDlBtn" disabled onclick="downloadSelected()">↓ Download</button>
         <button class="ex-btn" onclick="document.getElementById('uploadInput').click()">↑ Upload</button>
         <span class="ex-sel-info" id="exSelInfo">–</span>
@@ -984,6 +985,27 @@ ws.onmessage = ({data}) => {
   if (type==='drives_list')    { renderDrives(msg.data); return; }
   if (type==='file_content')   { handleFileContent(msg); return; }
   if (type==='write_file_result') { handleWriteFileResult(msg); return; }
+
+
+
+  if (type === 'delete_result') {
+    const results = msg.results || [];
+    const successCount = results.filter(r => r.success).length;
+    const failCount = results.length - successCount;
+    
+    log(`🗑 Đã xóa ${successCount} mục, ${failCount} thất bại`, successCount > 0 ? 'info' : 'error');
+    
+    results.forEach(r => {
+      if (!r.success) {
+        log(`  ✕ ${r.path}: ${r.message}`, 'error');
+      }
+    });
+    
+    // Refresh lại thư mục hiện tại nếu explorer đang mở
+    if (exOpen) navTo(exCurPath);
+    return;
+  }
+
 
   // ── Task Manager ─────────────────────────────────────────
   if (type==='processes' && client_id===selClient) {
@@ -1217,10 +1239,37 @@ function rowClick(el, e) {
 }
 
 function updateSel() {
-  const n=exSelected.size;
-  document.getElementById('exSelInfo').textContent=n?`${n} selected`:'–';
-  document.getElementById('exDlBtn').disabled=!n;
+  const n = exSelected.size;
+  document.getElementById('exSelInfo').textContent = n ? `${n} selected` : '–';
+  document.getElementById('exDlBtn').disabled = !n;
+  // Bật/tắt nút Delete dựa trên số lượng selected
+  document.getElementById('exDeleteBtn').disabled = !n;
 }
+
+
+function deleteSelected() {
+  if (!exSelected.size || !selClient) return;
+  
+  const count = exSelected.size;
+  const msg = count === 1 
+    ? `Delete ${Array.from(exSelected)[0]}?` 
+    : `Delete ${count} selected items?`;
+  
+  if (!confirm(msg)) return;
+  
+  const paths = Array.from(exSelected);
+  ws.send(JSON.stringify({
+    type: 'delete_files',
+    client_id: selClient,
+    paths: paths
+  }));
+  
+  log(`🗑 Đang xóa ${paths.length} mục...`, 'info');
+  
+  // Có thể tạm thời vô hiệu hóa nút để tránh click liên tục
+  document.getElementById('exDeleteBtn').disabled = true;
+}
+
 
 // ── Download: Client → Admin ───────────────────────────────
 function downloadSelected() {
