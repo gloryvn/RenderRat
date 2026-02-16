@@ -217,6 +217,37 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
 .ex-btn.primary { background: var(--accent); border-color: var(--accent); color: #000; }
 .ex-btn.primary:hover { opacity: .85; }
 .ex-btn:disabled { opacity: .3; pointer-events: none; }
+.ex-btn.delete {
+  background: #ff4d4f;
+  border-color: #ff4d4f;
+  color: #fff;
+}
+
+.ex-btn.delete:hover {
+  background: #d9363e;
+  border-color: #d9363e;
+}
+
+.ex-btn.delete:active {
+  transform: scale(0.96);
+}
+
+.ex-btn.delete:disabled {
+  background: #555;
+  border-color: #555;
+  color: #aaa;
+}
+.ex-btn.delete-outline {
+  background: transparent;
+  border-color: #ff4d4f;
+  color: #ff4d4f;
+}
+
+.ex-btn.delete-outline:hover {
+  background: #ff4d4f;
+  color: #fff;
+}
+
 .ex-sel-info { font-size: 10px; color: var(--muted); margin-left: auto; white-space: nowrap; }
 
 /* File list */
@@ -686,10 +717,117 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
 
 
 
+/* ══ WALLPAPER PANEL ═════════════════════════════ */
 
-
-
-
+.wallpaper-panel {
+  width: 0;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--surf);
+  border-left: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  transition: width .22s cubic-bezier(.4,0,.2,1), border-color .22s;
+}
+.wallpaper-panel.open {
+  width: 400px;
+  min-width: 400px;
+  border-left-color: var(--border);
+}
+.wp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surf2);
+}
+.wp-title {
+  font-family: var(--sans);
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--accent);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.wp-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 20px;
+  padding: 4px 8px;
+  transition: color .12s;
+  line-height: 1;
+}
+.wp-close:hover { color: var(--red); }
+.wp-content {
+  padding: 16px;
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.wp-dropzone {
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .12s, background .12s;
+}
+.wp-dropzone:hover, .wp-dropzone.dragover {
+  border-color: var(--accent);
+  background: rgba(0,229,255,.05);
+}
+.wp-dropzone-icon {
+  font-size: 32px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.wp-dropzone-text {
+  font-size: 12px;
+  color: var(--muted);
+}
+.wp-preview {
+  display: none;
+  text-align: center;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 8px;
+  background: var(--surf2);
+}
+.wp-preview img {
+  max-width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+}
+.wp-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.wp-btn {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text);
+  transition: all .12s;
+}
+.wp-btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #000;
+}
+.wp-btn.primary:hover { opacity: .85; }
+.wp-btn:hover { border-color: var(--accent); color: var(--accent); }
+.wp-btn:disabled { opacity: .3; pointer-events: none; }
 
 
 
@@ -737,6 +875,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
     <div class="divider"></div>
     <button class="btn" id="filesBtn" onclick="toggleExplorer()">📁 Files</button>
     <button class="btn" id="taskBtn" onclick="toggleTaskManager()">⚙️ Tasks</button>
+    <button class="btn" id="wallpaperBtn" onclick="toggleWallpaper()">🖼️ Wallpaper</button>
     <div class="divider"></div>
     <div class="stat-badge" id="fpsBadge">-- FPS</div>
     <div class="stat-badge" id="latBadge">-- ms</div>
@@ -788,7 +927,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
 
       <!-- Toolbar -->
       <div class="ex-toolbar">
-        <button class="ex-btn" id="exDeleteBtn" disabled onclick="deleteSelected()">🗑 Delete</button>
+        <button class="ex-btn delete" id="exDeleteBtn" disabled onclick="deleteSelected()">🗑 Delete</button>
         <button class="ex-btn primary" id="exDlBtn" disabled onclick="downloadSelected()">↓ Download</button>
         <button class="ex-btn" onclick="document.getElementById('uploadInput').click()">↑ Upload</button>
         <span class="ex-sel-info" id="exSelInfo">–</span>
@@ -807,7 +946,9 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
 
     </div><!-- /explorer-panel -->
 
-        <div class="task-manager-panel" id="taskManagerPanel">
+    <!-- ══ TASK MANAGER PANEL ══════════════════════════════ -->
+
+    <div class="task-manager-panel" id="taskManagerPanel">
       
       <!-- Header -->
       <div class="tm-header">
@@ -895,6 +1036,33 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
       </div>
     </div><!-- /task-manager-panel -->
 
+    <!-- ══ WALLPAPER PANEL ══════════════════════════════ -->
+    <div class="wallpaper-panel" id="wallpaperPanel">
+      <div class="wp-header">
+        <div class="wp-title">🖼️ Wallpaper</div>
+        <button class="wp-close" onclick="toggleWallpaper()">✕</button>
+      </div>
+      <div class="wp-content">
+        <div class="wp-dropzone" id="wallpaperDropzone"
+             onclick="document.getElementById('wallpaperFileInput').click()"
+             ondragover="event.preventDefault(); this.classList.add('dragover')"
+             ondragleave="this.classList.remove('dragover')"
+             ondrop="onWallpaperDrop(event)">
+          <div class="wp-dropzone-icon">📤</div>
+          <div class="wp-dropzone-text">Drag & drop an image here or click to select</div>
+          <input type="file" id="wallpaperFileInput" accept="image/*" style="display:none" onchange="onWallpaperFileSelect(event)">
+        </div>
+        </div>
+        <div class="wp-preview" id="wallpaperPreview">
+          <img id="wallpaperPreviewImg" src="" alt="Preview">
+        </div>
+        <div class="wp-actions">
+          <button class="wp-btn primary" id="setWallpaperBtn" disabled onclick="setWallpaper()">Set Wallpaper</button>
+          <button class="wp-btn" onclick="resetWallpaper()">Cancel</button>
+        </div>
+      </div>
+    </div>
+
 
 
   </div><!-- /workspace -->
@@ -940,7 +1108,8 @@ let currentPath      = '';
 let pathHistory      = [];
 
 let isWebcam = false;
-
+let wpOpen = false;
+let wpFile = null;
 
 // ════════════════════════════════════════════════════════════
 //  WEBSOCKET
@@ -1048,6 +1217,9 @@ ws.onmessage = ({data}) => {
     return;
   }
 
+
+
+
   // ── File transfers ────────────────────────────────────────
   if (type==='folder_transfer_start') { onFolderStart(msg); return; }
   if (type==='folder_transfer_done')  { onFolderDone(msg);  return; }
@@ -1057,7 +1229,33 @@ ws.onmessage = ({data}) => {
   if (type==='file_transfer_error')   { onXferError(msg);   return; }
   if (type==='file_transfer_progress'){ onXferProgress(msg);return; }
   if (type==='file_save_result')      { onSaveResult(msg);  return; }
+
+
+
+  if (type === 'wallpaper_set_result') {
+    const {transfer_id, success, error} = msg;
+    const x = activeXfers[transfer_id];
+    if (x) {
+      if (success) {
+        setXferDone(transfer_id);
+        x.msg.textContent = '✅ Wallpaper set';
+        log('Wallpaper changed successfully', 'result');
+      } else {
+        x.fill.classList.add('err');
+        x.msg.textContent = '❌ ' + (error || 'Failed');
+        log('Wallpaper error: ' + error, 'error');
+      }
+    }
+    resetWallpaper(); // optional, clears preview
+    return;
+  }
+
+  
 };
+
+
+
+
 
 // ════════════════════════════════════════════════════════════
 //  CLIENTS
@@ -1201,6 +1399,8 @@ function hideScreen() { $img.classList.remove('show'); $ph.style.display='flex';
 // ════════════════════════════════════════════════════════════
 //  EXPLORER PANEL
 // ════════════════════════════════════════════════════════════
+
+
 function toggleExplorer() {
   exOpen=!exOpen;
   document.getElementById('explorerPanel').classList.toggle('open',exOpen);
@@ -1829,6 +2029,112 @@ function showEmptyState(message) {
     </div>
   `;
 }
+
+function toggleWallpaper() {
+  wpOpen = !wpOpen;
+  document.getElementById('wallpaperPanel').classList.toggle('open', wpOpen);
+  document.getElementById('wallpaperBtn').classList.toggle('files-active', wpOpen); // reuse class
+  // Close other panels
+  if (wpOpen) {
+    if (exOpen) toggleExplorer();
+    if (tmOpen) toggleTaskManager();
+  }
+}
+
+function onWallpaperDrop(e) {
+  e.preventDefault();
+  document.getElementById('wallpaperDropzone').classList.remove('dragover');
+  const files = e.dataTransfer.files;
+  if (files.length > 0) handleWallpaperFile(files[0]);
+}
+
+function onWallpaperFileSelect(e) {
+  const file = e.target.files[0];
+  if (file) handleWallpaperFile(file);
+}
+
+function handleWallpaperFile(file) {
+  if (!file.type.startsWith('image/')) {
+    log('Please select an image file', 'error');
+    return;
+  }
+  wpFile = file;
+  // Show preview
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    document.getElementById('wallpaperPreviewImg').src = e.target.result;
+    document.getElementById('wallpaperPreview').style.display = 'block';
+    document.getElementById('setWallpaperBtn').disabled = false;
+  };
+  reader.readAsDataURL(file);
+}
+
+function resetWallpaper() {
+  wpFile = null;
+  document.getElementById('wallpaperPreview').style.display = 'none';
+  document.getElementById('wallpaperPreviewImg').src = '';
+  document.getElementById('setWallpaperBtn').disabled = true;
+  document.getElementById('wallpaperFileInput').value = '';
+}
+
+function setWallpaper() {
+  if (!selClient) { log('Select a client', 'error'); return; }
+  if (!wpFile) return;
+  document.getElementById('setWallpaperBtn').disabled = true;
+  sendWallpaperFile(wpFile);
+}
+
+function sendWallpaperFile(file) {
+  const tid = randId();
+  const CHUNK = 512 * 1024; // 512KB
+  const total = Math.ceil(file.size / CHUNK) || 1;
+
+  mkXferItem(tid, file.name, file.size, 'up', 'Sending wallpaper...');
+
+  ws.send(JSON.stringify({
+    type: 'wallpaper_upload_start',
+    client_id: selClient,
+    transfer_id: tid,
+    filename: file.name,
+    file_size: file.size,
+    total_chunks: total
+  }));
+
+  let chunkIdx = 0;
+  const sendNextChunk = async () => {
+    const start = chunkIdx * CHUNK;
+    const end = Math.min(start + CHUNK, file.size);
+    const chunk = file.slice(start, end);
+    const b64 = await readB64(chunk);
+    ws.send(JSON.stringify({
+      type: 'wallpaper_chunk',
+      client_id: selClient,
+      transfer_id: tid,
+      chunk_idx: chunkIdx,
+      total_chunks: total,
+      data: b64
+    }));
+    xferProgress(tid, chunkIdx + 1, total);
+    chunkIdx++;
+    if (chunkIdx < total) {
+      setTimeout(sendNextChunk, 0);
+    } else {
+      ws.send(JSON.stringify({
+        type: 'wallpaper_upload_done',
+        client_id: selClient,
+        transfer_id: tid,
+        filename: file.name,
+        file_size: file.size
+      }));
+      log(`Wallpaper upload complete: ${file.name}`, 'info');
+    }
+  };
+  sendNextChunk();
+}
+
+
+
+
 
 
 </script>
