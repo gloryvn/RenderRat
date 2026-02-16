@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Admin Panel</title>
+<title>Admin Panel - Task Manager Edition</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@700;800&display=swap');
 
@@ -15,19 +15,23 @@
   --red:     #ff3366;
   --green:   #00ff88;
   --yellow:  #ffbb00;
+  --orange:  #ff8800;
+  --purple:  #bb66ff;
   --muted:   #3d4f66;
   --text:    #c9d8ef;
   --mono:    'JetBrains Mono', monospace;
   --sans:    'Syne', sans-serif;
-  --ex-w:    380px;   /* explorer panel width */
+  --ex-w:    380px;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: var(--bg); color: var(--text); font-family: var(--mono); height: 100vh; display: flex; overflow: hidden; }
 
 /* ══ SCROLLBAR ══════════════════════════════════════ */
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--surf2); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
 
 /* ══ SIDEBAR (client list) ══════════════════════════ */
 .sidebar {
@@ -87,6 +91,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
 .btn.primary:hover { opacity: .85; }
 .btn.active-stream { background: rgba(0,255,136,.1); border-color: var(--green); color: var(--green); }
 .btn.files-active { border-color: var(--accent); color: var(--accent); background: rgba(0,229,255,.07); }
+.btn.task-active { border-color: var(--purple); color: var(--purple); background: rgba(187,102,255,.07); }
 .divider { width: 1px; height: 18px; background: var(--border); margin: 0 1px; }
 .cmd-input {
   font-family: var(--mono); font-size: 12px;
@@ -110,8 +115,8 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
 .btn-logout { background: transparent; border: 1px solid var(--border); color: var(--muted); font-size: 11px; padding: 6px 12px; border-radius: 5px; cursor: pointer; transition: all .12s; font-family: var(--mono); font-weight: 600; margin-left: 8px; }
 .btn-logout:hover { border-color: var(--red); color: var(--red); }
 
-/* ══ WORKSPACE (viewer + explorer side by side) ══════ */
-.workspace { flex: 1; display: flex; overflow: hidden; }
+/* ══ WORKSPACE ══════════════════════════════════════ */
+.workspace { flex: 1; display: flex; overflow: hidden; position: relative; }
 
 /* ══ VIEWER ═════════════════════════════════════════ */
 .viewer {
@@ -136,298 +141,428 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
 .rec { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: blink 1s step-end infinite; }
 @keyframes blink { 50% { opacity: 0; } }
 
-/* ══ EXPLORER PANEL (VS Code style) ═════════════════ */
-.explorer-panel {
-  width: 0; min-width: 0; overflow: hidden;
+/* ══ TASK MANAGER PANEL ═════════════════════════════ */
+.task-manager-panel {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  min-width: 0;
+  overflow: hidden;
   background: var(--surf);
   border-left: 1px solid transparent;
-  display: flex; flex-direction: column;
-  transition: width .22s cubic-bezier(.4,0,.2,1), border-color .22s;
+  display: flex;
+  flex-direction: column;
+  transition: width .25s cubic-bezier(.4,0,.2,1), border-color .25s;
+  z-index: 100;
 }
-.explorer-panel.open {
-  width: var(--ex-w); min-width: var(--ex-w);
+.task-manager-panel.open {
+  width: 750px;
+  min-width: 750px;
   border-left-color: var(--border);
 }
 
-/* Explorer header */
-.ex-hdr {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 10px 12px;
+/* Task Manager Header */
+.tm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--border);
-  flex-shrink: 0; background: var(--surf2);
-}
-.ex-title {
-  font-family: var(--sans); font-weight: 800; font-size: 11px;
-  color: var(--muted); letter-spacing: .14em; text-transform: uppercase;
-}
-.ex-hdr-btns { display: flex; gap: 4px; }
-.ex-icon-btn {
-  background: none; border: none; color: var(--muted); cursor: pointer;
-  padding: 3px 6px; border-radius: 4px; font-size: 14px; line-height: 1;
-  transition: color .12s, background .12s;
-}
-.ex-icon-btn:hover { color: var(--text); background: #1a2233; }
-
-/* Path bar */
-.ex-pathbar {
-  display: flex; align-items: center; gap: 0;
-  border-bottom: 1px solid var(--border); flex-shrink: 0;
   background: var(--surf2);
+  flex-shrink: 0;
 }
-.ex-back {
-  padding: 7px 10px; color: var(--muted); cursor: pointer;
-  font-size: 13px; border-right: 1px solid var(--border);
-  transition: color .12s; flex-shrink: 0;
+.tm-title {
+  font-family: var(--sans);
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--purple);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
-.ex-back:hover { color: var(--accent); }
-.ex-path-input {
-  flex: 1; background: none; border: none; outline: none;
-  color: var(--text); font-family: var(--mono); font-size: 11px;
-  padding: 7px 10px; min-width: 0;
+.tm-title-icon {
+  font-size: 16px;
 }
-.ex-path-input::placeholder { color: var(--muted); }
-.ex-refresh { padding: 7px 10px; color: var(--muted); cursor: pointer; font-size: 13px; transition: color .12s; }
-.ex-refresh:hover { color: var(--accent); }
+.tm-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 20px;
+  padding: 4px 8px;
+  transition: color .12s;
+  line-height: 1;
+}
+.tm-close:hover { color: var(--red); }
 
-/* Drives bar */
-.ex-drives {
-  display: flex; gap: 4px; padding: 6px 10px; flex-wrap: wrap;
-  border-bottom: 1px solid var(--border); flex-shrink: 0;
+/* Task Manager Stats */
+.tm-stats {
+  display: flex;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surf);
+  flex-shrink: 0;
 }
-.ex-drive-pill {
-  font-size: 10px; font-weight: 600; padding: 3px 9px;
-  border: 1px solid var(--border); border-radius: 12px; cursor: pointer;
-  color: var(--muted); background: transparent; font-family: var(--mono);
-  transition: all .12s;
-}
-.ex-drive-pill:hover { border-color: var(--accent); color: var(--accent); }
-
-/* Toolbar */
-.ex-toolbar {
-  display: flex; align-items: center; gap: 6px; padding: 6px 10px;
-  border-bottom: 1px solid var(--border); flex-shrink: 0;
-}
-.ex-btn {
-  font-family: var(--mono); font-size: 10px; font-weight: 600;
-  padding: 4px 10px; border: 1px solid var(--border); border-radius: 4px;
-  cursor: pointer; background: transparent; color: var(--text); white-space: nowrap;
-  transition: all .12s;
-}
-.ex-btn:hover { border-color: var(--accent); color: var(--accent); }
-.ex-btn.primary { background: var(--accent); border-color: var(--accent); color: #000; }
-.ex-btn.primary:hover { opacity: .85; }
-.ex-btn:disabled { opacity: .3; pointer-events: none; }
-.ex-sel-info { font-size: 10px; color: var(--muted); margin-left: auto; white-space: nowrap; }
-
-/* File list */
-.ex-filelist { flex: 1; overflow-y: auto; }
-
-.ex-row {
-  display: flex; align-items: center; gap: 0;
-  padding: 0; cursor: pointer;
-  border-left: 2px solid transparent;
-  transition: background .1s;
-  user-select: none;
-}
-.ex-row:hover { background: #111a28; }
-.ex-row.selected { background: #0a1929; border-left-color: var(--accent); }
-.ex-row.active-dir { background: rgba(0,229,255,.05); }
-
-.ex-row-icon { width: 32px; text-align: center; font-size: 14px; flex-shrink: 0; padding: 6px 0; }
-.ex-row-name {
-  flex: 1; font-size: 12px; padding: 6px 6px 6px 0;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
-}
-.ex-row-name.dir  { color: var(--accent); }
-.ex-row-name.parent { color: var(--muted); font-style: italic; }
-.ex-row-size { font-size: 10px; color: var(--muted); padding: 6px 10px 6px 6px; white-space: nowrap; flex-shrink: 0; }
-
-/* Transfer queue */
-.ex-transfers {
-  flex-shrink: 0; max-height: 200px; overflow-y: auto;
-  border-top: 1px solid var(--border);
+.tm-stat-card {
+  flex: 1;
   background: var(--surf2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
-
-/* ══ IMAGE VIEWER & TEXT EDITOR MODAL ═══════════════ */
-.modal-overlay {
-  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(4px);
-  display: none; align-items: center; justify-content: center;
-  z-index: 10000; animation: fadeIn .2s;
+.tm-stat-label {
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  font-weight: 600;
 }
-.modal-overlay.show { display: flex; }
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+.tm-stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
 }
+.tm-stat-value.cpu { color: var(--accent); }
+.tm-stat-value.mem { color: var(--green); }
+.tm-stat-value.proc { color: var(--purple); }
 
-.modal-content {
-  background: var(--surf); border: 1px solid var(--border);
-  border-radius: 12px; max-width: 90vw; max-height: 90vh;
-  display: flex; flex-direction: column; overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
-  animation: slideUp .3s cubic-bezier(.4,0,.2,1);
+/* Task Manager Controls */
+.tm-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surf);
+  flex-shrink: 0;
 }
-
-@keyframes slideUp {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-.modal-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 16px; border-bottom: 1px solid var(--border);
-  background: var(--surf2); flex-shrink: 0;
-}
-
-.modal-title {
-  font-family: var(--sans); font-weight: 800; font-size: 13px;
-  color: var(--accent); letter-spacing: .08em; text-transform: uppercase;
-  display: flex; align-items: center; gap: 8px;
-}
-
-.modal-path {
-  font-family: var(--mono); font-size: 11px; color: var(--muted);
-  margin-left: 12px; max-width: 500px; overflow: hidden;
-  text-overflow: ellipsis; white-space: nowrap;
-}
-
-.modal-close {
-  background: none; border: none; color: var(--muted);
-  cursor: pointer; font-size: 20px; padding: 4px 8px;
-  transition: color .12s; line-height: 1;
-}
-.modal-close:hover { color: var(--red); }
-
-.modal-body {
-  flex: 1; overflow: auto; padding: 0; position: relative;
-  min-height: 400px;
-}
-
-/* Image Viewer */
-.image-viewer-container {
-  display: flex; align-items: center; justify-content: center;
-  min-height: 400px; padding: 20px; background: #04070d;
-}
-
-.image-viewer-img {
-  max-width: 100%; max-height: 70vh; object-fit: contain;
-  border-radius: 6px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-}
-
-.image-info {
-  position: absolute; bottom: 10px; left: 10px;
-  background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px);
-  border: 1px solid var(--border); border-radius: 6px;
-  padding: 6px 12px; font-size: 10px; color: var(--muted);
+.tm-search {
+  flex: 1;
   font-family: var(--mono);
-}
-
-/* Text Editor */
-.teor-container {
-  display: flex; flex-direction: column; height: 70vh;
-}
-
-.text-editor-toolbar {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 8px 16px; border-bottom: 1px solid var(--border);
-  background: var(--surf2); flex-shrink: 0;
-}
-
-.text-editor-info {
-  font-size: 10px; color: var(--muted); font-family: var(--mono);
-  display: flex; gap: 12px;
-}
-
-.text-editor-actions {
-  display: flex; gap: 6px;
-}
-
-.editor-btn {
-  font-family: var(--mono); font-size: 10px; font-weight: 600;
-  padding: 5px 12px; border: 1px solid var(--border);
-  border-radius: 5px; cursor: pointer; background: transparent;
-  color: var(--text); transition: all .12s;
-}
-.editor-btn:hover { border-color: var(--accent); color: var(--accent); }
-.editor-btn.save { background: var(--green); border-color: var(--green); color: #000; }
-.editor-btn.save:hover { opacity: .85; }
-.editor-btn:disabled { opacity: .3; pointer-events: none; }
-
-.text-editor-area {
-  flex: 1; padding: 16px; overflow: auto;
-}
-
-.text-editor-textarea {
-  width: 100%; height: 100%; min-height: 500px;
-  background: #04070d; border: 1px solid var(--border);
-  border-radius: 6px; padding: 12px; color: var(--text);
-  font-family: var(--mono); font-size: 13px; line-height: 1.6;
-  resize: none; outline: none;
+  font-size: 12px;
+  background: var(--surf2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 7px 12px;
+  color: var(--text);
+  outline: none;
   transition: border-color .2s;
 }
-.text-editor-textarea:focus {
+.tm-search:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.1);
+}
+.tm-search::placeholder {
+  color: var(--muted);
+}
+.tm-sort-btn {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text);
+  transition: all .12s;
+  white-space: nowrap;
+}
+.tm-sort-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.tm-sort-btn.active {
+  background: rgba(0,229,255,.08);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.tm-refresh-btn {
+  font-family: var(--mono);
+  font-size: 18px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--muted);
+  transition: all .12s;
+  line-height: 1;
+}
+.tm-refresh-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: rotate(90deg);
 }
 
-.editor-status {
-  padding: 8px 16px; border-top: 1px solid var(--border);
-  background: var(--surf2); font-size: 10px; color: var(--muted);
-  text-align: center; font-family: var(--mono);
+/* Process Table */
+.tm-table-container {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
-.ex-transfer-hdr {
-  font-size: 9px; text-transform: uppercase; letter-spacing: .12em;
-  color: var(--muted); padding: 8px 12px 4px;
-}
-.transfer-item {
-  padding: 8px 12px; border-bottom: 1px solid rgba(26,34,51,.5);
+.tm-table {
+  width: 100%;
+  border-collapse: collapse;
   font-size: 11px;
 }
-.t-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
-.t-name { font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
-.t-size { color: var(--muted); font-size: 10px; flex-shrink: 0; }
-.t-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 4px; }
-.t-fill { height: 100%; border-radius: 2px; transition: width .2s; background: var(--accent); width: 0%; }
-.t-fill.done { background: var(--green); }
-.t-fill.err  { background: var(--red); }
-.t-status { display: flex; justify-content: space-between; align-items: center; }
-.t-msg { font-size: 10px; color: var(--muted); }
-.t-dl { font-size: 10px; font-weight: 700; color: var(--accent); text-decoration: none; display: none; }
-.t-dl.show { display: inline; }
-.t-dl:hover { text-decoration: underline; }
-.no-transfers { font-size: 11px; color: var(--muted); text-align: center; padding: 12px; }
-
-/* Loading spinner */
-.ex-loading { display: flex; align-items: center; justify-content: center; padding: 30px; gap: 10px; color: var(--muted); font-size: 12px; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.spinner { border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; width: 14px; height: 14px; animation: spin .7s linear infinite; flex-shrink: 0; }
-
-/* Drop overlay */
-.drop-overlay {
-  display: none; position: absolute; inset: 0;
-  background: rgba(0,229,255,.08);
-  border: 2px dashed var(--accent);
-  border-radius: 4px; z-index: 10;
-  align-items: center; justify-content: center;
-  font-size: 14px; color: var(--accent); font-weight: 700;
-  pointer-events: none;
+.tm-table thead {
+  position: sticky;
+  top: 0;
+  background: var(--surf);
+  z-index: 10;
+  border-bottom: 2px solid var(--border);
 }
-.drop-overlay.show { display: flex; }
+.tm-table th {
+  text-align: left;
+  padding: 10px 12px;
+  font-weight: 700;
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: color .12s;
+  user-select: none;
+}
+.tm-table th:hover {
+  color: var(--accent);
+}
+.tm-table th.sortable::after {
+  content: ' ↕';
+  opacity: .3;
+}
+.tm-table th.sort-asc::after {
+  content: ' ↑';
+  opacity: 1;
+  color: var(--accent);
+}
+.tm-table th.sort-desc::after {
+  content: ' ↓';
+  opacity: 1;
+  color: var(--accent);
+}
+.tm-table tbody tr {
+  border-bottom: 1px solid rgba(26,34,51,.4);
+  transition: background .12s;
+  cursor: pointer;
+}
+.tm-table tbody tr:hover {
+  background: #111a28;
+}
+.tm-table tbody tr.selected {
+  background: rgba(187,102,255,.08);
+  border-left: 3px solid var(--purple);
+}
+.tm-table td {
+  padding: 10px 12px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+.tm-table td.pid {
+  font-weight: 700;
+  color: var(--accent);
+  font-family: var(--mono);
+}
+.tm-table td.name {
+  font-weight: 600;
+  max-width: 180px;
+}
+.tm-table td.cpu,
+.tm-table td.memory {
+  font-family: var(--mono);
+  font-weight: 600;
+}
+.tm-table td.cpu.high { color: var(--red); }
+.tm-table td.cpu.mid { color: var(--yellow); }
+.tm-table td.cpu.low { color: var(--green); }
+.tm-table td.memory.high { color: var(--red); }
+.tm-table td.memory.mid { color: var(--yellow); }
+.tm-table td.memory.low { color: var(--green); }
+.tm-table td.status {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.tm-table td.status.running { color: var(--green); }
+.tm-table td.status.sleeping { color: var(--muted); }
+.tm-table td.path {
+  font-size: 10px;
+  color: var(--muted);
+  font-family: var(--mono);
+  max-width: 250px;
+}
+.tm-table td.user {
+  font-size: 10px;
+  color: var(--accent);
+}
+.tm-table td.actions {
+  text-align: right;
+}
+.tm-end-btn {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--mono);
+  transition: all .12s;
+}
+.tm-end-btn:hover {
+  border-color: var(--red);
+  color: var(--red);
+  background: rgba(255,51,102,.08);
+}
 
-/* ══ OUTPUT LOG ═════════════════════════════════════ */
+/* Process Details Panel */
+.tm-details {
+  border-top: 2px solid var(--border);
+  background: var(--surf2);
+  padding: 14px 16px;
+  max-height: 180px;
+  overflow-y: auto;
+  display: none;
+  flex-shrink: 0;
+}
+.tm-details.show {
+  display: block;
+}
+.tm-details-title {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.tm-details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px 20px;
+}
+.tm-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tm-detail-label {
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.tm-detail-value {
+  font-size: 12px;
+  color: var(--text);
+  font-weight: 600;
+  word-break: break-all;
+}
+.tm-detail-value.path {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--accent);
+}
+.tm-details-actions {
+  margin-top: 14px;
+  display: flex;
+  gap: 8px;
+}
+.tm-detail-btn {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--mono);
+  transition: all .12s;
+}
+.tm-detail-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.tm-detail-btn.danger {
+  border-color: var(--red);
+  color: var(--red);
+}
+.tm-detail-btn.danger:hover {
+  background: rgba(255,51,102,.12);
+}
+
+/* Empty State */
+.tm-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: var(--muted);
+}
+.tm-empty-icon {
+  font-size: 48px;
+  opacity: .2;
+  margin-bottom: 16px;
+}
+.tm-empty-text {
+  font-size: 13px;
+  font-family: var(--sans);
+  letter-spacing: .05em;
+}
+
+/* Loading Spinner */
+.tm-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner {
+  border: 3px solid var(--border);
+  border-top-color: var(--purple);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  animation: spin .7s linear infinite;
+  flex-shrink: 0;
+}
+
+/* ══ OUTPUT LOG (Moved to bottom for better visibility) ══ */
 .output-panel {
-  height: 130px; background: var(--surf);
+  height: 130px;
+  background: var(--surf);
   border-top: 1px solid var(--border);
-  padding: 8px 12px; overflow-y: auto;
-  font-size: 11px; line-height: 1.65; flex-shrink: 0;
+  padding: 8px 12px;
+  overflow-y: auto;
+  font-size: 11px;
+  line-height: 1.65;
+  flex-shrink: 0;
 }
 .log { color: #4a6a8a; }
 .log.info   { color: var(--accent); }
 .log.result { color: var(--green); }
 .log.error  { color: var(--red); }
+.log.warn   { color: var(--yellow); }
 .log.ts     { color: var(--muted); font-size: 9px; margin-bottom: 1px; }
 </style>
 </head>
@@ -455,7 +590,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
     <input class="cmd-input" id="cmdInput" placeholder="Shell command…" onkeydown="if(event.key==='Enter')sendCmd()">
     <button class="btn" onclick="sendCmd()">Run</button>
     <div class="divider"></div>
-    <button class="btn" id="filesBtn" onclick="toggleExplorer()">📁 Files</button>
+    <button class="btn" id="taskBtn" onclick="toggleTaskManager()">⚙️ Tasks</button>
     <div class="divider"></div>
     <div class="stat-badge" id="fpsBadge">-- FPS</div>
     <div class="stat-badge" id="latBadge">-- ms</div>
@@ -470,784 +605,751 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
   <div class="workspace">
 
     <!-- VIEWER -->
-    <div class="viewer" id="viewer"
-         ondragover="onViewerDragOver(event)"
-         ondragleave="onViewerDragLeave(event)"
-         ondrop="onViewerDrop(event)">
+    <div class="viewer" id="viewer">
       <div class="placeholder" id="placeholder">
         <div class="ph-icon">🖥</div>
         <div class="ph-text">Select a client to begin</div>
       </div>
       <img class="screen-img" id="screenImg" alt="">
       <div class="live-badge" id="liveBadge"><div class="rec"></div>LIVE</div>
-      <div class="drop-overlay" id="dropOverlay">Drop file to upload here</div>
     </div>
 
-    <!-- ══ EXPLORER PANEL ══════════════════════════════ -->
-    <div class="explorer-panel" id="explorerPanel">
-
+    <!-- ══ TASK MANAGER PANEL ══════════════════════════ -->
+    <div class="task-manager-panel" id="taskManagerPanel">
+      
       <!-- Header -->
-      <div class="ex-hdr">
-        <div class="ex-title">Explorer</div>
-        <div class="ex-hdr-btns">
-          <button class="ex-icon-btn" title="Upload file" onclick="document.getElementById('uploadInput').click()">↑</button>
-          <button class="ex-icon-btn" title="Close" onclick="toggleExplorer()">✕</button>
+      <div class="tm-header">
+        <div class="tm-title">
+          <span class="tm-title-icon">⚙️</span>
+          <span>Task Manager</span>
+        </div>
+        <button class="tm-close" onclick="toggleTaskManager()">×</button>
+      </div>
+
+      <!-- Stats -->
+      <div class="tm-stats">
+        <div class="tm-stat-card">
+          <div class="tm-stat-label">CPU Usage</div>
+          <div class="tm-stat-value cpu" id="tmCpuStat">--</div>
+        </div>
+        <div class="tm-stat-card">
+          <div class="tm-stat-label">Memory</div>
+          <div class="tm-stat-value mem" id="tmMemStat">--</div>
+        </div>
+        <div class="tm-stat-card">
+          <div class="tm-stat-label">Processes</div>
+          <div class="tm-stat-value proc" id="tmProcStat">--</div>
         </div>
       </div>
-      <input type="file" id="uploadInput" style="display:none" multiple onchange="uploadFiles(event)">
 
-      <!-- Path bar -->
-      <div class="ex-pathbar">
-        <div class="ex-back" onclick="navBack()" title="Back">←</div>
-        <input class="ex-path-input" id="exPath" placeholder="Path…" onkeydown="if(event.key==='Enter')navTo(this.value)">
-        <div class="ex-refresh" onclick="navTo(exCurPath)" title="Refresh">↺</div>
+      <!-- Controls -->
+      <div class="tm-controls">
+        <input type="text" class="tm-search" id="tmSearch" placeholder="🔍 Search processes..." onkeyup="filterProcesses()">
+        <button class="tm-sort-btn" id="sortCpuBtn" onclick="sortBy('cpu')">Sort CPU</button>
+        <button class="tm-sort-btn" id="sortMemBtn" onclick="sortBy('memory')">Sort MEM</button>
+        <button class="tm-refresh-btn" onclick="requestProcesses()" title="Refresh">↻</button>
       </div>
 
-      <!-- Drives -->
-      <div class="ex-drives" id="exDrives"></div>
-
-      <!-- Toolbar -->
-      <div class="ex-toolbar">
-        <button class="ex-btn primary" id="exDlBtn" disabled onclick="downloadSelected()">↓ Download</button>
-        <button class="ex-btn" onclick="document.getElementById('uploadInput').click()">↑ Upload</button>
-        <span class="ex-sel-info" id="exSelInfo">–</span>
+      <!-- Process Table -->
+      <div class="tm-table-container" id="tmTableContainer">
+        <div class="tm-loading">
+          <div class="spinner"></div>
+          <span>Loading processes...</span>
+        </div>
       </div>
 
-      <!-- File list -->
-      <div class="ex-filelist" id="exFilelist" style="position:relative">
-        <div class="ex-loading"><div class="spinner"></div>Waiting for client…</div>
+      <!-- Process Details -->
+      <div class="tm-details" id="tmDetails">
+        <div class="tm-details-title">Process Details</div>
+        <div class="tm-details-grid">
+          <div class="tm-detail-item">
+            <div class="tm-detail-label">Process ID</div>
+            <div class="tm-detail-value" id="detailPid">--</div>
+          </div>
+          <div class="tm-detail-item">
+            <div class="tm-detail-label">Name</div>
+            <div class="tm-detail-value" id="detailName">--</div>
+          </div>
+          <div class="tm-detail-item">
+            <div class="tm-detail-label">CPU Usage</div>
+            <div class="tm-detail-value" id="detailCpu">--</div>
+          </div>
+          <div class="tm-detail-item">
+            <div class="tm-detail-label">Memory Usage</div>
+            <div class="tm-detail-value" id="detailMem">--</div>
+          </div>
+          <div class="tm-detail-item">
+            <div class="tm-detail-label">Status</div>
+            <div class="tm-detail-value" id="detailStatus">--</div>
+          </div>
+          <div class="tm-detail-item">
+            <div class="tm-detail-label">Threads</div>
+            <div class="tm-detail-value" id="detailThreads">--</div>
+          </div>
+          <div class="tm-detail-item">
+            <div class="tm-detail-label">User</div>
+            <div class="tm-detail-value" id="detailUser">--</div>
+          </div>
+          <div class="tm-detail-item" style="grid-column: span 2;">
+            <div class="tm-detail-label">Executable Path</div>
+            <div class="tm-detail-value path" id="detailPath">--</div>
+          </div>
+        </div>
+        <div class="tm-details-actions">
+          <button class="tm-detail-btn" onclick="copyPath()">📋 Copy Path</button>
+          <button class="tm-detail-btn" onclick="openLocation()">📂 Open Location</button>
+          <button class="tm-detail-btn danger" onclick="endSelectedTask()">🔴 End Task</button>
+        </div>
       </div>
 
-      <!-- Transfer queue -->
-      <div class="ex-transfers" id="exTransfers">
-        <div class="ex-transfer-hdr">Transfers</div>
-        <div class="no-transfers" id="noTransfers">No active transfers</div>
-      </div>
-
-    </div><!-- /explorer-panel -->
+    </div><!-- /task-manager-panel -->
 
   </div><!-- /workspace -->
 
   <!-- OUTPUT LOG -->
   <div class="output-panel" id="output">
-    <div class="log info">[SYSTEM] Panel ready</div>
+    <div class="log info">[SYSTEM] Panel ready - Task Manager Edition</div>
   </div>
 
 </div><!-- /main -->
-
-<!-- ══ IMAGE VIEWER MODAL ══════════════════════════════ -->
-<div class="modal-overlay" id="imageViewerModal">
-  <div class="modal-content" style="width: 90vw;">
-    <div class="modal-header">
-      <div>
-        <span class="modal-title">🖼 IMAGE VIEWER</span>
-        <span class="modal-path" id="imageViewerPath"></span>
-      </div>
-      <button class="modal-close" onclick="closeImageViewer()">×</button>
-    </div>
-    <div class="modal-body">
-      <div class="image-viewer-container">
-        <img id="imageViewerImg" class="image-viewer-img" alt="Preview">
-      </div>
-      <div class="image-info" id="imageViewerInfo"></div>
-    </div>
-  </div>
-</div>
-
-<!-- ══ TEXT EDITOR MODAL ═══════════════════════════════ -->
-<div class="modal-overlay" id="textEditorModal">
-  <div class="modal-content" style="width: 90vw;">
-    <div class="modal-header">
-      <div>
-        <span class="modal-title">📝 TEXT EDITOR</span>
-        <span class="modal-path" id="textEditorPath"></span>
-      </div>
-      <button class="modal-close" onclick="closeTextEditor()">×</button>
-    </div>
-    <div class="modal-body">
-      <div class="text-editor-container">
-        <div class="text-editor-toolbar">
-          <div class="text-editor-info">
-            <span id="editorFileSize"></span>
-            <span id="editorLines"></span>
-            <span id="editorModified" style="color: var(--yellow); display: none;">● Modified</span>
-          </div>
-          <div class="text-editor-actions">
-            <button class="editor-btn" onclick="reloadTextFile()">🔄 Reload</button>
-            <button class="editor-btn save" onclick="saveTextFile()" id="saveBtn">💾 Save</button>
-          </div>
-        </div>
-        <div class="text-editor-area">
-          <textarea id="textEditorTextarea" class="text-editor-textarea" spellcheck="false"></textarea>
-        </div>
-        <div class="editor-status" id="editorStatus">Ready</div>
-      </div>
-    </div>
-  </div>
-</div>
 
 <script>
 // ════════════════════════════════════════════════════════════
 //  STATE
 // ════════════════════════════════════════════════════════════
-let selClient    = null;
-let isStreaming  = false;
-let frameCount   = 0;
-let fpsTimer     = null;
-let lastFrameTs  = 0;
-let exOpen       = false;
-let exCurPath    = '.';
-let exHistory    = [];
-let exSelected   = new Set();
-let exItems      = [];
-let activeXfers  = {};       // tid → { el, fill, msg, dl, chunks, total }
-const CHUNK      = 512*1024; // 512KB
+let ws               = null;
+let selClient        = null;
+let isStreaming      = false;
+let frameCount       = 0;
+let fpsTimer         = null;
+let lastFrameTs      = 0;
+let tmOpen           = false;
+let processes        = [];
+let selectedProcess  = null;
+let sortField        = 'cpu';
+let sortDirection    = 'desc';
 
 // ════════════════════════════════════════════════════════════
-//  WEBSOCKET
+//  WEBSOCKET CONNECTION
 // ════════════════════════════════════════════════════════════
-const ws = new WebSocket(
-  (location.protocol==='https:'?'wss:':'ws:') + '//' + location.host + '/ws/admin'
-);
+function connectWS() {
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const url = `${proto}//${location.host}/ws/admin`;
+  
+  log('Connecting to WebSocket...', 'info');
+  ws = new WebSocket(url);
 
-const $sdot   = document.getElementById('sdot');
-const $stxt   = document.getElementById('stxt');
-const $stream = document.getElementById('streamBtn');
-const $live   = document.getElementById('liveBadge');
-const $fps    = document.getElementById('fpsBadge');
-const $lat    = document.getElementById('latBadge');
-const $img    = document.getElementById('screenImg');
-const $ph     = document.getElementById('placeholder');
-const $out    = document.getElementById('output');
+  ws.onopen = () => {
+    log('Connected to server', 'result');
+    updateStatus('connected', 'Connected');
+  };
 
-ws.onopen = () => { $sdot.classList.add('on'); $stxt.textContent='Connected'; log('Connected','info'); };
-ws.onclose= () => { $sdot.classList.remove('on'); $stxt.textContent='Disconnected'; _stopStream(false); log('Disconnected','error'); };
+  ws.onmessage = (event) => {
+    try {
+      const msg = JSON.parse(event.data);
+      handleMessage(msg);
+    } catch (e) {
+      console.error('Parse error:', e);
+    }
+  };
 
-ws.onmessage = ({data}) => {
-  let msg; try { msg=JSON.parse(data); } catch { return; }
-  const {type, client_id} = msg;
+  ws.onerror = (err) => {
+    log('WebSocket error', 'error');
+    console.error(err);
+  };
 
-  if (type==='clients')         { renderClients(msg.clients); return; }
-  if (type==='client_info' && client_id===selClient) {
-    const s=msg.sysinfo||{}; log(`[#${client_id}] ${s.platform} CPU:${s.cpu_percent}% RAM:${s.memory_percent}%`,'info'); return;
-  }
-  if (type==='stream_frame' && client_id===selClient) {
-    const now=performance.now();
-    if(lastFrameTs) $lat.textContent=Math.round(now-lastFrameTs)+'ms';
-    lastFrameTs=now; frameCount++;
-    $img.src='data:image/jpeg;base64,'+msg.image; showScreen(); return;
-  }
-  if (type==='screenshot' && client_id===selClient) {
-    $img.src='data:image/jpeg;base64,'+msg.image; showScreen(); log(`Snapshot received`,'info'); return;
-  }
-  if (type==='command_result' && client_id===selClient) { log(msg.output,'result'); return; }
-  if (type==='stream_stopped'  && client_id===selClient) { _stopStream(false); log(`Stream stopped: ${msg.reason}`,'error'); return; }
-
-  // ── Explorer ─────────────────────────────────────────────
-  if (type==='directory_list') { renderDir(msg.data); return; }
-  if (type==='drives_list')    { renderDrives(msg.data); return; }
-  if (type==='file_content')   { handleFileContent(msg); return; }
-  if (type==='write_file_result') { handleWriteFileResult(msg); return; }
-
-  // ── File transfers ────────────────────────────────────────
-  if (type==='folder_transfer_start') { onFolderStart(msg); return; }
-  if (type==='folder_transfer_done')  { onFolderDone(msg);  return; }
-  if (type==='file_transfer_start')   { onXferStart(msg);   return; }
-  if (type==='file_chunk')            { onXferChunk(msg);   return; }
-  if (type==='file_transfer_done')    { onXferDone(msg);    return; }
-  if (type==='file_transfer_error')   { onXferError(msg);   return; }
-  if (type==='file_transfer_progress'){ onXferProgress(msg);return; }
-  if (type==='file_save_result')      { onSaveResult(msg);  return; }
-};
+  ws.onclose = () => {
+    log('Disconnected. Reconnecting in 3s...', 'warn');
+    updateStatus('disconnected', 'Disconnected');
+    setTimeout(connectWS, 3000);
+  };
+}
 
 // ════════════════════════════════════════════════════════════
-//  CLIENTS
+//  MESSAGE HANDLER
+// ════════════════════════════════════════════════════════════
+function handleMessage(msg) {
+  switch (msg.type) {
+    case 'clients':
+      renderClients(msg.clients);
+      break;
+
+    case 'stream_frame':
+      if (msg.client_id === selClient && isStreaming) {
+        handleStreamFrame(msg);
+      }
+      break;
+
+    case 'screenshot':
+      if (msg.client_id === selClient) {
+        showScreenshot(msg.image);
+        log(`Screenshot received from ${msg.client_id}`, 'result');
+      }
+      break;
+
+    case 'command_result':
+      if (msg.client_id === selClient) {
+        log(`Command output:\n${msg.output}`, 'result');
+      }
+      break;
+
+    case 'processes':
+      if (msg.client_id === selClient) {
+        handleProcessesData(msg.data);
+      }
+      break;
+
+    case 'kill_result':
+      if (msg.client_id === selClient) {
+        log(`Kill process: ${msg.result}`, msg.result.includes('ERROR') ? 'error' : 'result');
+        // Refresh processes after kill
+        setTimeout(() => requestProcesses(), 500);
+      }
+      break;
+
+    case 'sysinfo':
+      if (msg.client_id === selClient && msg.data) {
+        updateSysStats(msg.data);
+      }
+      break;
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+//  CLIENT LIST
 // ════════════════════════════════════════════════════════════
 function renderClients(clients) {
-  const el = document.getElementById('clientList');
-  if (!clients.length) {
-    el.innerHTML='<div class="no-clients">No clients online</div>';
-    if (selClient && !clients.includes(selClient)) { selClient=null; _stopStream(false); hideScreen(); }
+  const list = document.getElementById('clientList');
+  
+  if (!clients || clients.length === 0) {
+    list.innerHTML = '<div class="no-clients">No clients online</div>';
     return;
   }
-  el.innerHTML='';
-  clients.forEach(id => {
-    const d=document.createElement('div');
-    d.className='client-item'+(id===selClient?' active':'');
-    d.innerHTML=`<div class="cdot"></div>#${id}`;
-    d.onclick=()=>selectClient(id);
-    el.appendChild(d);
-  });
+
+  list.innerHTML = clients.map(id => `
+    <div class="client-item ${id === selClient ? 'active' : ''}" onclick="selectClient('${id}')">
+      <div class="cdot"></div>
+      <span>${id}</span>
+    </div>
+  `).join('');
 }
 
 function selectClient(id) {
-  if(id===selClient) return;
-  if(isStreaming && selClient) ws.send(JSON.stringify({type:'stop_stream',client_id:selClient}));
-  isStreaming=false;
-  selClient=id;
-  document.querySelectorAll('.client-item').forEach(e=>e.classList.toggle('active',e.textContent.trim()==='#'+id));
-  log(`[#${id}] Selected`,'info');
-  if(exOpen) { reqDrives(); navTo('.'); }
-  startStream();
+  if (selClient === id) return;
+  
+  // Stop streaming from old client
+  if (isStreaming) {
+    stopStream();
+  }
+
+  selClient = id;
+  log(`Selected client: ${id}`, 'info');
+  
+  // Update UI
+  renderClients(document.querySelectorAll('.client-item').length > 0 ? 
+    Array.from(document.querySelectorAll('.client-item')).map(el => el.textContent.trim()) : []);
+  
+  // Show placeholder
+  document.getElementById('placeholder').style.display = 'flex';
+  document.getElementById('screenImg').classList.remove('show');
+  
+  // Request initial data if task manager is open
+  if (tmOpen) {
+    requestProcesses();
+  }
 }
 
 // ════════════════════════════════════════════════════════════
-//  STREAM
+//  STREAMING
 // ════════════════════════════════════════════════════════════
-function toggleStream() { isStreaming ? _stopStream(true) : startStream(); }
+function toggleStream() {
+  if (!selClient) {
+    log('Please select a client first', 'warn');
+    return;
+  }
+
+  if (isStreaming) {
+    stopStream();
+  } else {
+    startStream();
+  }
+}
 
 function startStream() {
-  if(!selClient||isStreaming) return;
-  ws.send(JSON.stringify({type:'start_stream',client_id:selClient}));
-  isStreaming=true; frameCount=0; lastFrameTs=0;
-  $stream.textContent='⏹ Stop'; $stream.className='btn active-stream';
-  $live.classList.add('show');
-  fpsTimer=setInterval(()=>{
-    const f=frameCount; frameCount=0;
-    $fps.textContent=f+' FPS';
-    $fps.className='stat-badge '+(f>=15?'good':f>=8?'mid':'low');
-  },1000);
-  log(`[STREAM] → #${selClient}`,'info');
+  if (!ws || ws.readyState !== WebSocket.OPEN) {
+    log('WebSocket not connected', 'error');
+    return;
+  }
+
+  ws.send(JSON.stringify({
+    type: 'start_stream',
+    client_id: selClient
+  }));
+
+  isStreaming = true;
+  frameCount = 0;
+  
+  // Update UI
+  document.getElementById('streamBtn').classList.add('active-stream');
+  document.getElementById('streamBtn').textContent = '■ Stop';
+  document.getElementById('liveBadge').classList.add('show');
+  document.getElementById('placeholder').style.display = 'none';
+  
+  // Start FPS counter
+  fpsTimer = setInterval(updateFPS, 1000);
+  
+  log(`Streaming started from ${selClient}`, 'result');
 }
 
-function _stopStream(send) {
-  if(send && selClient) try{ws.send(JSON.stringify({type:'stop_stream',client_id:selClient}));}catch{}
-  isStreaming=false; clearInterval(fpsTimer); fpsTimer=null; frameCount=0;
-  $stream.textContent='▶ Stream'; $stream.className='btn primary';
-  $live.classList.remove('show');
-  $fps.textContent='-- FPS'; $fps.className='stat-badge';
-  $lat.textContent='-- ms';
+function stopStream() {
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+  ws.send(JSON.stringify({
+    type: 'stop_stream',
+    client_id: selClient
+  }));
+
+  isStreaming = false;
+  
+  // Update UI
+  document.getElementById('streamBtn').classList.remove('active-stream');
+  document.getElementById('streamBtn').textContent = '▶ Stream';
+  document.getElementById('liveBadge').classList.remove('show');
+  
+  // Stop FPS counter
+  if (fpsTimer) {
+    clearInterval(fpsTimer);
+    fpsTimer = null;
+  }
+  
+  log('Streaming stopped', 'info');
 }
 
+function handleStreamFrame(msg) {
+  const img = document.getElementById('screenImg');
+  img.src = 'data:image/jpeg;base64,' + msg.image;
+  img.classList.add('show');
+  
+  frameCount++;
+  lastFrameTs = Date.now();
+  
+  // Update latency
+  if (msg.ts) {
+    const latency = Date.now() - msg.ts;
+    updateLatency(latency);
+  }
+}
+
+function updateFPS() {
+  const badge = document.getElementById('fpsBadge');
+  badge.textContent = `${frameCount} FPS`;
+  
+  if (frameCount > 15) {
+    badge.className = 'stat-badge good';
+  } else if (frameCount > 8) {
+    badge.className = 'stat-badge mid';
+  } else {
+    badge.className = 'stat-badge low';
+  }
+  
+  frameCount = 0;
+}
+
+function updateLatency(ms) {
+  const badge = document.getElementById('latBadge');
+  badge.textContent = `${ms} ms`;
+  
+  if (ms < 100) {
+    badge.className = 'stat-badge good';
+  } else if (ms < 200) {
+    badge.className = 'stat-badge mid';
+  } else {
+    badge.className = 'stat-badge low';
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+//  SCREENSHOT
+// ════════════════════════════════════════════════════════════
 function reqScreenshot() {
-  if(!selClient){log('Select a client','error');return;}
-  ws.send(JSON.stringify({type:'request_screenshot',client_id:selClient}));
+  if (!selClient) {
+    log('Please select a client first', 'warn');
+    return;
+  }
+
+  if (!ws || ws.readyState !== WebSocket.OPEN) {
+    log('WebSocket not connected', 'error');
+    return;
+  }
+
+  ws.send(JSON.stringify({
+    type: 'request_screenshot',
+    client_id: selClient,
+    quality: 85
+  }));
+
+  log('Requesting screenshot...', 'info');
 }
 
+function showScreenshot(imageData) {
+  const img = document.getElementById('screenImg');
+  img.src = 'data:image/jpeg;base64,' + imageData;
+  img.classList.add('show');
+  document.getElementById('placeholder').style.display = 'none';
+}
+
+// ════════════════════════════════════════════════════════════
+//  COMMAND EXECUTION
+// ════════════════════════════════════════════════════════════
 function sendCmd() {
-  if(!selClient){log('Select a client','error');return;}
-  const v=document.getElementById('cmdInput').value.trim(); if(!v) return;
-  ws.send(JSON.stringify({type:'command',client_id:selClient,command:v}));
-  log('$ '+v,'log');
-  document.getElementById('cmdInput').value='';
-}
-
-function showScreen() { $img.classList.add('show'); $ph.style.display='none'; }
-function hideScreen() { $img.classList.remove('show'); $ph.style.display='flex'; }
-
-// ════════════════════════════════════════════════════════════
-//  EXPLORER PANEL
-// ════════════════════════════════════════════════════════════
-function toggleExplorer() {
-  exOpen=!exOpen;
-  document.getElementById('explorerPanel').classList.toggle('open',exOpen);
-  document.getElementById('filesBtn').classList.toggle('files-active',exOpen);
-  if(exOpen && selClient) { reqDrives(); navTo(exCurPath); }
-}
-
-function reqDrives() {
-  if(!selClient) return;
-  ws.send(JSON.stringify({type:'get_drives',client_id:selClient}));
-}
-
-function navTo(path) {
-  if(!selClient) return;
-  if(path!==exCurPath) exHistory.push(exCurPath);
-  exCurPath=path;
-  exSelected.clear(); updateSel();
-  document.getElementById('exPath').value=path;
-  document.getElementById('exFilelist').innerHTML='<div class="ex-loading"><div class="spinner"></div>Loading…</div>';
-  ws.send(JSON.stringify({type:'list_directory',client_id:selClient,path}));
-}
-
-function navBack() { if(exHistory.length) navTo(exHistory.pop()); }
-
-function renderDrives(drives=[]) {
-  document.getElementById('exDrives').innerHTML = drives.map(d=>
-    `<button class="ex-drive-pill" onclick="navTo('${esc(d.path)}')">${d.name}</button>`
-  ).join('');
-}
-
-function renderDir(data) {
-  if(!data) return;
-  const items = data.items || [];
-  const path  = data.path  || exCurPath;
-  exCurPath=path; exItems=items;
-  exSelected.clear(); updateSel();
-  document.getElementById('exPath').value=path;
-
-  if(data.error) {
-    document.getElementById('exFilelist').innerHTML=
-      `<div style="color:var(--red);padding:16px;font-size:12px">⚠ ${data.error}</div>`;
+  const input = document.getElementById('cmdInput');
+  const cmd = input.value.trim();
+  
+  if (!cmd) return;
+  if (!selClient) {
+    log('Please select a client first', 'warn');
     return;
   }
 
-  const rows = items.map(item => {
-    const isDir   = item.type==='dir';
-    const isPar   = item.type==='parent';
-    const icon    = isPar?'↩':isDir?'📁':fileIcon(item.ext||'');
-    const nc      = isPar?'parent':isDir?'dir':'';
-    const size    = isPar?'':isDir?`${item.size} items`:fmtSize(item.size);
-    return `<div class="ex-row" data-path="${esc(item.path)}" data-type="${item.type}"
-               ondblclick="rowDbl(this)" onclick="rowClick(this,event)">
-      <div class="ex-row-icon">${icon}</div>
-      <div class="ex-row-name ${nc}" title="${esc(item.name)}">${esc(item.name)}</div>
-      <div class="ex-row-size">${size}</div>
-    </div>`;
-  }).join('');
+  if (!ws || ws.readyState !== WebSocket.OPEN) {
+    log('WebSocket not connected', 'error');
+    return;
+  }
 
-  document.getElementById('exFilelist').innerHTML = rows ||
-    '<div style="color:var(--muted);padding:20px;font-size:12px;text-align:center">Empty folder</div>';
+  ws.send(JSON.stringify({
+    type: 'command',
+    client_id: selClient,
+    command: cmd
+  }));
+
+  log(`Executing: ${cmd}`, 'info');
+  input.value = '';
 }
 
-function rowDbl(el) {
-  const {type, path} = el.dataset;
-  if(type==='dir'||type==='parent') {
-    navTo(path);
-  } else {
-    // Check file extension to decide action
-    const ext = path.substring(path.lastIndexOf('.')).toLowerCase();
+// ════════════════════════════════════════════════════════════
+//  TASK MANAGER
+// ════════════════════════════════════════════════════════════
+function toggleTaskManager() {
+  tmOpen = !tmOpen;
+  const panel = document.getElementById('taskManagerPanel');
+  const btn = document.getElementById('taskBtn');
+  
+  if (tmOpen) {
+    panel.classList.add('open');
+    btn.classList.add('task-active');
     
-    // Text files - open in editor
-    const textExts = ['.txt', '.py', '.js', '.html', '.css', '.json', '.xml', '.md', 
-                      '.log', '.csv', '.ini', '.yaml', '.yml', '.sh', '.bat', '.c', 
-                      '.cpp', '.java', '.php', '.rb', '.go', '.rs', '.ts', '.jsx', 
-                      '.tsx', '.vue', '.sql', '.conf', '.cfg'];
-    
-    // Image files - open in viewer
-    const imageExts = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg', '.ico'];
-    
-    if (textExts.includes(ext) || imageExts.includes(ext)) {
-      // Request file content from client
-      ws.send(JSON.stringify({
-        type: 'read_file',
-        client_id: selClient,
-        path: path
-      }));
-      log(`📂 Opening: ${path.split(/[\\/]/).pop()}`, 'info');
-    } else {
-      // Other files - download
-      exSelected.clear(); 
-      exSelected.add(path); 
-      updateSel(); 
-      downloadSelected();
+    if (selClient) {
+      requestProcesses();
+      requestSysInfo();
     }
-  }
-}
-
-function rowClick(el, e) {
-  const {path, type} = el.dataset;
-  if(type==='parent') return;
-  if(e.ctrlKey||e.metaKey) { exSelected.has(path)?exSelected.delete(path):exSelected.add(path); }
-  else if(e.shiftKey && exSelected.size) {
-    const rows=[...document.querySelectorAll('.ex-row')];
-    const a=rows.indexOf(el), b=rows.findIndex(r=>exSelected.has(r.dataset.path));
-    for(let i=Math.min(a,b);i<=Math.max(a,b);i++) if(rows[i].dataset.path) exSelected.add(rows[i].dataset.path);
-  } else { exSelected.clear(); exSelected.add(path); }
-  document.querySelectorAll('.ex-row').forEach(r=>r.classList.toggle('selected',exSelected.has(r.dataset.path)));
-  updateSel();
-}
-
-function updateSel() {
-  const n=exSelected.size;
-  document.getElementById('exSelInfo').textContent=n?`${n} selected`:'–';
-  document.getElementById('exDlBtn').disabled=!n;
-}
-
-// ── Download: Client → Admin ───────────────────────────────
-function downloadSelected() {
-  if(!exSelected.size||!selClient) return;
-  exSelected.forEach(path=>{
-    const tid=randId();
-    const name=path.split(/[\\/]/).pop();
-    mkXferItem(tid, name, null, 'down');
-    ws.send(JSON.stringify({type:'request_file_upload',client_id:selClient,path,transfer_id:tid}));
-    log(`↓ Fetching: ${path}`,'info');
-  });
-}
-
-// ── Upload: Admin → Client (into current explorer dir) ─────
-async function uploadFiles(e) {
-  const files=[...e.target.files]; e.target.value='';
-  if(!files.length||!selClient) return;
-  for(const file of files) await sendOneFile(file, exCurPath);
-}
-
-async function sendOneFile(file, saveDir) {
-  const tid=randId();
-  const total=Math.ceil(file.size/CHUNK)||1;
-  mkXferItem(tid, file.name, file.size, 'up');
-  ws.send(JSON.stringify({type:'send_file_to_client',client_id:selClient,transfer_id:tid,
-    filename:file.name,file_size:file.size,total_chunks:total,save_dir:saveDir}));
-  for(let i=0;i<total;i++){
-    const b64=await readB64(file.slice(i*CHUNK,(i+1)*CHUNK));
-    ws.send(JSON.stringify({type:'send_chunk_to_client',client_id:selClient,transfer_id:tid,
-      chunk_idx:i,total_chunks:total,data:b64}));
-    xferProgress(tid,i+1,total);
-    await tick();
-  }
-  ws.send(JSON.stringify({type:'finish_file_to_client',client_id:selClient,transfer_id:tid,
-    filename:file.name,file_size:file.size}));
-  log(`↑ Sent: ${file.name} → ${saveDir}`,'info');
-}
-
-// ── Drag & drop onto viewer → upload to current dir ─────────
-function onViewerDragOver(e) {
-  if(!exOpen||!selClient) return;
-  e.preventDefault();
-  document.getElementById('dropOverlay').classList.add('show');
-  document.getElementById('dropOverlay').textContent=`Drop to upload → ${exCurPath}`;
-}
-function onViewerDragLeave() { document.getElementById('dropOverlay').classList.remove('show'); }
-function onViewerDrop(e) {
-  e.preventDefault();
-  document.getElementById('dropOverlay').classList.remove('show');
-  if(!exOpen||!selClient) return;
-  [...(e.dataTransfer.files||[])].forEach(f=>sendOneFile(f,exCurPath));
-}
-
-// ════════════════════════════════════════════════════════════
-//  TRANSFER HANDLERS (incoming from server)
-// ════════════════════════════════════════════════════════════
-function onFolderStart(msg) {
-  // folder_transfer_start — tạo 1 item đại diện cho cả folder
-  const {transfer_id:tid, folder_name, total_files} = msg;
-  mkXferItem(tid, `📁 ${folder_name}/`, null, 'down', `0/${total_files} files`);
-}
-
-function onFolderDone(msg) {
-  const {transfer_id:tid, folder_name, total_files} = msg;
-  const x=activeXfers[tid];
-  if(!x) return;
-  setXferDone(tid);
-  x.msg.textContent=`${total_files} files received`;
-  // Tạo download link cho folder — chỉ available qua server endpoint
-  x.dl.href=`/download_folder/${tid}`;
-  x.dl.textContent='⬇ Download zip';
-  x.dl.classList.add('show');
-  log(`↓ Folder done: ${folder_name} (${total_files} files)`,'result');
-  // Refresh explorer nếu đang mở
-  if(exOpen) setTimeout(()=>navTo(exCurPath), 800);
-}
-
-function onXferStart(msg) {
-  const {transfer_id:tid, filename, file_size, total_chunks, total_files, file_index, is_folder} = msg;
-  if(is_folder && activeXfers[tid]) {
-    // Cập nhật progress item folder đã có
-    const x=activeXfers[tid];
-    const fi=file_index+1;
-    x.msg.textContent=`[${fi}/${total_files}] ${filename.split(/[\\/]/).pop()}`;
-    x.fill.style.width='0%';
-    // track chunk state riêng cho file hiện tại
-    x.curChunks=0; x.curTotal=total_chunks;
-    return;
-  }
-  // File đơn
-  if(!activeXfers[tid]) mkXferItem(tid, filename, file_size, 'down');
-  const x=activeXfers[tid];
-  if(x){ x.total=total_chunks; x.chunks=0; }
-}
-
-function onXferChunk(msg) {
-  const {transfer_id:tid, chunk_idx, total_chunks} = msg;
-  const x=activeXfers[tid]; if(!x) return;
-  if(x.curTotal!=null) {
-    // folder mode: progress per file
-    x.curChunks=(x.curChunks||0)+1;
-    xferProgress(tid, x.curChunks, x.curTotal);
   } else {
-    x.chunks=(x.chunks||0)+1;
-    xferProgress(tid, x.chunks, x.total||total_chunks);
+    panel.classList.remove('open');
+    btn.classList.remove('task-active');
   }
 }
 
-function onXferDone(msg) {
-  const {transfer_id:tid, filename, file_index, total_files, is_folder} = msg;
-  if(is_folder) return; // folder done xử lý bởi onFolderDone
-  setXferDone(tid);
-  const x=activeXfers[tid]; if(!x) return;
-  x.dl.href=`/download/${tid}`;
-  x.dl.textContent='⬇ Download';
-  x.dl.classList.add('show');
-  log(`↓ Ready: ${filename}`,'result');
-}
-
-function onXferError(msg) {
-  const {transfer_id:tid, error} = msg;
-  const x=activeXfers[tid]; if(!x) return;
-  x.fill.classList.add('err'); x.fill.style.width='100%';
-  x.msg.textContent='✕ '+error;
-  x.msg.style.color='var(--red)';
-  log(`Transfer error: ${error}`,'error');
-}
-
-function onXferProgress(msg) {
-  const {transfer_id:tid} = msg;
-  const x=activeXfers[tid]; if(!x) return;
-  x.msg.textContent=msg.message||'…';
-}
-
-function onSaveResult(msg) {
-  const {transfer_id:tid, path, error} = msg;
-  const x=activeXfers[tid];
-  if(x){ if(error){x.fill.classList.add('err');x.msg.textContent='✕ '+error;}else{setXferDone(tid);x.msg.textContent='Saved: '+path;} }
-  if(error) log(`Save error: ${error}`,'error');
-  else { log(`↑ Saved: ${path}`,'result'); if(exOpen) setTimeout(()=>navTo(exCurPath),600); }
-}
-
-// ════════════════════════════════════════════════════════════
-//  TRANSFER UI HELPERS
-// ════════════════════════════════════════════════════════════
-function mkXferItem(tid, name, size, dir, initMsg='') {
-  document.getElementById('noTransfers')?.remove();
-  const el=document.createElement('div'); el.className='transfer-item'; el.id='xfer-'+tid;
-  el.innerHTML=`
-    <div class="t-row">
-      <span class="t-name" title="${esc(name)}">${dir==='up'?'↑':'↓'} ${esc(name)}</span>
-      <span class="t-size">${size!=null?fmtSize(size):''}</span>
-    </div>
-    <div class="t-bar"><div class="t-fill" id="fill-${tid}"></div></div>
-    <div class="t-status">
-      <span class="t-msg" id="msg-${tid}">${initMsg||'Starting…'}</span>
-      <a class="t-dl" id="dl-${tid}" target="_blank"></a>
-    </div>`;
-  document.getElementById('exTransfers').appendChild(el);
-  activeXfers[tid]={
-    el, fill:document.getElementById('fill-'+tid),
-    msg:document.getElementById('msg-'+tid),
-    dl:document.getElementById('dl-'+tid),
-    chunks:0, total:0
-  };
-}
-
-function xferProgress(tid, done, total) {
-  const x=activeXfers[tid]; if(!x||!total) return;
-  const pct=Math.round(done/total*100);
-  x.fill.style.width=pct+'%';
-  if(!x.curTotal) x.msg.textContent=pct+'%'; // solo file
-}
-
-function setXferDone(tid) {
-  const x=activeXfers[tid]; if(!x) return;
-  x.fill.style.width='100%'; x.fill.classList.add('done');
-}
-
-// ════════════════════════════════════════════════════════════
-//  UTILS
-// ════════════════════════════════════════════════════════════
-function fileIcon(ext) {
-  const m={
-    '.exe':'⚙','.dll':'⚙','.bat':'⚙','.sh':'⚙',
-    '.zip':'🗜','.rar':'🗜','.7z':'🗜','.tar':'🗜','.gz':'🗜',
-    '.jpg':'🖼','.jpeg':'🖼','.png':'🖼','.gif':'🖼','.bmp':'🖼','.svg':'🖼','.webp':'🖼',
-    '.mp4':'🎬','.mkv':'🎬','.avi':'🎬','.mov':'🎬',
-    '.mp3':'🎵','.wav':'🎵','.flac':'🎵','.aac':'🎵',
-    '.pdf':'📄','.doc':'📝','.docx':'📝','.xls':'📊','.xlsx':'📊',
-    '.txt':'📃','.log':'📃','.md':'📃',
-    '.py':'🐍','.js':'📜','.ts':'📜','.html':'🌐','.css':'🎨',
-    '.json':'📋','.xml':'📋','.csv':'📊',
-    '.db':'🗄','.sqlite':'🗄','.sql':'🗄',
-  };
-  return m[ext]||'📄';
-}
-
-function fmtSize(b) {
-  if(b==null||b==='') return '';
-  if(b<1024) return b+' B';
-  if(b<1048576) return (b/1024).toFixed(1)+' KB';
-  return (b/1048576).toFixed(2)+' MB';
-}
-
-function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-function randId() { return Math.random().toString(36).slice(2,10); }
-
-function readB64(blob) {
-  return new Promise((res,rej)=>{
-    const r=new FileReader();
-    r.onload=()=>res(r.result.split(',')[1]);
-    r.onerror=rej; r.readAsDataURL(blob);
-  });
-}
-
-function tick() { return new Promise(r=>setTimeout(r,0)); }
-
-function log(msg, cls='') {
-  const ts=document.createElement('div'); ts.className='log ts';
-  ts.textContent=new Date().toLocaleTimeString();
-  const el=document.createElement('div'); el.className='log '+cls;
-  el.textContent=msg;
-  $out.append(ts,el); $out.scrollTop=$out.scrollHeight;
-  while($out.children.length>300) $out.removeChild($out.firstChild);
-}
-
-// ════════════════════════════════════════════════════════════
-//  IMAGE VIEWER & TEXT EDITOR
-// ════════════════════════════════════════════════════════════
-
-let currentFilePath = null;
-let currentFileContent = null;
-let isTextModified = false;
-
-// Handle file content received from client
-function handleFileContent(msg) {
-  const data = msg.data;
-  const path = msg.path;
-  
-  if (!data) {
-    log('Failed to read file', 'error');
+function requestProcesses() {
+  if (!selClient) {
+    log('Please select a client first', 'warn');
     return;
   }
-  
+
+  if (!ws || ws.readyState !== WebSocket.OPEN) {
+    log('WebSocket not connected', 'error');
+    return;
+  }
+
+  ws.send(JSON.stringify({
+    type: 'request_processes',
+    client_id: selClient
+  }));
+
+  log('Requesting process list...', 'info');
+}
+
+function requestSysInfo() {
+  if (!selClient || !ws || ws.readyState !== WebSocket.OPEN) return;
+
+  ws.send(JSON.stringify({
+    type: 'request_sysinfo',
+    client_id: selClient
+  }));
+}
+
+function handleProcessesData(data) {
   if (data.error) {
-    log(`File error: ${data.error}`, 'error');
+    log(`Error loading processes: ${data.error}`, 'error');
+    showEmptyState('Error loading processes');
     return;
   }
-  
-  currentFilePath = path;
-  
-  // Image file
-  if (data.type === 'image') {
-    const ext = data.extension || '';
-    const mimeMap = {
-      '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
-      '.png': 'image/png', '.gif': 'image/gif',
-      '.bmp': 'image/bmp', '.webp': 'image/webp',
-      '.svg': 'image/svg+xml', '.ico': 'image/x-icon'
-    };
-    const mime = mimeMap[ext] || 'image/jpeg';
-    openImageViewer(path, data.content, mime);
-  }
-  // Text file
-  else if (data.type === 'text') {
-    openTextEditor(path, data.content, data.size);
-  }
-}
 
-// Image Viewer functions
-function openImageViewer(path, base64Data, mimeType) {
-  document.getElementById('imageViewerPath').textContent = path;
-  const img = document.getElementById('imageViewerImg');
-  img.src = `data:${mimeType};base64,${base64Data}`;
-  
-  img.onload = () => {
-    const info = document.getElementById('imageViewerInfo');
-    info.textContent = `${img.naturalWidth} × ${img.naturalHeight} px`;
-  };
-  
-  document.getElementById('imageViewerModal').classList.add('show');
-  log(`📷 Opened image: ${path.split(/[\\/]/).pop()}`, 'info');
-}
-
-function closeImageViewer() {
-  document.getElementById('imageViewerModal').classList.remove('show');
-  document.getElementById('imageViewerImg').src = '';
-}
-
-// Text Editor functions
-function openTextEditor(path, content, size) {
-  currentFileContent = content;
-  isTextModified = false;
-  
-  document.getElementById('textEditorPath').textContent = path;
-  document.getElementById('textEditorTextarea').value = content;
-  document.getElementById('editorFileSize').textContent = `Size: ${fmtSize(size)}`;
-  
-  const lines = content.split('\n').length;
-  document.getElementById('editorLines').textContent = `Lines: ${lines}`;
-  document.getElementById('editorModified').style.display = 'none';
-  document.getElementById('editorStatus').textContent = 'Ready';
-  
-  document.getElementById('textEditorModal').classList.add('show');
-  log(`📝 Opened file: ${path.split(/[\\/]/).pop()}`, 'info');
-  
-  // Track changes
-  const textarea = document.getElementById('textEditorTextarea');
-  textarea.oninput = () => {
-    isTextModified = (textarea.value !== currentFileContent);
-    document.getElementById('editorModified').style.display = isTextModified ? 'inline' : 'none';
-    const newLines = textarea.value.split('\n').length;
-    document.getElementById('editorLines').textContent = `Lines: ${newLines}`;
-  };
-}
-
-function closeTextEditor() {
-  if (isTextModified) {
-    if (!confirm('You have unsaved changes. Close anyway?')) {
-      return;
-    }
-  }
-  document.getElementById('textEditorModal').classList.remove('show');
-  document.getElementById('textEditorTextarea').value = '';
-  currentFilePath = null;
-  currentFileContent = null;
-  isTextModified = false;
-}
-
-function reloadTextFile() {
-  if (!currentFilePath || !selClient) return;
-  
-  if (isTextModified && !confirm('Discard your changes?')) {
+  if (!Array.isArray(data)) {
+    log('Invalid process data received', 'error');
     return;
   }
+
+  processes = data;
+  log(`Loaded ${processes.length} processes`, 'result');
   
-  ws.send(JSON.stringify({
-    type: 'read_file',
-    client_id: selClient,
-    path: currentFilePath
-  }));
-  document.getElementById('editorStatus').textContent = 'Reloading...';
+  // Update process count
+  document.getElementById('tmProcStat').textContent = processes.length;
+  
+  // Calculate average CPU
+  const avgCpu = processes.reduce((sum, p) => sum + (p.cpu || 0), 0) / processes.length;
+  document.getElementById('tmCpuStat').textContent = avgCpu.toFixed(1) + '%';
+  
+  // Calculate average Memory
+  const avgMem = processes.reduce((sum, p) => sum + (p.memory || 0), 0) / processes.length;
+  document.getElementById('tmMemStat').textContent = avgMem.toFixed(1) + '%';
+  
+  renderProcessTable();
 }
 
-function saveTextFile() {
-  if (!currentFilePath || !selClient) return;
-  
-  const content = document.getElementById('textEditorTextarea').value;
-  document.getElementById('saveBtn').disabled = true;
-  document.getElementById('editorStatus').textContent = 'Saving...';
-  
-  ws.send(JSON.stringify({
-    type: 'write_file',
-    client_id: selClient,
-    path: currentFilePath,
-    content: content
-  }));
+function updateSysStats(sysinfo) {
+  if (sysinfo.cpu_percent !== undefined) {
+    document.getElementById('tmCpuStat').textContent = sysinfo.cpu_percent.toFixed(1) + '%';
+  }
+  if (sysinfo.memory_percent !== undefined) {
+    document.getElementById('tmMemStat').textContent = sysinfo.memory_percent.toFixed(1) + '%';
+  }
 }
 
-function handleWriteFileResult(msg) {
-  document.getElementById('saveBtn').disabled = false;
+function renderProcessTable() {
+  const container = document.getElementById('tmTableContainer');
   
-  if (msg.success) {
-    document.getElementById('editorStatus').textContent = '✓ Saved successfully';
-    document.getElementById('editorStatus').style.color = 'var(--green)';
-    currentFileContent = document.getElementById('textEditorTextarea').value;
-    isTextModified = false;
-    document.getElementById('editorModified').style.display = 'none';
-    log(`💾 Saved: ${currentFilePath.split(/[\\/]/).pop()}`, 'info');
-    
-    setTimeout(() => {
-      document.getElementById('editorStatus').textContent = 'Ready';
-      document.getElementById('editorStatus').style.color = 'var(--muted)';
-    }, 2000);
+  if (!processes || processes.length === 0) {
+    showEmptyState('No processes found');
+    return;
+  }
+
+  // Sort processes
+  const sorted = [...processes].sort((a, b) => {
+    const aVal = a[sortField] || 0;
+    const bVal = b[sortField] || 0;
+    return sortDirection === 'desc' ? bVal - aVal : aVal - bVal;
+  });
+
+  // Filter by search
+  const search = document.getElementById('tmSearch').value.toLowerCase();
+  const filtered = search ? sorted.filter(p => 
+    p.name.toLowerCase().includes(search) ||
+    String(p.pid).includes(search) ||
+    (p.path && p.path.toLowerCase().includes(search))
+  ) : sorted;
+
+  const html = `
+    <table class="tm-table">
+      <thead>
+        <tr>
+          <th class="sortable ${sortField === 'pid' ? 'sort-' + sortDirection : ''}" onclick="sortBy('pid')">PID</th>
+          <th class="sortable ${sortField === 'name' ? 'sort-' + sortDirection : ''}" onclick="sortBy('name')">Name</th>
+          <th class="sortable ${sortField === 'cpu' ? 'sort-' + sortDirection : ''}" onclick="sortBy('cpu')">CPU %</th>
+          <th class="sortable ${sortField === 'memory' ? 'sort-' + sortDirection : ''}" onclick="sortBy('memory')">Memory %</th>
+          <th class="sortable ${sortField === 'status' ? 'sort-' + sortDirection : ''}" onclick="sortBy('status')">Status</th>
+          <th class="sortable ${sortField === 'threads' ? 'sort-' + sortDirection : ''}" onclick="sortBy('threads')">Threads</th>
+          <th>User</th>
+          <th>Path</th>
+          <th style="text-align: right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${filtered.map(p => {
+          const cpuClass = p.cpu > 50 ? 'high' : p.cpu > 20 ? 'mid' : 'low';
+          const memClass = p.memory > 30 ? 'high' : p.memory > 10 ? 'mid' : 'low';
+          const isSelected = selectedProcess && selectedProcess.pid === p.pid;
+          
+          return `
+            <tr class="${isSelected ? 'selected' : ''}" onclick="selectProcess(${p.pid})">
+              <td class="pid">${p.pid}</td>
+              <td class="name" title="${p.name}">${p.name}</td>
+              <td class="cpu ${cpuClass}">${p.cpu.toFixed(1)}%</td>
+              <td class="memory ${memClass}">${p.memory.toFixed(1)}%</td>
+              <td class="status ${p.status}">${p.status || 'unknown'}</td>
+              <td>${p.threads || 0}</td>
+              <td class="user" title="${p.user || 'N/A'}">${p.user || 'N/A'}</td>
+              <td class="path" title="${p.path || 'N/A'}">${p.path || 'N/A'}</td>
+              <td class="actions">
+                <button class="tm-end-btn" onclick="event.stopPropagation(); killProcess(${p.pid})">End</button>
+              </td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+
+  container.innerHTML = html;
+}
+
+function selectProcess(pid) {
+  const process = processes.find(p => p.pid === pid);
+  if (!process) return;
+
+  selectedProcess = process;
+  
+  // Update details panel
+  document.getElementById('detailPid').textContent = process.pid;
+  document.getElementById('detailName').textContent = process.name;
+  document.getElementById('detailCpu').textContent = process.cpu.toFixed(2) + '%';
+  document.getElementById('detailMem').textContent = process.memory.toFixed(2) + '%';
+  document.getElementById('detailStatus').textContent = process.status || 'unknown';
+  document.getElementById('detailThreads').textContent = process.threads || '0';
+  document.getElementById('detailUser').textContent = process.user || 'N/A';
+  document.getElementById('detailPath').textContent = process.path || 'N/A';
+  
+  // Show details panel
+  document.getElementById('tmDetails').classList.add('show');
+  
+  // Re-render table to update selection
+  renderProcessTable();
+}
+
+function sortBy(field) {
+  if (sortField === field) {
+    sortDirection = sortDirection === 'desc' ? 'asc' : 'desc';
   } else {
-    document.getElementById('editorStatus').textContent = `✕ Error: ${msg.error}`;
-    document.getElementById('editorStatus').style.color = 'var(--red)';
-    log(`Save failed: ${msg.error}`, 'error');
+    sortField = field;
+    sortDirection = 'desc';
   }
+  
+  // Update button states
+  document.querySelectorAll('.tm-sort-btn').forEach(btn => btn.classList.remove('active'));
+  if (field === 'cpu') {
+    document.getElementById('sortCpuBtn').classList.add('active');
+  } else if (field === 'memory') {
+    document.getElementById('sortMemBtn').classList.add('active');
+  }
+  
+  renderProcessTable();
 }
 
-// Close modals with ESC key
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    if (document.getElementById('imageViewerModal').classList.contains('show')) {
-      closeImageViewer();
-    }
-    if (document.getElementById('textEditorModal').classList.contains('show')) {
-      closeTextEditor();
-    }
+function filterProcesses() {
+  renderProcessTable();
+}
+
+function killProcess(pid) {
+  if (!confirm(`Are you sure you want to end process ${pid}?`)) {
+    return;
   }
+
+  if (!ws || ws.readyState !== WebSocket.OPEN) {
+    log('WebSocket not connected', 'error');
+    return;
+  }
+
+  ws.send(JSON.stringify({
+    type: 'kill_process',
+    client_id: selClient,
+    pid: pid
+  }));
+
+  log(`Killing process ${pid}...`, 'info');
+}
+
+function endSelectedTask() {
+  if (!selectedProcess) {
+    log('No process selected', 'warn');
+    return;
+  }
+  
+  killProcess(selectedProcess.pid);
+}
+
+function copyPath() {
+  if (!selectedProcess || !selectedProcess.path || selectedProcess.path === 'N/A') {
+    log('No path available to copy', 'warn');
+    return;
+  }
+
+  navigator.clipboard.writeText(selectedProcess.path).then(() => {
+    log('Path copied to clipboard', 'result');
+  }).catch(err => {
+    log('Failed to copy path', 'error');
+  });
+}
+
+function openLocation() {
+  if (!selectedProcess || !selectedProcess.path || selectedProcess.path === 'N/A') {
+    log('No path available', 'warn');
+    return;
+  }
+
+  // Extract directory from path
+  const path = selectedProcess.path;
+  const lastSlash = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
+  const directory = lastSlash > 0 ? path.substring(0, lastSlash) : path;
+
+  log(`Opening location: ${directory}`, 'info');
+  // You could send a command to open the directory here
+  // For now, just log it
+}
+
+function showEmptyState(message) {
+  const container = document.getElementById('tmTableContainer');
+  container.innerHTML = `
+    <div class="tm-empty">
+      <div class="tm-empty-icon">⚙️</div>
+      <div class="tm-empty-text">${message}</div>
+    </div>
+  `;
+}
+
+// ════════════════════════════════════════════════════════════
+//  UTILITIES
+// ════════════════════════════════════════════════════════════
+function log(msg, type = 'info') {
+  const output = document.getElementById('output');
+  const ts = new Date().toLocaleTimeString('en-US', { hour12: false });
+  const div = document.createElement('div');
+  div.className = `log ${type}`;
+  div.innerHTML = `<div class="log ts">[${ts}]</div>${msg}`;
+  output.appendChild(div);
+  output.scrollTop = output.scrollHeight;
+}
+
+function updateStatus(status, text) {
+  const dot = document.getElementById('sdot');
+  const stxt = document.getElementById('stxt');
+  
+  if (status === 'connected') {
+    dot.classList.add('on');
+  } else {
+    dot.classList.remove('on');
+  }
+  
+  stxt.textContent = text;
+}
+
+// ════════════════════════════════════════════════════════════
+//  INITIALIZATION
+// ════════════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  connectWS();
+  
+  // Auto-refresh processes every 3 seconds when task manager is open
+  setInterval(() => {
+    if (tmOpen && selClient) {
+      requestProcesses();
+      requestSysInfo();
+    }
+  }, 3000);
 });
 
+// Handle keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  // Ctrl/Cmd + K: Open Task Manager
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+    e.preventDefault();
+    toggleTaskManager();
+  }
+  
+  // Ctrl/Cmd + R: Refresh processes
+  if ((e.ctrlKey || e.metaKey) && e.key === 'r' && tmOpen) {
+    e.preventDefault();
+    requestProcesses();
+  }
+});
 </script>
+
 </body>
 </html>
