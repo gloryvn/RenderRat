@@ -75,15 +75,22 @@ async def client_ws(websocket: WebSocket):
         clients.pop(client_id, None)
         print(f"❌ Client {client_id} disconnected")
         
-        # Notify all admins about disconnection
-        for admin in admins:
+        # Notify all admins about disconnection immediately
+        disconnected_admins = []
+        for admin in admins[:]:  # Use slice to iterate over copy
             try:
                 await admin.send_json({
                     "type": "client_list",
                     "clients": list(clients.keys())
                 })
-            except:
-                pass
+            except Exception as e:
+                # Remove disconnected admin
+                disconnected_admins.append(admin)
+        
+        # Clean up disconnected admins
+        for admin in disconnected_admins:
+            if admin in admins:
+                admins.remove(admin)
 
 
 # =========================
