@@ -1098,20 +1098,29 @@ function selectClient(id) {
 // ════════════════════════════════════════════════════════════
 //  STREAM
 // ════════════════════════════════════════════════════════════
-function toggleStream() { isStreaming ? _stopStream(true) : startStream(); }
-
-function startStream() {
-  if(!selClient||isStreaming) return;
-  ws.send(JSON.stringify({type:'start_stream',client_id:selClient}));
-  isStreaming=true; frameCount=0; lastFrameTs=0;
-  $stream.textContent='⏹ Stop'; $stream.className='btn active-stream';
-  $live.classList.add('show');
-  fpsTimer=setInterval(()=>{
-    const f=frameCount; frameCount=0;
-    $fps.textContent=f+' FPS';
-    $fps.className='stat-badge '+(f>=15?'good':f>=8?'mid':'low');
-  },1000);
-  log(`[STREAM] → #${selClient}`,'info');
+function toggleStream() {
+  if (!selClient) { log('Select a client', 'error'); return; }
+  if (isStreaming) {
+    // Đang stream -> tắt
+    ws.send(JSON.stringify({type: 'stop_stream', client_id: selClient}));
+    isStreaming = false;
+    document.getElementById('streamBtn').textContent = '▶ Stream';
+    document.getElementById('streamBtn').classList.remove('active-stream');
+    if (!isWebcam) document.getElementById('liveBadge').classList.remove('show');
+  } else {
+    // Nếu đang webcam, tắt nó trước
+    if (isWebcam) {
+      ws.send(JSON.stringify({type: 'stop_webcam', client_id: selClient}));
+      isWebcam = false;
+      document.getElementById('webcamBtn').textContent = '📷 Webcam';
+      document.getElementById('webcamBtn').classList.remove('active-stream');
+    }
+    ws.send(JSON.stringify({type: 'start_stream', client_id: selClient}));
+    isStreaming = true;
+    document.getElementById('streamBtn').textContent = '⏹ Stop';
+    document.getElementById('streamBtn').classList.add('active-stream');
+    document.getElementById('liveBadge').classList.add('show');
+  }
 }
 
 function _stopStream(send) {
