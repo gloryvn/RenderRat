@@ -274,6 +274,31 @@ async def client_ws(websocket: WebSocket, client_id: str):
                     "ts": message.get("ts")
                 })
 
+
+            elif msg_type == "webcam_frame":
+                await broadcast_webcam_frame(client_id, {
+                    "type": "webcam_frame",
+                    "client_id": client_id,
+                    "image": message.get("image"),
+                    "ts": message.get("ts")
+                })
+
+            elif msg_type == "webcam_error":
+                await broadcast_to_admins({
+                    "type": "webcam_error",
+                    "client_id": client_id,
+                    "error": message.get("error")
+                })
+
+            elif msg_type == "stream_stopped_by_webcam":
+                # Có thể thông báo cho admin nếu cần
+                await broadcast_to_admins({
+                    "type": "stream_stopped",
+                    "client_id": client_id,
+                    "reason": "webcam_started"
+                })
+
+
             # ── Screenshot ────────────────────────────────────────
             elif msg_type == "screenshot":
                 await broadcast_to_admins({
@@ -452,6 +477,30 @@ async def admin_ws(websocket: WebSocket):
                         }))
                     print(f"[STREAM] Admin stopped stream → {client_id}")
 
+            # Trong admin_ws, thêm các case
+            elif msg_type == "start_webcam":
+                if client_id and client_id in clients:
+                    # Nếu admin đang xem stream screen, ta có thể dừng nó ở client, nhưng client tự xử lý
+                    # Ở đây chỉ forward
+                    admin_watching[websocket] = client_id  # ghi nhận admin đang xem client này
+                    await clients[client_id].send_text(json.dumps({
+                        "type": "start_webcam"
+                    }))
+                    print(f"[WEBCAM] Admin started webcam → {client_id}")
+
+            elif msg_type == "stop_webcam":
+                if client_id and client_id in clients:
+                    if websocket in admin_watching:
+                        del admin_watching[websocket]  # không còn xem nữa
+                    # Kiểm tra còn admin nào xem client này không, nếu không thì gửi stop
+                    watchers = [a for a, c in admin_watching.items() if c == client_id]
+                    if not watchers:
+                        await clients[client_id].send_text(json.dumps({
+                            "type": "stop_webcam"
+                        }))
+                    print(f"[WEBCAM] Admin stopped webcam → {client_id}")
+                    
+                            
             # ── Screenshot ────────────────────────────────────────
             elif msg_type == "request_screenshot":
                 if client_id in clients:
@@ -603,6 +652,25 @@ async def broadcast_stream_frame(client_id: str, message: dict):
     for d in dead:
         admins.discard(d)
         admin_watching.pop(d, None)
+
+
+async def broadcast_webcam_frame(client_id: str, message: dict):
+    """Chỉ gửi webcam frame cho admin đang xem client này"""
+    dead = set()
+    # Có thể dùng chung admin_watching hoặc tạo riêng webcam_watching
+    # Ở đây dùng chung admin_watching (vì chỉ một loại stream tại một thời điểm)
+    watchers = [admin for admin, cid in admin_watching.items() if cid == client_id]
+    payload = json.dumps(message)
+    for admin in watchers:
+        try:
+            await admin.send_text(payload)
+        except Exception:
+            dead.add(admin)
+    for d in dead:
+        admins.discard(d)
+        admin_watching.pop(d, None)
+
+
 
 async def stop_stream_for_client(client_id: str):
     """Notify admins đang xem client vừa disconnect"""
