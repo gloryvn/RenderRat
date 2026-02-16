@@ -987,6 +987,24 @@ ws.onmessage = ({data}) => {
   if (type==='file_content')   { handleFileContent(msg); return; }
   if (type==='write_file_result') { handleWriteFileResult(msg); return; }
 
+  // ── Task Manager ─────────────────────────────────────────
+  if (type==='processes' && client_id===selClient) {
+    handleProcessesData(msg.data);
+    return;
+  }
+  
+  if (type==='sysinfo' && client_id===selClient) {
+    updateSysStats(msg.data);
+    return;
+  }
+  
+  if (type==='kill_result' && client_id===selClient) {
+    log(msg.result || 'Process terminated', 'info');
+    // Refresh processes after kill
+    setTimeout(() => requestProcesses(), 500);
+    return;
+  }
+
   // ── File transfers ────────────────────────────────────────
   if (type==='folder_transfer_start') { onFolderStart(msg); return; }
   if (type==='folder_transfer_done')  { onFolderDone(msg);  return; }
@@ -1209,13 +1227,13 @@ function updateSel() {
 // ── Download: Client → Admin ───────────────────────────────
 function downloadSelected() {
   if(!exSelected.size||!selClient) return;
-  exSelected.forEach(path=>{
-    const tid=randId();
-    const name=path.split(/[\\/]/).pop();
-    mkXferItem(tid, name, null, 'down');
-    ws.send(JSON.stringify({type:'request_file_upload',client_id:selClient,path,transfer_id:tid}));
-    log(`↓ Fetching: ${path}`,'info');
+  const items=[...exSelected].map(p=>exItems.find(i=>i.path===p)).filter(Boolean);
+  items.forEach(item=>{
+    const tid='xfer_'+Date.now()+'_'+Math.random().toString(36).slice(2,9);
+    mkXferItem(tid, item.name, item.type === 'dir' ? null : item.size, 'down');
+    ws.send(JSON.stringify({type:'request_file_upload',client_id:selClient,path:item.path,transfer_id:tid}));
   });
+  log(`Download started: ${items.map(i=>i.name).join(', ')}`,'info');
 }
 
 // ── Upload: Admin → Client (into current explorer dir) ─────
