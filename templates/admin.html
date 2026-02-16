@@ -292,10 +292,6 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
 
 /* ══ TASK MANAGER PANEL ═════════════════════════════ */
 .task-manager-panel {
-  position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
   width: 0;
   min-width: 0;
   overflow: hidden;
@@ -304,13 +300,15 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
   display: flex;
   flex-direction: column;
   transition: width .25s cubic-bezier(.4,0,.2,1), border-color .25s;
-  z-index: 101;
 }
+
 .task-manager-panel.open {
   width: 750px;
   min-width: 750px;
   border-left-color: var(--border);
 }
+
+
 .tm-header {
   display: flex;
   align-items: center;
