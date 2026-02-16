@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Admin Panel - Full Edition</title>
+<title>Admin Panel</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@700;800&display=swap');
 
@@ -15,22 +15,19 @@
   --red:     #ff3366;
   --green:   #00ff88;
   --yellow:  #ffbb00;
-  --orange:  #ff8800;
-  --purple:  #bb66ff;
   --muted:   #3d4f66;
   --text:    #c9d8ef;
   --mono:    'JetBrains Mono', monospace;
   --sans:    'Syne', sans-serif;
+  --ex-w:    380px;   /* explorer panel width */
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: var(--bg); color: var(--text); font-family: var(--mono); height: 100vh; display: flex; overflow: hidden; }
 
 /* ══ SCROLLBAR ══════════════════════════════════════ */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--surf2); }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
 /* ══ SIDEBAR (client list) ══════════════════════════ */
 .sidebar {
@@ -90,7 +87,6 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
 .btn.primary:hover { opacity: .85; }
 .btn.active-stream { background: rgba(0,255,136,.1); border-color: var(--green); color: var(--green); }
 .btn.files-active { border-color: var(--accent); color: var(--accent); background: rgba(0,229,255,.07); }
-.btn.task-active { border-color: var(--purple); color: var(--purple); background: rgba(187,102,255,.07); }
 .divider { width: 1px; height: 18px; background: var(--border); margin: 0 1px; }
 .cmd-input {
   font-family: var(--mono); font-size: 12px;
@@ -114,8 +110,8 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
 .btn-logout { background: transparent; border: 1px solid var(--border); color: var(--muted); font-size: 11px; padding: 6px 12px; border-radius: 5px; cursor: pointer; transition: all .12s; font-family: var(--mono); font-weight: 600; margin-left: 8px; }
 .btn-logout:hover { border-color: var(--red); color: var(--red); }
 
-/* ══ WORKSPACE ══════════════════════════════════════ */
-.workspace { flex: 1; display: flex; overflow: hidden; position: relative; }
+/* ══ WORKSPACE (viewer + explorer side by side) ══════ */
+.workspace { flex: 1; display: flex; overflow: hidden; }
 
 /* ══ VIEWER ═════════════════════════════════════════ */
 .viewer {
@@ -140,733 +136,138 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
 .rec { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: blink 1s step-end infinite; }
 @keyframes blink { 50% { opacity: 0; } }
 
-/* ══ FILE EXPLORER PANEL ═══════════════════════════ */
+/* ══ EXPLORER PANEL (VS Code style) ═════════════════ */
 .explorer-panel {
-  position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  width: 0;
-  min-width: 0;
-  overflow: hidden;
+  width: 0; min-width: 0; overflow: hidden;
   background: var(--surf);
   border-left: 1px solid transparent;
-  display: flex;
-  flex-direction: column;
-  transition: width .25s cubic-bezier(.4,0,.2,1), border-color .25s;
-  z-index: 100;
+  display: flex; flex-direction: column;
+  transition: width .22s cubic-bezier(.4,0,.2,1), border-color .22s;
 }
 .explorer-panel.open {
-  width: 380px;
-  min-width: 380px;
+  width: var(--ex-w); min-width: var(--ex-w);
   border-left-color: var(--border);
 }
 
-/* Explorer Header */
+/* Explorer header */
 .ex-hdr {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px;
   border-bottom: 1px solid var(--border);
-  background: var(--surf2);
-  flex-shrink: 0;
+  flex-shrink: 0; background: var(--surf2);
 }
 .ex-title {
-  font-family: var(--sans);
-  font-weight: 800;
-  font-size: 13px;
-  color: var(--accent);
-  letter-spacing: .12em;
-  text-transform: uppercase;
+  font-family: var(--sans); font-weight: 800; font-size: 11px;
+  color: var(--muted); letter-spacing: .14em; text-transform: uppercase;
 }
-.ex-close {
-  background: none;
-  border: none;
-  color: var(--muted);
-  cursor: pointer;
-  font-size: 20px;
-  padding: 4px 8px;
-  transition: color .12s;
-  line-height: 1;
+.ex-hdr-btns { display: flex; gap: 4px; }
+.ex-icon-btn {
+  background: none; border: none; color: var(--muted); cursor: pointer;
+  padding: 3px 6px; border-radius: 4px; font-size: 14px; line-height: 1;
+  transition: color .12s, background .12s;
 }
-.ex-close:hover { color: var(--red); }
+.ex-icon-btn:hover { color: var(--text); background: #1a2233; }
 
-/* Path Bar */
+/* Path bar */
 .ex-pathbar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--border);
-  background: var(--surf);
-  flex-shrink: 0;
-}
-.ex-back-btn {
-  font-size: 16px;
-  padding: 4px 8px;
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  cursor: pointer;
-  background: transparent;
-  color: var(--text);
-  transition: all .12s;
-  line-height: 1;
-}
-.ex-back-btn:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-.ex-back-btn:disabled {
-  opacity: .3;
-  cursor: not-allowed;
-}
-.ex-path-display {
-  flex: 1;
-  font-size: 11px;
-  color: var(--text);
+  display: flex; align-items: center; gap: 0;
+  border-bottom: 1px solid var(--border); flex-shrink: 0;
   background: var(--surf2);
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  padding: 6px 10px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-family: var(--mono);
 }
+.ex-back {
+  padding: 7px 10px; color: var(--muted); cursor: pointer;
+  font-size: 13px; border-right: 1px solid var(--border);
+  transition: color .12s; flex-shrink: 0;
+}
+.ex-back:hover { color: var(--accent); }
+.ex-path-input {
+  flex: 1; background: none; border: none; outline: none;
+  color: var(--text); font-family: var(--mono); font-size: 11px;
+  padding: 7px 10px; min-width: 0;
+}
+.ex-path-input::placeholder { color: var(--muted); }
+.ex-refresh { padding: 7px 10px; color: var(--muted); cursor: pointer; font-size: 13px; transition: color .12s; }
+.ex-refresh:hover { color: var(--accent); }
 
-.ex-path-display:focus {
-  border-color: var(--accent);
-  background: #0a1120;
-}
-
-.ex-refresh-btn {
-  font-size: 16px;
-  padding: 4px 8px;
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  cursor: pointer;
-  background: transparent;
-  color: var(--muted);
-  transition: all .12s;
-  line-height: 1;
-}
-.ex-refresh-btn:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-/* Drives Bar */
+/* Drives bar */
 .ex-drives {
-  display: flex;
-  gap: 6px;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--border);
-  flex-wrap: wrap;
-  flex-shrink: 0;
+  display: flex; gap: 4px; padding: 6px 10px; flex-wrap: wrap;
+  border-bottom: 1px solid var(--border); flex-shrink: 0;
 }
 .ex-drive-pill {
-  font-size: 10px;
-  font-weight: 600;
-  padding: 4px 10px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  cursor: pointer;
-  background: transparent;
-  color: var(--text);
+  font-size: 10px; font-weight: 600; padding: 3px 9px;
+  border: 1px solid var(--border); border-radius: 12px; cursor: pointer;
+  color: var(--muted); background: transparent; font-family: var(--mono);
   transition: all .12s;
-  font-family: var(--mono);
 }
-.ex-drive-pill:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: rgba(0,229,255,.08);
-}
+.ex-drive-pill:hover { border-color: var(--accent); color: var(--accent); }
 
 /* Toolbar */
 .ex-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--border);
-  background: var(--surf);
-  flex-shrink: 0;
+  display: flex; align-items: center; gap: 6px; padding: 6px 10px;
+  border-bottom: 1px solid var(--border); flex-shrink: 0;
 }
 .ex-btn {
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 600;
-  padding: 5px 12px;
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  cursor: pointer;
-  background: transparent;
-  color: var(--text);
+  font-family: var(--mono); font-size: 10px; font-weight: 600;
+  padding: 4px 10px; border: 1px solid var(--border); border-radius: 4px;
+  cursor: pointer; background: transparent; color: var(--text); white-space: nowrap;
   transition: all .12s;
-  white-space: nowrap;
 }
-.ex-btn:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-.ex-btn.primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #000;
-}
-.ex-btn.primary:hover {
-  opacity: .85;
-}
-.ex-btn:disabled {
-  opacity: .3;
-  cursor: not-allowed;
-}
-.ex-sel-info {
-  font-size: 10px;
-  color: var(--muted);
-  margin-left: auto;
-}
+.ex-btn:hover { border-color: var(--accent); color: var(--accent); }
+.ex-btn.primary { background: var(--accent); border-color: var(--accent); color: #000; }
+.ex-btn.primary:hover { opacity: .85; }
+.ex-btn:disabled { opacity: .3; pointer-events: none; }
+.ex-sel-info { font-size: 10px; color: var(--muted); margin-left: auto; white-space: nowrap; }
 
-/* File List */
-.ex-filelist {
-  flex: 1;
-  overflow-y: auto;
-}
+/* File list */
+.ex-filelist { flex: 1; overflow-y: auto; }
+
 .ex-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  cursor: pointer;
+  display: flex; align-items: center; gap: 0;
+  padding: 0; cursor: pointer;
   border-left: 2px solid transparent;
-  transition: background .12s;
+  transition: background .1s;
   user-select: none;
 }
-.ex-row:hover {
-  background: #111a28;
-}
-.ex-row.selected {
-  background: #0a1929;
-  border-left-color: var(--accent);
-}
-.ex-row-icon {
-  font-size: 16px;
-  flex-shrink: 0;
-  width: 20px;
-  text-align: center;
-}
-.ex-row-name {
-  flex: 1;
-  font-size: 12px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
-}
-.ex-row-name.dir {
-  color: var(--accent);
-  font-weight: 600;
-}
-.ex-row-name.parent {
-  color: var(--muted);
-  font-style: italic;
-}
-.ex-row-size {
-  font-size: 10px;
-  color: var(--muted);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
+.ex-row:hover { background: #111a28; }
+.ex-row.selected { background: #0a1929; border-left-color: var(--accent); }
+.ex-row.active-dir { background: rgba(0,229,255,.05); }
 
-/* Transfer Queue */
+.ex-row-icon { width: 32px; text-align: center; font-size: 14px; flex-shrink: 0; padding: 6px 0; }
+.ex-row-name {
+  flex: 1; font-size: 12px; padding: 6px 6px 6px 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
+}
+.ex-row-name.dir  { color: var(--accent); }
+.ex-row-name.parent { color: var(--muted); font-style: italic; }
+.ex-row-size { font-size: 10px; color: var(--muted); padding: 6px 10px 6px 6px; white-space: nowrap; flex-shrink: 0; }
+
+/* Transfer queue */
 .ex-transfers {
-  max-height: 150px;
-  overflow-y: auto;
+  flex-shrink: 0; max-height: 200px; overflow-y: auto;
   border-top: 1px solid var(--border);
   background: var(--surf2);
-  flex-shrink: 0;
 }
-.ex-transfer-item {
-  padding: 10px 12px;
-  border-bottom: 1px solid rgba(26,34,51,.4);
-}
-.ex-transfer-name {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text);
-  margin-bottom: 6px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.ex-transfer-progress {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.ex-progress-bar {
-  flex: 1;
-  height: 4px;
-  background: var(--surf);
-  border-radius: 2px;
-  overflow: hidden;
-}
-.ex-progress-fill {
-  height: 100%;
-  background: var(--accent);
-  border-radius: 2px;
-  transition: width .3s;
-}
-.ex-transfer-percent {
-  font-size: 10px;
-  color: var(--muted);
-  min-width: 35px;
-  text-align: right;
-}
-
-/* Empty State */
-.ex-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  color: var(--muted);
-}
-.ex-empty-icon {
-  font-size: 48px;
-  opacity: .2;
-  margin-bottom: 16px;
-}
-.ex-empty-text {
-  font-size: 13px;
-  font-family: var(--sans);
-  letter-spacing: .05em;
-}
-
-/* Loading */
-.ex-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40px;
-  gap: 12px;
-  color: var(--muted);
-  font-size: 13px;
-}
-
-/* ══ TASK MANAGER PANEL ═════════════════════════════ */
-.task-manager-panel {
-  position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  width: 0;
-  min-width: 0;
-  overflow: hidden;
-  background: var(--surf);
-  border-left: 1px solid transparent;
-  display: flex;
-  flex-direction: column;
-  transition: width .25s cubic-bezier(.4,0,.2,1), border-color .25s;
-  z-index: 101;
-}
-.task-manager-panel.open {
-  width: 750px;
-  min-width: 750px;
-  border-left-color: var(--border);
-}
-.tm-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
-  background: var(--surf2);
-  flex-shrink: 0;
-}
-.tm-title {
-  font-family: var(--sans);
-  font-weight: 800;
-  font-size: 13px;
-  color: var(--purple);
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.tm-title-icon {
-  font-size: 16px;
-}
-.tm-close {
-  background: none;
-  border: none;
-  color: var(--muted);
-  cursor: pointer;
-  font-size: 20px;
-  padding: 4px 8px;
-  transition: color .12s;
-  line-height: 1;
-}
-.tm-close:hover { color: var(--red); }
-.tm-stats {
-  display: flex;
-  gap: 12px;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
-  background: var(--surf);
-  flex-shrink: 0;
-}
-.tm-stat-card {
-  flex: 1;
-  background: var(--surf2);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.tm-stat-label {
-  font-size: 9px;
-  color: var(--muted);
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  font-weight: 600;
-}
-.tm-stat-value {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text);
-}
-.tm-stat-value.cpu { color: var(--accent); }
-.tm-stat-value.mem { color: var(--green); }
-.tm-stat-value.proc { color: var(--purple); }
-.tm-controls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--border);
-  background: var(--surf);
-  flex-shrink: 0;
-}
-.tm-search {
-  flex: 1;
-  font-family: var(--mono);
-  font-size: 12px;
-  background: var(--surf2);
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  padding: 7px 12px;
-  color: var(--text);
-  outline: none;
-  transition: border-color .2s;
-}
-.tm-search:focus {
-  border-color: var(--accent);
-}
-.tm-search::placeholder {
-  color: var(--muted);
-}
-.tm-sort-btn {
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 600;
-  padding: 7px 12px;
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  cursor: pointer;
-  background: transparent;
-  color: var(--text);
-  transition: all .12s;
-  white-space: nowrap;
-}
-.tm-sort-btn:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-.tm-sort-btn.active {
-  background: rgba(0,229,255,.08);
-  border-color: var(--accent);
-  color: var(--accent);
-}
-.tm-refresh-btn {
-  font-family: var(--mono);
-  font-size: 18px;
-  padding: 4px 10px;
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  cursor: pointer;
-  background: transparent;
-  color: var(--muted);
-  transition: all .12s;
-  line-height: 1;
-}
-.tm-refresh-btn:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-  transform: rotate(90deg);
-}
-.tm-table-container {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-.tm-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 11px;
-}
-.tm-table thead {
-  position: sticky;
-  top: 0;
-  background: var(--surf);
-  z-index: 10;
-  border-bottom: 2px solid var(--border);
-}
-.tm-table th {
-  text-align: left;
-  padding: 10px 12px;
-  font-weight: 700;
-  color: var(--muted);
-  font-size: 10px;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  border-bottom: 1px solid var(--border);
-  cursor: pointer;
-  transition: color .12s;
-  user-select: none;
-}
-.tm-table th:hover {
-  color: var(--accent);
-}
-.tm-table th.sortable::after {
-  content: ' ↕';
-  opacity: .3;
-}
-.tm-table th.sort-asc::after {
-  content: ' ↑';
-  opacity: 1;
-  color: var(--accent);
-}
-.tm-table th.sort-desc::after {
-  content: ' ↓';
-  opacity: 1;
-  color: var(--accent);
-}
-.tm-table tbody tr {
-  border-bottom: 1px solid rgba(26,34,51,.4);
-  transition: background .12s;
-  cursor: pointer;
-}
-.tm-table tbody tr:hover {
-  background: #111a28;
-}
-.tm-table tbody tr.selected {
-  background: rgba(187,102,255,.08);
-  border-left: 3px solid var(--purple);
-}
-.tm-table td {
-  padding: 10px 12px;
-  color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 200px;
-}
-.tm-table td.pid {
-  font-weight: 700;
-  color: var(--accent);
-  font-family: var(--mono);
-}
-.tm-table td.name {
-  font-weight: 600;
-  max-width: 180px;
-}
-.tm-table td.cpu,
-.tm-table td.memory {
-  font-family: var(--mono);
-  font-weight: 600;
-}
-.tm-table td.cpu.high { color: var(--red); }
-.tm-table td.cpu.mid { color: var(--yellow); }
-.tm-table td.cpu.low { color: var(--green); }
-.tm-table td.memory.high { color: var(--red); }
-.tm-table td.memory.mid { color: var(--yellow); }
-.tm-table td.memory.low { color: var(--green); }
-.tm-table td.status {
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-.tm-table td.status.running { color: var(--green); }
-.tm-table td.status.sleeping { color: var(--muted); }
-.tm-table td.path {
-  max-width: 250px;
-  font-size: 10px;
-  color: var(--muted);
-}
-.tm-table td.user {
-  max-width: 100px;
-  font-size: 10px;
-}
-.tm-table td.actions {
-  text-align: right;
-}
-.tm-end-btn {
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 600;
-  padding: 4px 10px;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  cursor: pointer;
-  background: transparent;
-  color: var(--red);
-  transition: all .12s;
-}
-.tm-end-btn:hover {
-  background: rgba(255,51,102,.12);
-  border-color: var(--red);
-}
-.tm-details {
-  max-height: 0;
-  overflow: hidden;
-  border-top: 1px solid transparent;
-  background: var(--surf2);
-  transition: max-height .3s ease-out, border-color .3s;
-}
-.tm-details.show {
-  max-height: 400px;
-  border-top-color: var(--border);
-}
-.tm-details-title {
-  font-family: var(--sans);
-  font-weight: 700;
-  font-size: 12px;
-  color: var(--purple);
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  padding: 12px 16px 8px;
-}
-.tm-details-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  padding: 0 16px 12px;
-}
-.tm-detail-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.tm-detail-label {
-  font-size: 9px;
-  color: var(--muted);
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  font-weight: 600;
-}
-.tm-detail-value {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.tm-detail-value.path {
-  font-size: 11px;
-  word-break: break-all;
-  white-space: normal;
-}
-.tm-details-actions {
-  display: flex;
-  gap: 8px;
-  padding: 0 16px 16px;
-}
-.tm-detail-btn {
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 600;
-  padding: 7px 14px;
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  cursor: pointer;
-  background: transparent;
-  color: var(--text);
-  transition: all .12s;
-  flex: 1;
-}
-.tm-detail-btn:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: rgba(0,229,255,.08);
-}
-.tm-detail-btn.danger {
-  border-color: var(--red);
-  color: var(--red);
-}
-.tm-detail-btn.danger:hover {
-  background: rgba(255,51,102,.12);
-}
-.tm-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  color: var(--muted);
-}
-.tm-empty-icon {
-  font-size: 48px;
-  opacity: .2;
-  margin-bottom: 16px;
-}
-.tm-empty-text {
-  font-size: 13px;
-  font-family: var(--sans);
-  letter-spacing: .05em;
-}
-.tm-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40px;
-  gap: 12px;
-  color: var(--muted);
-  font-size: 13px;
-}
+ 
+/* Loading spinner */
+.ex-loading { display: flex; align-items: center; justify-content: center; padding: 30px; gap: 10px; color: var(--muted); font-size: 12px; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.spinner {
-  border: 3px solid var(--border);
-  border-top-color: var(--purple);
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  animation: spin .7s linear infinite;
-  flex-shrink: 0;
-}
+.spinner { border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; width: 14px; height: 14px; animation: spin .7s linear infinite; flex-shrink: 0; }
+
+ 
+.drop-overlay.show { display: flex; }
 
 /* ══ OUTPUT LOG ═════════════════════════════════════ */
 .output-panel {
-  height: 130px;
-  background: var(--surf);
+  height: 130px; background: var(--surf);
   border-top: 1px solid var(--border);
-  padding: 8px 12px;
-  overflow-y: auto;
-  font-size: 11px;
-  line-height: 1.65;
-  flex-shrink: 0;
+  padding: 8px 12px; overflow-y: auto;
+  font-size: 11px; line-height: 1.65; flex-shrink: 0;
 }
 .log { color: #4a6a8a; }
 .log.info   { color: var(--accent); }
 .log.result { color: var(--green); }
 .log.error  { color: var(--red); }
-.log.warn   { color: var(--yellow); }
 .log.ts     { color: var(--muted); font-size: 9px; margin-bottom: 1px; }
 </style>
 </head>
@@ -895,7 +296,6 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
     <button class="btn" onclick="sendCmd()">Run</button>
     <div class="divider"></div>
     <button class="btn" id="filesBtn" onclick="toggleExplorer()">📁 Files</button>
-    <button class="btn" id="taskBtn" onclick="toggleTaskManager()">⚙️ Tasks</button>
     <div class="divider"></div>
     <div class="stat-badge" id="fpsBadge">-- FPS</div>
     <div class="stat-badge" id="latBadge">-- ms</div>
@@ -910,7 +310,10 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
   <div class="workspace">
 
     <!-- VIEWER -->
-    <div class="viewer" id="viewer">
+    <div class="viewer" id="viewer"
+         ondragover="onViewerDragOver(event)"
+         ondragleave="onViewerDragLeave(event)"
+         ondrop="onViewerDrop(event)">
       <div class="placeholder" id="placeholder">
         <div class="ph-icon">🖥</div>
         <div class="ph-text">Select a client to begin</div>
@@ -919,20 +322,24 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
       <div class="live-badge" id="liveBadge"><div class="rec"></div>LIVE</div>
     </div>
 
-    <!-- ══ FILE EXPLORER PANEL ══════════════════════════ -->
+    <!-- ══ EXPLORER PANEL ══════════════════════════════ -->
     <div class="explorer-panel" id="explorerPanel">
-      
+
       <!-- Header -->
       <div class="ex-hdr">
-        <div class="ex-title">📁 FILE EXPLORER</div>
-        <button class="ex-close" onclick="toggleExplorer()">×</button>
+        <div class="ex-title">Explorer</div>
+        <div class="ex-hdr-btns">
+          <button class="ex-icon-btn" title="Upload file" onclick="document.getElementById('uploadInput').click()">↑</button>
+          <button class="ex-icon-btn" title="Close" onclick="toggleExplorer()">✕</button>
+        </div>
       </div>
+      <input type="file" id="uploadInput" style="display:none" multiple onchange="uploadFiles(event)">
 
-      <!-- Path Bar -->
+      <!-- Path bar -->
       <div class="ex-pathbar">
-        <button class="ex-back-btn" id="exBackBtn" onclick="exGoBack()" disabled>←</button>
-        <input type="text" class="ex-path-display" id="exPath" value="C:\" onkeydown="handlePathKeydown(event)">
-        <button class="ex-refresh-btn" onclick="exRefresh()">↻</button>
+        <div class="ex-back" onclick="navBack()" title="Back">←</div>
+        <input class="ex-path-input" id="exPath" placeholder="Path…" onkeydown="if(event.key==='Enter')navTo(this.value)">
+        <div class="ex-refresh" onclick="navTo(exCurPath)" title="Refresh">↺</div>
       </div>
 
       <!-- Drives -->
@@ -940,1249 +347,698 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
 
       <!-- Toolbar -->
       <div class="ex-toolbar">
-        <button class="ex-btn primary" onclick="exDownload()" id="exDownloadBtn" disabled>
-          ⬇ Download
-        </button>
-        <button class="ex-btn" onclick="exView()" id="exViewBtn" disabled>
-          👁 View
-        </button>
-        <button class="ex-btn" onclick="exUpload()">
-          ⬆ Upload
-        </button>
-        <div class="ex-sel-info" id="exSelInfo">No selection</div>
+        <button class="ex-btn primary" id="exDlBtn" disabled onclick="downloadSelected()">↓ Download</button>
+        <button class="ex-btn" onclick="document.getElementById('uploadInput').click()">↑ Upload</button>
+        <span class="ex-sel-info" id="exSelInfo">–</span>
       </div>
 
-      <!-- File List -->
-      <div class="ex-filelist" id="exFileList">
-        <div class="ex-empty">
-          <div class="ex-empty-icon">📂</div>
-          <div class="ex-empty-text">Select a client and click refresh</div>
-        </div>
+      <!-- File list -->
+      <div class="ex-filelist" id="exFilelist" style="position:relative">
+        <div class="ex-loading"><div class="spinner"></div>Waiting for client…</div>
       </div>
 
-      <!-- Transfer Queue (hidden when empty) -->
-      <div class="ex-transfers" id="exTransfers" style="display: none;"></div>
+      <!-- Transfer queue -->
+      <div class="ex-transfers" id="exTransfers">
+        <div class="ex-transfer-hdr">Transfers</div>
+        <div class="no-transfers" id="noTransfers">No active transfers</div>
+      </div>
 
     </div><!-- /explorer-panel -->
-
-
-
-    <!-- ══ TASK MANAGER PANEL ══════════════════════════ -->
-    <div class="task-manager-panel" id="taskManagerPanel">
-      
-      <!-- Header -->
-      <div class="tm-header">
-        <div class="tm-title">
-          <span class="tm-title-icon">⚙️</span>
-          <span>Task Manager</span>
-        </div>
-        <button class="tm-close" onclick="toggleTaskManager()">×</button>
-      </div>
-
-      <!-- Stats -->
-      <div class="tm-stats">
-        <div class="tm-stat-card">
-          <div class="tm-stat-label">CPU Usage</div>
-          <div class="tm-stat-value cpu" id="tmCpuStat">--</div>
-        </div>
-        <div class="tm-stat-card">
-          <div class="tm-stat-label">Memory</div>
-          <div class="tm-stat-value mem" id="tmMemStat">--</div>
-        </div>
-        <div class="tm-stat-card">
-          <div class="tm-stat-label">Processes</div>
-          <div class="tm-stat-value proc" id="tmProcStat">--</div>
-        </div>
-      </div>
-
-      <!-- Controls -->
-      <div class="tm-controls">
-        <input type="text" class="tm-search" id="tmSearch" placeholder="🔍 Search processes..." onkeyup="filterProcesses()">
-        <button class="tm-sort-btn" id="sortCpuBtn" onclick="sortBy('cpu')">Sort CPU</button>
-        <button class="tm-sort-btn" id="sortMemBtn" onclick="sortBy('memory')">Sort MEM</button>
-        <button class="tm-refresh-btn" onclick="requestProcesses()" title="Refresh">↻</button>
-      </div>
-
-      <!-- Process Table -->
-      <div class="tm-table-container" id="tmTableContainer">
-        <div class="tm-loading">
-          <div class="spinner"></div>
-          <span>Loading processes...</span>
-        </div>
-      </div>
-
-      <!-- Process Details -->
-      <div class="tm-details" id="tmDetails">
-        <div class="tm-details-title">Process Details</div>
-        <div class="tm-details-grid">
-          <div class="tm-detail-item">
-            <div class="tm-detail-label">Process ID</div>
-            <div class="tm-detail-value" id="detailPid">--</div>
-          </div>
-          <div class="tm-detail-item">
-            <div class="tm-detail-label">Name</div>
-            <div class="tm-detail-value" id="detailName">--</div>
-          </div>
-          <div class="tm-detail-item">
-            <div class="tm-detail-label">CPU Usage</div>
-            <div class="tm-detail-value" id="detailCpu">--</div>
-          </div>
-          <div class="tm-detail-item">
-            <div class="tm-detail-label">Memory Usage</div>
-            <div class="tm-detail-value" id="detailMem">--</div>
-          </div>
-          <div class="tm-detail-item">
-            <div class="tm-detail-label">Status</div>
-            <div class="tm-detail-value" id="detailStatus">--</div>
-          </div>
-          <div class="tm-detail-item">
-            <div class="tm-detail-label">Threads</div>
-            <div class="tm-detail-value" id="detailThreads">--</div>
-          </div>
-          <div class="tm-detail-item">
-            <div class="tm-detail-label">User</div>
-            <div class="tm-detail-value" id="detailUser">--</div>
-          </div>
-          <div class="tm-detail-item" style="grid-column: span 2;">
-            <div class="tm-detail-label">Executable Path</div>
-            <div class="tm-detail-value path" id="detailPath">--</div>
-          </div>
-        </div>
-        <div class="tm-details-actions">
-          <button class="tm-detail-btn" onclick="copyPath()">📋 Copy Path</button>
-          <button class="tm-detail-btn" onclick="openLocation()">📂 Open Location</button>
-          <button class="tm-detail-btn danger" onclick="endSelectedTask()">🔴 End Task</button>
-        </div>
-      </div>
-
-    </div><!-- /task-manager-panel -->
 
   </div><!-- /workspace -->
 
   <!-- OUTPUT LOG -->
   <div class="output-panel" id="output">
-    <div class="log info">[SYSTEM] Panel ready - Full Edition (Files + Tasks)</div>
+    <div class="log info">[SYSTEM] Panel ready</div>
   </div>
 
 </div><!-- /main -->
+
+ 
+
 
 <script>
 // ════════════════════════════════════════════════════════════
 //  STATE
 // ════════════════════════════════════════════════════════════
-let ws               = null;
-let selClient        = null;
-let isStreaming      = false;
-let frameCount       = 0;
-let fpsTimer         = null;
-let lastFrameTs      = 0;
-let tmOpen           = false;
-let fileOpen         = false;
-let processes        = [];
-let selectedProcess  = null;
-let sortField        = 'cpu';
-let sortDirection    = 'desc';
-let currentPath      = '';
-let pathHistory      = [];
-let exOpen = false;
-let exPath = '';
-let exHistory = [];
-let exSelected = new Set();
-let exDrives = [];
-let exFiles = [];
-let exTransfers = {};
+let selClient    = null;
+let isStreaming  = false;
+let frameCount   = 0;
+let fpsTimer     = null;
+let lastFrameTs  = 0;
+let exOpen       = false;
+let exCurPath    = '.';
+let exHistory    = [];
+let exSelected   = new Set();
+let exItems      = [];
+let activeXfers  = {};       // tid → { el, fill, msg, dl, chunks, total }
+const CHUNK      = 512*1024; // 512KB
 
 // ════════════════════════════════════════════════════════════
-//  WEBSOCKET CONNECTION
+//  WEBSOCKET
 // ════════════════════════════════════════════════════════════
-function connectWS() {
-  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const url = `${proto}//${location.host}/ws/admin`;
-  
-  log('Connecting to WebSocket...', 'info');
-  ws = new WebSocket(url);
+const ws = new WebSocket(
+  (location.protocol==='https:'?'wss:':'ws:') + '//' + location.host + '/ws/admin'
+);
 
-  ws.onopen = () => {
-    log('Connected to server', 'result');
-    updateStatus('connected', 'Connected');
-  };
+const $sdot   = document.getElementById('sdot');
+const $stxt   = document.getElementById('stxt');
+const $stream = document.getElementById('streamBtn');
+const $live   = document.getElementById('liveBadge');
+const $fps    = document.getElementById('fpsBadge');
+const $lat    = document.getElementById('latBadge');
+const $img    = document.getElementById('screenImg');
+const $ph     = document.getElementById('placeholder');
+const $out    = document.getElementById('output');
 
-  ws.onmessage = (event) => {
-    try {
-      const msg = JSON.parse(event.data);
-      handleMessage(msg);
-    } catch (e) {
-      console.error('Parse error:', e);
-    }
-  };
+ws.onopen = () => { $sdot.classList.add('on'); $stxt.textContent='Connected'; log('Connected','info'); };
+ws.onclose= () => { $sdot.classList.remove('on'); $stxt.textContent='Disconnected'; _stopStream(false); log('Disconnected','error'); };
 
-  ws.onerror = (err) => {
-    log('WebSocket error', 'error');
-    console.error(err);
-  };
+ws.onmessage = ({data}) => {
+  let msg; try { msg=JSON.parse(data); } catch { return; }
+  const {type, client_id} = msg;
 
-  ws.onclose = () => {
-    log('Disconnected. Reconnecting in 3s...', 'warn');
-    updateStatus('disconnected', 'Disconnected');
-    setTimeout(connectWS, 3000);
-  };
-}
-
-// ════════════════════════════════════════════════════════════
-//  MESSAGE HANDLER
-// ════════════════════════════════════════════════════════════
-function handleMessage(msg) {
-  switch (msg.type) {
-    case 'clients':
-      renderClients(msg.clients);
-      break;
-
-    case 'stream_frame':
-      if (msg.client_id === selClient && isStreaming) {
-        handleStreamFrame(msg);
-      }
-      break;
-
-    case 'screenshot':
-      if (msg.client_id === selClient) {
-        showScreenshot(msg.image);
-        log(`Screenshot received from ${msg.client_id}`, 'result');
-      }
-      break;
-
-    case 'command_result':
-      if (msg.client_id === selClient) {
-        log(`Command output:\n${msg.output}`, 'result');
-      }
-      break;
-
-    case 'processes':
-      if (msg.client_id === selClient) {
-        handleProcessesData(msg.data);
-      }
-      break;
-
-    case 'kill_result':
-      if (msg.client_id === selClient) {
-        log(`Kill process: ${msg.result}`, msg.result.includes('ERROR') ? 'error' : 'result');
-        setTimeout(() => requestProcesses(), 500);
-      }
-      break;
-
-    case 'sysinfo':
-      if (msg.client_id === selClient && msg.data) {
-        updateSysStats(msg.data);
-      }
-      break;
-
-    case 'directory_list':
-      if (msg.client_id === selClient) {
-        handleDirectoryList(msg.data, msg.path);
-      }
-      break;
-
-    case 'drives_list':
-      if (msg.client_id === selClient) {
-        handleDrivesList(msg.data);
-      }
-      break;
-
-    case 'file_content':
-      if (msg.client_id === selClient) {
-        handleFileContent(msg.data, msg.path);
-      }
-      break;
-
-    case 'file_transfer_start':
-      if (msg.client_id === selClient) {
-        handleFileTransferStart(msg);
-      }
-      break;
-
-    case 'file_chunk':
-      if (msg.client_id === selClient) {
-        handleFileChunk(msg);
-      }
-      break;
-
-    case 'file_transfer_done':
-      if (msg.client_id === selClient) {
-        handleFileTransferDone(msg);
-      }
-      break;
+  if (type==='clients')         { renderClients(msg.clients); return; }
+  if (type==='client_info' && client_id===selClient) {
+    const s=msg.sysinfo||{}; log(`[#${client_id}] ${s.platform} CPU:${s.cpu_percent}% RAM:${s.memory_percent}%`,'info'); return;
   }
-}
+  if (type==='stream_frame' && client_id===selClient) {
+    const now=performance.now();
+    if(lastFrameTs) $lat.textContent=Math.round(now-lastFrameTs)+'ms';
+    lastFrameTs=now; frameCount++;
+    $img.src='data:image/jpeg;base64,'+msg.image; showScreen(); return;
+  }
+  if (type==='screenshot' && client_id===selClient) {
+    $img.src='data:image/jpeg;base64,'+msg.image; showScreen(); log(`Snapshot received`,'info'); return;
+  }
+  if (type==='command_result' && client_id===selClient) { log(msg.output,'result'); return; }
+  if (type==='stream_stopped'  && client_id===selClient) { _stopStream(false); log(`Stream stopped: ${msg.reason}`,'error'); return; }
+
+  // ── Explorer ─────────────────────────────────────────────
+  if (type==='directory_list') { renderDir(msg.data); return; }
+  if (type==='drives_list')    { renderDrives(msg.data); return; }
+  if (type==='file_content')   { handleFileContent(msg); return; }
+  if (type==='write_file_result') { handleWriteFileResult(msg); return; }
+
+  // ── File transfers ────────────────────────────────────────
+  if (type==='folder_transfer_start') { onFolderStart(msg); return; }
+  if (type==='folder_transfer_done')  { onFolderDone(msg);  return; }
+  if (type==='file_transfer_start')   { onXferStart(msg);   return; }
+  if (type==='file_chunk')            { onXferChunk(msg);   return; }
+  if (type==='file_transfer_done')    { onXferDone(msg);    return; }
+  if (type==='file_transfer_error')   { onXferError(msg);   return; }
+  if (type==='file_transfer_progress'){ onXferProgress(msg);return; }
+  if (type==='file_save_result')      { onSaveResult(msg);  return; }
+};
 
 // ════════════════════════════════════════════════════════════
-//  CLIENT LIST
+//  CLIENTS
 // ════════════════════════════════════════════════════════════
 function renderClients(clients) {
-  const list = document.getElementById('clientList');
-  
-  if (!clients || clients.length === 0) {
-    list.innerHTML = '<div class="no-clients">No clients online</div>';
+  const el = document.getElementById('clientList');
+  if (!clients.length) {
+    el.innerHTML='<div class="no-clients">No clients online</div>';
+    if (selClient && !clients.includes(selClient)) { selClient=null; _stopStream(false); hideScreen(); }
     return;
   }
-
-  list.innerHTML = clients.map(id => `
-    <div class="client-item ${id === selClient ? 'active' : ''}" onclick="selectClient('${id}')">
-      <div class="cdot"></div>
-      <span>${id}</span>
-    </div>
-  `).join('');
+  el.innerHTML='';
+  clients.forEach(id => {
+    const d=document.createElement('div');
+    d.className='client-item'+(id===selClient?' active':'');
+    d.innerHTML=`<div class="cdot"></div>#${id}`;
+    d.onclick=()=>selectClient(id);
+    el.appendChild(d);
+  });
 }
 
 function selectClient(id) {
-  if (selClient === id) return;
-  
-  if (isStreaming) {
-    stopStream();
-  }
-
-  if (exOpen) {
-    exRequestDrives();
-    exRefresh();
-  }
-
-  selClient = id;
-  log(`Selected client: ${id}`, 'info');
-  
-  renderClients(document.querySelectorAll('.client-item').length > 0 ? 
-    Array.from(document.querySelectorAll('.client-item')).map(el => el.textContent.trim()) : []);
-  
-  document.getElementById('placeholder').style.display = 'flex';
-  document.getElementById('screenImg').classList.remove('show');
-  
-  if (tmOpen) {
-    requestProcesses();
-  }
-  if (fileOpen) {
-    refreshFiles();
-  }
+  if(id===selClient) return;
+  if(isStreaming && selClient) ws.send(JSON.stringify({type:'stop_stream',client_id:selClient}));
+  isStreaming=false;
+  selClient=id;
+  document.querySelectorAll('.client-item').forEach(e=>e.classList.toggle('active',e.textContent.trim()==='#'+id));
+  log(`[#${id}] Selected`,'info');
+  if(exOpen) { reqDrives(); navTo('.'); }
+  startStream();
 }
 
 // ════════════════════════════════════════════════════════════
-//  STREAMING
+//  STREAM
 // ════════════════════════════════════════════════════════════
-function toggleStream() {
-  if (!selClient) {
-    log('Please select a client first', 'warn');
-    return;
-  }
-
-  if (isStreaming) {
-    stopStream();
-  } else {
-    startStream();
-  }
-}
+function toggleStream() { isStreaming ? _stopStream(true) : startStream(); }
 
 function startStream() {
-  if (!ws || ws.readyState !== WebSocket.OPEN) {
-    log('WebSocket not connected', 'error');
-    return;
-  }
-
-  ws.send(JSON.stringify({
-    type: 'start_stream',
-    client_id: selClient
-  }));
-
-  isStreaming = true;
-  frameCount = 0;
-  
-  document.getElementById('streamBtn').classList.add('active-stream');
-  document.getElementById('streamBtn').textContent = '■ Stop';
-  document.getElementById('liveBadge').classList.add('show');
-  document.getElementById('placeholder').style.display = 'none';
-  
-  fpsTimer = setInterval(updateFPS, 1000);
-  
-  log(`Started streaming from ${selClient}`, 'info');
+  if(!selClient||isStreaming) return;
+  ws.send(JSON.stringify({type:'start_stream',client_id:selClient}));
+  isStreaming=true; frameCount=0; lastFrameTs=0;
+  $stream.textContent='⏹ Stop'; $stream.className='btn active-stream';
+  $live.classList.add('show');
+  fpsTimer=setInterval(()=>{
+    const f=frameCount; frameCount=0;
+    $fps.textContent=f+' FPS';
+    $fps.className='stat-badge '+(f>=15?'good':f>=8?'mid':'low');
+  },1000);
+  log(`[STREAM] → #${selClient}`,'info');
 }
 
-function handlePathKeydown(event) {
-  if (event.key === 'Enter') {
-    event.preventDefault();
-    const newPath = event.target.value.trim();
-    if (newPath && newPath !== exPath) {
-      exNavigate(newPath);
-    }
-  }
+function _stopStream(send) {
+  if(send && selClient) try{ws.send(JSON.stringify({type:'stop_stream',client_id:selClient}));}catch{}
+  isStreaming=false; clearInterval(fpsTimer); fpsTimer=null; frameCount=0;
+  $stream.textContent='▶ Stream'; $stream.className='btn primary';
+  $live.classList.remove('show');
+  $fps.textContent='-- FPS'; $fps.className='stat-badge';
+  $lat.textContent='-- ms';
 }
 
-
-
-function stopStream() {
-  if (!ws || ws.readyState !== WebSocket.OPEN) return;
-
-  ws.send(JSON.stringify({
-    type: 'stop_stream',
-    client_id: selClient
-  }));
-
-  isStreaming = false;
-  
-  document.getElementById('streamBtn').classList.remove('active-stream');
-  document.getElementById('streamBtn').textContent = '▶ Stream';
-  document.getElementById('liveBadge').classList.remove('show');
-  
-  if (fpsTimer) {
-    clearInterval(fpsTimer);
-    fpsTimer = null;
-  }
-  
-  document.getElementById('fpsBadge').textContent = '-- FPS';
-  document.getElementById('latBadge').textContent = '-- ms';
-  
-  log('Stopped streaming', 'info');
-}
-
-function handleStreamFrame(msg) {
-  const img = document.getElementById('screenImg');
-  const placeholder = document.getElementById('placeholder');
-  
-  img.src = 'data:image/jpeg;base64,' + msg.image;
-  img.classList.add('show');
-  placeholder.style.display = 'none';
-  
-  frameCount++;
-  
-  if (msg.ts && lastFrameTs) {
-    const latency = Date.now() - msg.ts;
-    updateLatency(latency);
-  }
-  lastFrameTs = msg.ts;
-}
-
-function updateFPS() {
-  const fps = frameCount;
-  frameCount = 0;
-  
-  const badge = document.getElementById('fpsBadge');
-  badge.textContent = `${fps} FPS`;
-  
-  if (fps >= 15) {
-    badge.classList.remove('mid', 'low');
-    badge.classList.add('good');
-  } else if (fps >= 8) {
-    badge.classList.remove('good', 'low');
-    badge.classList.add('mid');
-  } else {
-    badge.classList.remove('good', 'mid');
-    badge.classList.add('low');
-  }
-}
-
-function updateLatency(ms) {
-  const badge = document.getElementById('latBadge');
-  badge.textContent = `${ms} ms`;
-  
-  if (ms < 100) {
-    badge.classList.remove('mid', 'low');
-    badge.classList.add('good');
-  } else if (ms < 250) {
-    badge.classList.remove('good', 'low');
-    badge.classList.add('mid');
-  } else {
-    badge.classList.remove('good', 'mid');
-    badge.classList.add('low');
-  }
-}
-
-// ════════════════════════════════════════════════════════════
-//  SCREENSHOT
-// ════════════════════════════════════════════════════════════
 function reqScreenshot() {
-  if (!selClient) {
-    log('Please select a client first', 'warn');
-    return;
-  }
-
-  if (!ws || ws.readyState !== WebSocket.OPEN) {
-    log('WebSocket not connected', 'error');
-    return;
-  }
-
-  ws.send(JSON.stringify({
-    type: 'request_screenshot',
-    client_id: selClient,
-    quality: 85
-  }));
-
-  log('Requesting screenshot...', 'info');
+  if(!selClient){log('Select a client','error');return;}
+  ws.send(JSON.stringify({type:'request_screenshot',client_id:selClient}));
 }
 
-function showScreenshot(base64Image) {
-  const img = document.getElementById('screenImg');
-  const placeholder = document.getElementById('placeholder');
-  
-  img.src = 'data:image/jpeg;base64,' + base64Image;
-  img.classList.add('show');
-  placeholder.style.display = 'none';
-}
-
-// ════════════════════════════════════════════════════════════
-//  COMMAND EXECUTION
-// ════════════════════════════════════════════════════════════
 function sendCmd() {
-  const input = document.getElementById('cmdInput');
-  const cmd = input.value.trim();
-  
-  if (!cmd) return;
-  if (!selClient) {
-    log('Please select a client first', 'warn');
-    return;
-  }
-
-  if (!ws || ws.readyState !== WebSocket.OPEN) {
-    log('WebSocket not connected', 'error');
-    return;
-  }
-
-  ws.send(JSON.stringify({
-    type: 'command',
-    client_id: selClient,
-    command: cmd
-  }));
-
-  log(`Executing: ${cmd}`, 'info');
-  input.value = '';
+  if(!selClient){log('Select a client','error');return;}
+  const v=document.getElementById('cmdInput').value.trim(); if(!v) return;
+  ws.send(JSON.stringify({type:'command',client_id:selClient,command:v}));
+  log('$ '+v,'log');
+  document.getElementById('cmdInput').value='';
 }
 
-// ════════════════════════════════════════════════════════════
-//  FILE EXPLORER
-// ════════════════════════════════════════════════════════════
- 
+function showScreen() { $img.classList.add('show'); $ph.style.display='none'; }
+function hideScreen() { $img.classList.remove('show'); $ph.style.display='flex'; }
 
-
+// ════════════════════════════════════════════════════════════
+//  EXPLORER PANEL
+// ════════════════════════════════════════════════════════════
 function toggleExplorer() {
-  exOpen = !exOpen;
-  const panel = document.getElementById('explorerPanel');
-  const btn = document.getElementById('filesBtn');
-  
-  if (exOpen) {
-    // Tắt Task Manager nếu đang mở
-    if (tmOpen) {
-      tmOpen = false;
-      document.getElementById('taskManagerPanel').classList.remove('open');
-      document.getElementById('taskBtn').classList.remove('task-active');
-    }
-    
-    panel.classList.add('open');
-    btn.classList.add('files-active');
-    
-    if (selClient) {
-      exRequestDrives();
-      exRefresh();
-    }
-  } else {
-    panel.classList.remove('open');
-    btn.classList.remove('files-active');
-  }
+  exOpen=!exOpen;
+  document.getElementById('explorerPanel').classList.toggle('open',exOpen);
+  document.getElementById('filesBtn').classList.toggle('files-active',exOpen);
+  if(exOpen && selClient) { reqDrives(); navTo(exCurPath); }
 }
 
-function exRequestDrives() {
-  if (!ws || ws.readyState !== WebSocket.OPEN) return;
-  
-  ws.send(JSON.stringify({
-    type: 'get_drives',
-    client_id: selClient
-  }));
+function reqDrives() {
+  if(!selClient) return;
+  ws.send(JSON.stringify({type:'get_drives',client_id:selClient}));
 }
 
-function exRefresh() {
-  if (!selClient) {
-    log('Please select a client first', 'warn');
-    return;
-  }
-  
-  if (!ws || ws.readyState !== WebSocket.OPEN) {
-    log('WebSocket not connected', 'error');
-    return;
-  }
-
-  const path = exPath || '.';
-  
-  ws.send(JSON.stringify({
-    type: 'list_directory',
-    client_id: selClient,
-    path: path
-  }));
-
-  log(`Listing: ${path}`, 'info');
+function navTo(path) {
+  if(!selClient) return;
+  if(path!==exCurPath) exHistory.push(exCurPath);
+  exCurPath=path;
+  exSelected.clear(); updateSel();
+  document.getElementById('exPath').value=path;
+  document.getElementById('exFilelist').innerHTML='<div class="ex-loading"><div class="spinner"></div>Loading…</div>';
+  ws.send(JSON.stringify({type:'list_directory',client_id:selClient,path}));
 }
 
-function exGoBack() {
-  if (exHistory.length > 0) {
-    exPath = exHistory.pop();
-    exRefresh();
-    document.getElementById('exBackBtn').disabled = exHistory.length === 0;
-  }
+function navBack() { if(exHistory.length) navTo(exHistory.pop()); }
+
+function renderDrives(drives=[]) {
+  document.getElementById('exDrives').innerHTML = drives.map(d=>
+    `<button class="ex-drive-pill" onclick="navTo('${esc(d.path)}')">${d.name}</button>`
+  ).join('');
 }
 
-function exNavigate(path) {
-  if (exPath) {
-    exHistory.push(exPath);
-    document.getElementById('exBackBtn').disabled = false;
-  }
-  exPath = path;
-  exSelected.clear();
-  exRefresh();
-}
+function renderDir(data) {
+  if(!data) return;
+  const items = data.items || [];
+  const path  = data.path  || exCurPath;
+  exCurPath=path; exItems=items;
+  exSelected.clear(); updateSel();
+  document.getElementById('exPath').value=path;
 
-function handleDrivesList(drives) {
-  if (!drives || !Array.isArray(drives)) return;
-  
-  exDrives = drives;
-  const container = document.getElementById('exDrives');
-  
-  container.innerHTML = drives.map(d => `
-    <button class="ex-drive-pill" onclick="exNavigate('${d.path}')">
-      ${d.name}
-    </button>
-  `).join('');
-}
-
-function handleDirectoryList(data, path) {
-  if (data.error) {
-    log(`Error: ${data.error}`, 'error');
+  if(data.error) {
+    document.getElementById('exFilelist').innerHTML=
+      `<div style="color:var(--red);padding:16px;font-size:12px">⚠ ${data.error}</div>`;
     return;
   }
 
-  exPath = data.path || path;
-  exFiles = data.items || [];
-  
-  document.getElementById('exPath').value = exPath;
-  
-  const container = document.getElementById('exFileList');
-  
-  if (exFiles.length === 0) {
-    container.innerHTML = `
-      <div class="ex-empty">
-        <div class="ex-empty-icon">📂</div>
-        <div class="ex-empty-text">Empty directory</div>
-      </div>
-    `;
-    return;
-  }
-
-  const html = exFiles.map(item => {
-    const icon = item.type === 'parent' ? '⬆️' : 
-                 item.type === 'dir' ? '📁' : 
-                 getFileIcon(item.ext);
-    const nameClass = item.type === 'parent' ? 'parent' : 
-                      item.type === 'dir' ? 'dir' : '';
-    const size = item.type === 'file' ? formatBytes(item.size) : 
-                 item.type === 'dir' ? `${item.size} items` : '';
-    
-    return `
-      <div class="ex-row" 
-           data-path="${item.path}" 
-           data-type="${item.type}"
-           data-name="${item.name}"
-           ondblclick="exRowDblClick(this)"
-           onclick="exRowClick(event, this)">
-        <div class="ex-row-icon">${icon}</div>
-        <div class="ex-row-name ${nameClass}">${item.name}</div>
-        <div class="ex-row-size">${size}</div>
-      </div>
-    `;
+  const rows = items.map(item => {
+    const isDir   = item.type==='dir';
+    const isPar   = item.type==='parent';
+    const icon    = isPar?'↩':isDir?'📁':fileIcon(item.ext||'');
+    const nc      = isPar?'parent':isDir?'dir':'';
+    const size    = isPar?'':isDir?`${item.size} items`:fmtSize(item.size);
+    return `<div class="ex-row" data-path="${esc(item.path)}" data-type="${item.type}"
+               ondblclick="rowDbl(this)" onclick="rowClick(this,event)">
+      <div class="ex-row-icon">${icon}</div>
+      <div class="ex-row-name ${nc}" title="${esc(item.name)}">${esc(item.name)}</div>
+      <div class="ex-row-size">${size}</div>
+    </div>`;
   }).join('');
 
-  container.innerHTML = html;
-  exUpdateSelection();
+  document.getElementById('exFilelist').innerHTML = rows ||
+    '<div style="color:var(--muted);padding:20px;font-size:12px;text-align:center">Empty folder</div>';
 }
 
-function exRowClick(event, row) {
-  const path = row.dataset.path;
-  
-  if (event.ctrlKey || event.metaKey) {
-    // Multi-select
-    if (exSelected.has(path)) {
-      exSelected.delete(path);
+function rowDbl(el) {
+  const {type, path} = el.dataset;
+  if(type==='dir'||type==='parent') {
+    navTo(path);
+  } else {
+    // Check file extension to decide action
+    const ext = path.substring(path.lastIndexOf('.')).toLowerCase();
+    
+    // Text files - open in editor
+    const textExts = ['.txt', '.py', '.js', '.html', '.css', '.json', '.xml', '.md', 
+                      '.log', '.csv', '.ini', '.yaml', '.yml', '.sh', '.bat', '.c', 
+                      '.cpp', '.java', '.php', '.rb', '.go', '.rs', '.ts', '.jsx', 
+                      '.tsx', '.vue', '.sql', '.conf', '.cfg'];
+    
+    // Image files - open in viewer
+    const imageExts = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg', '.ico'];
+    
+    if (textExts.includes(ext) || imageExts.includes(ext)) {
+      // Request file content from client
+      ws.send(JSON.stringify({
+        type: 'read_file',
+        client_id: selClient,
+        path: path
+      }));
+      log(`📂 Opening: ${path.split(/[\\/]/).pop()}`, 'info');
     } else {
-      exSelected.add(path);
+      // Other files - download
+      exSelected.clear(); 
+      exSelected.add(path); 
+      updateSel(); 
+      downloadSelected();
     }
-  } else {
-    // Single select
-    exSelected.clear();
-    exSelected.add(path);
-  }
-  
-  exUpdateSelection();
-}
-
-function exRowDblClick(row) {
-  const type = row.dataset.type;
-  const path = row.dataset.path;
-  
-  if (type === 'dir' || type === 'parent') {
-    exNavigate(path);
-  } else if (type === 'file') {
-    exView();
   }
 }
 
-function exUpdateSelection() {
-  // Update UI
-  document.querySelectorAll('.ex-row').forEach(row => {
-    const path = row.dataset.path;
-    row.classList.toggle('selected', exSelected.has(path));
+function rowClick(el, e) {
+  const {path, type} = el.dataset;
+  if(type==='parent') return;
+  if(e.ctrlKey||e.metaKey) { exSelected.has(path)?exSelected.delete(path):exSelected.add(path); }
+  else if(e.shiftKey && exSelected.size) {
+    const rows=[...document.querySelectorAll('.ex-row')];
+    const a=rows.indexOf(el), b=rows.findIndex(r=>exSelected.has(r.dataset.path));
+    for(let i=Math.min(a,b);i<=Math.max(a,b);i++) if(rows[i].dataset.path) exSelected.add(rows[i].dataset.path);
+  } else { exSelected.clear(); exSelected.add(path); }
+  document.querySelectorAll('.ex-row').forEach(r=>r.classList.toggle('selected',exSelected.has(r.dataset.path)));
+  updateSel();
+}
+
+function updateSel() {
+  const n=exSelected.size;
+  document.getElementById('exSelInfo').textContent=n?`${n} selected`:'–';
+  document.getElementById('exDlBtn').disabled=!n;
+}
+
+// ── Download: Client → Admin ───────────────────────────────
+function downloadSelected() {
+  if(!exSelected.size||!selClient) return;
+  exSelected.forEach(path=>{
+    const tid=randId();
+    const name=path.split(/[\\/]/).pop();
+    mkXferItem(tid, name, null, 'down');
+    ws.send(JSON.stringify({type:'request_file_upload',client_id:selClient,path,transfer_id:tid}));
+    log(`↓ Fetching: ${path}`,'info');
   });
-  
-  // Update toolbar
-  const count = exSelected.size;
-  const info = document.getElementById('exSelInfo');
-  const downloadBtn = document.getElementById('exDownloadBtn');
-  const viewBtn = document.getElementById('exViewBtn');
-  
-  if (count === 0) {
-    info.textContent = 'No selection';
-    downloadBtn.disabled = true;
-    viewBtn.disabled = true;
-  } else if (count === 1) {
-    const [path] = exSelected;
-    const item = exFiles.find(f => f.path === path);
-    info.textContent = item ? item.name : '1 selected';
-    downloadBtn.disabled = false;
-    viewBtn.disabled = item && item.type !== 'file';
-  } else {
-    info.textContent = `${count} selected`;
-    downloadBtn.disabled = false;
-    viewBtn.disabled = true;
-  }
 }
 
-function exDownload() {
-  if (exSelected.size === 0) return;
-  
-  if (!ws || ws.readyState !== WebSocket.OPEN) {
-    log('WebSocket not connected', 'error');
+// ── Upload: Admin → Client (into current explorer dir) ─────
+async function uploadFiles(e) {
+  const files=[...e.target.files]; e.target.value='';
+  if(!files.length||!selClient) return;
+  for(const file of files) await sendOneFile(file, exCurPath);
+}
+
+async function sendOneFile(file, saveDir) {
+  const tid=randId();
+  const total=Math.ceil(file.size/CHUNK)||1;
+  mkXferItem(tid, file.name, file.size, 'up');
+  ws.send(JSON.stringify({type:'send_file_to_client',client_id:selClient,transfer_id:tid,
+    filename:file.name,file_size:file.size,total_chunks:total,save_dir:saveDir}));
+  for(let i=0;i<total;i++){
+    const b64=await readB64(file.slice(i*CHUNK,(i+1)*CHUNK));
+    ws.send(JSON.stringify({type:'send_chunk_to_client',client_id:selClient,transfer_id:tid,
+      chunk_idx:i,total_chunks:total,data:b64}));
+    xferProgress(tid,i+1,total);
+    await tick();
+  }
+  ws.send(JSON.stringify({type:'finish_file_to_client',client_id:selClient,transfer_id:tid,
+    filename:file.name,file_size:file.size}));
+  log(`↑ Sent: ${file.name} → ${saveDir}`,'info');
+}
+
+// ── Drag & drop onto viewer → upload to current dir ─────────
+function onViewerDragOver(e) {
+  if(!exOpen||!selClient) return;
+  e.preventDefault();
+  document.getElementById('dropOverlay').classList.add('show');
+  document.getElementById('dropOverlay').textContent=`Drop to upload → ${exCurPath}`;
+}
+function onViewerDragLeave() { document.getElementById('dropOverlay').classList.remove('show'); }
+function onViewerDrop(e) {
+  e.preventDefault();
+  document.getElementById('dropOverlay').classList.remove('show');
+  if(!exOpen||!selClient) return;
+  [...(e.dataTransfer.files||[])].forEach(f=>sendOneFile(f,exCurPath));
+}
+
+// ════════════════════════════════════════════════════════════
+//  TRANSFER HANDLERS (incoming from server)
+// ════════════════════════════════════════════════════════════
+function onFolderStart(msg) {
+  // folder_transfer_start — tạo 1 item đại diện cho cả folder
+  const {transfer_id:tid, folder_name, total_files} = msg;
+  mkXferItem(tid, `📁 ${folder_name}/`, null, 'down', `0/${total_files} files`);
+}
+
+function onFolderDone(msg) {
+  const {transfer_id:tid, folder_name, total_files} = msg;
+  const x=activeXfers[tid];
+  if(!x) return;
+  setXferDone(tid);
+  x.msg.textContent=`${total_files} files received`;
+  // Tạo download link cho folder — chỉ available qua server endpoint
+  x.dl.href=`/download_folder/${tid}`;
+  x.dl.textContent='⬇ Download zip';
+  x.dl.classList.add('show');
+  log(`↓ Folder done: ${folder_name} (${total_files} files)`,'result');
+  // Refresh explorer nếu đang mở
+  if(exOpen) setTimeout(()=>navTo(exCurPath), 800);
+}
+
+function onXferStart(msg) {
+  const {transfer_id:tid, filename, file_size, total_chunks, total_files, file_index, is_folder} = msg;
+  if(is_folder && activeXfers[tid]) {
+    // Cập nhật progress item folder đã có
+    const x=activeXfers[tid];
+    const fi=file_index+1;
+    x.msg.textContent=`[${fi}/${total_files}] ${filename.split(/[\\/]/).pop()}`;
+    x.fill.style.width='0%';
+    // track chunk state riêng cho file hiện tại
+    x.curChunks=0; x.curTotal=total_chunks;
     return;
   }
+  // File đơn
+  if(!activeXfers[tid]) mkXferItem(tid, filename, file_size, 'down');
+  const x=activeXfers[tid];
+  if(x){ x.total=total_chunks; x.chunks=0; }
+}
 
-  exSelected.forEach(path => {
-    const item = exFiles.find(f => f.path === path);
-    if (!item) return;
-    
-    const transferId = 'dl_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-    
-    ws.send(JSON.stringify({
-      type: 'request_file_upload',
-      client_id: selClient,
-      path: path,
-      transfer_id: transferId
-    }));
+function onXferChunk(msg) {
+  const {transfer_id:tid, chunk_idx, total_chunks} = msg;
+  const x=activeXfers[tid]; if(!x) return;
+  if(x.curTotal!=null) {
+    // folder mode: progress per file
+    x.curChunks=(x.curChunks||0)+1;
+    xferProgress(tid, x.curChunks, x.curTotal);
+  } else {
+    x.chunks=(x.chunks||0)+1;
+    xferProgress(tid, x.chunks, x.total||total_chunks);
+  }
+}
 
-    exTransfers[transferId] = {
-      name: item.name,
-      type: 'download',
-      progress: 0,
-      chunks: {},
-      totalChunks: 0
+function onXferDone(msg) {
+  const {transfer_id:tid, filename, file_index, total_files, is_folder} = msg;
+  if(is_folder) return; // folder done xử lý bởi onFolderDone
+  setXferDone(tid);
+  const x=activeXfers[tid]; if(!x) return;
+  x.dl.href=`/download/${tid}`;
+  x.dl.textContent='⬇ Download';
+  x.dl.classList.add('show');
+  log(`↓ Ready: ${filename}`,'result');
+}
+
+function onXferError(msg) {
+  const {transfer_id:tid, error} = msg;
+  const x=activeXfers[tid]; if(!x) return;
+  x.fill.classList.add('err'); x.fill.style.width='100%';
+  x.msg.textContent='✕ '+error;
+  x.msg.style.color='var(--red)';
+  log(`Transfer error: ${error}`,'error');
+}
+
+function onXferProgress(msg) {
+  const {transfer_id:tid} = msg;
+  const x=activeXfers[tid]; if(!x) return;
+  x.msg.textContent=msg.message||'…';
+}
+
+function onSaveResult(msg) {
+  const {transfer_id:tid, path, error} = msg;
+  const x=activeXfers[tid];
+  if(x){ if(error){x.fill.classList.add('err');x.msg.textContent='✕ '+error;}else{setXferDone(tid);x.msg.textContent='Saved: '+path;} }
+  if(error) log(`Save error: ${error}`,'error');
+  else { log(`↑ Saved: ${path}`,'result'); if(exOpen) setTimeout(()=>navTo(exCurPath),600); }
+}
+
+// ════════════════════════════════════════════════════════════
+//  TRANSFER UI HELPERS
+// ════════════════════════════════════════════════════════════
+function mkXferItem(tid, name, size, dir, initMsg='') {
+  document.getElementById('noTransfers')?.remove();
+  const el=document.createElement('div'); el.className='transfer-item'; el.id='xfer-'+tid;
+  el.innerHTML=`
+    <div class="t-row">
+      <span class="t-name" title="${esc(name)}">${dir==='up'?'↑':'↓'} ${esc(name)}</span>
+      <span class="t-size">${size!=null?fmtSize(size):''}</span>
+    </div>
+    <div class="t-bar"><div class="t-fill" id="fill-${tid}"></div></div>
+    <div class="t-status">
+      <span class="t-msg" id="msg-${tid}">${initMsg||'Starting…'}</span>
+      <a class="t-dl" id="dl-${tid}" target="_blank"></a>
+    </div>`;
+  document.getElementById('exTransfers').appendChild(el);
+  activeXfers[tid]={
+    el, fill:document.getElementById('fill-'+tid),
+    msg:document.getElementById('msg-'+tid),
+    dl:document.getElementById('dl-'+tid),
+    chunks:0, total:0
+  };
+}
+
+function xferProgress(tid, done, total) {
+  const x=activeXfers[tid]; if(!x||!total) return;
+  const pct=Math.round(done/total*100);
+  x.fill.style.width=pct+'%';
+  if(!x.curTotal) x.msg.textContent=pct+'%'; // solo file
+}
+
+function setXferDone(tid) {
+  const x=activeXfers[tid]; if(!x) return;
+  x.fill.style.width='100%'; x.fill.classList.add('done');
+}
+
+// ════════════════════════════════════════════════════════════
+//  UTILS
+// ════════════════════════════════════════════════════════════
+function fileIcon(ext) {
+  const m={
+    '.exe':'⚙','.dll':'⚙','.bat':'⚙','.sh':'⚙',
+    '.zip':'🗜','.rar':'🗜','.7z':'🗜','.tar':'🗜','.gz':'🗜',
+    '.jpg':'🖼','.jpeg':'🖼','.png':'🖼','.gif':'🖼','.bmp':'🖼','.svg':'🖼','.webp':'🖼',
+    '.mp4':'🎬','.mkv':'🎬','.avi':'🎬','.mov':'🎬',
+    '.mp3':'🎵','.wav':'🎵','.flac':'🎵','.aac':'🎵',
+    '.pdf':'📄','.doc':'📝','.docx':'📝','.xls':'📊','.xlsx':'📊',
+    '.txt':'📃','.log':'📃','.md':'📃',
+    '.py':'🐍','.js':'📜','.ts':'📜','.html':'🌐','.css':'🎨',
+    '.json':'📋','.xml':'📋','.csv':'📊',
+    '.db':'🗄','.sqlite':'🗄','.sql':'🗄',
+  };
+  return m[ext]||'📄';
+}
+
+function fmtSize(b) {
+  if(b==null||b==='') return '';
+  if(b<1024) return b+' B';
+  if(b<1048576) return (b/1024).toFixed(1)+' KB';
+  return (b/1048576).toFixed(2)+' MB';
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function randId() { return Math.random().toString(36).slice(2,10); }
+
+function readB64(blob) {
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=()=>res(r.result.split(',')[1]);
+    r.onerror=rej; r.readAsDataURL(blob);
+  });
+}
+
+function tick() { return new Promise(r=>setTimeout(r,0)); }
+
+function log(msg, cls='') {
+  const ts=document.createElement('div'); ts.className='log ts';
+  ts.textContent=new Date().toLocaleTimeString();
+  const el=document.createElement('div'); el.className='log '+cls;
+  el.textContent=msg;
+  $out.append(ts,el); $out.scrollTop=$out.scrollHeight;
+  while($out.children.length>300) $out.removeChild($out.firstChild);
+}
+
+// ════════════════════════════════════════════════════════════
+//  IMAGE VIEWER & TEXT EDITOR
+// ════════════════════════════════════════════════════════════
+
+let currentFilePath = null;
+let currentFileContent = null;
+let isTextModified = false;
+
+// Handle file content received from client
+function handleFileContent(msg) {
+  const data = msg.data;
+  const path = msg.path;
+  
+  if (!data) {
+    log('Failed to read file', 'error');
+    return;
+  }
+  
+  if (data.error) {
+    log(`File error: ${data.error}`, 'error');
+    return;
+  }
+  
+  currentFilePath = path;
+  
+  // Image file
+  if (data.type === 'image') {
+    const ext = data.extension || '';
+    const mimeMap = {
+      '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+      '.png': 'image/png', '.gif': 'image/gif',
+      '.bmp': 'image/bmp', '.webp': 'image/webp',
+      '.svg': 'image/svg+xml', '.ico': 'image/x-icon'
     };
-    
-    log(`Requesting: ${item.name}`, 'info');
-  });
+    const mime = mimeMap[ext] || 'image/jpeg';
+    openImageViewer(path, data.content, mime);
+  }
+  // Text file
+  else if (data.type === 'text') {
+    openTextEditor(path, data.content, data.size);
+  }
 }
 
-function exView() {
-  if (exSelected.size !== 1) return;
+// Image Viewer functions
+function openImageViewer(path, base64Data, mimeType) {
+  document.getElementById('imageViewerPath').textContent = path;
+  const img = document.getElementById('imageViewerImg');
+  img.src = `data:${mimeType};base64,${base64Data}`;
   
-  const [path] = exSelected;
-  const item = exFiles.find(f => f.path === path);
+  img.onload = () => {
+    const info = document.getElementById('imageViewerInfo');
+    info.textContent = `${img.naturalWidth} × ${img.naturalHeight} px`;
+  };
   
-  if (!item || item.type !== 'file') return;
+  document.getElementById('imageViewerModal').classList.add('show');
+  log(`📷 Opened image: ${path.split(/[\\/]/).pop()}`, 'info');
+}
+
+function closeImageViewer() {
+  document.getElementById('imageViewerModal').classList.remove('show');
+  document.getElementById('imageViewerImg').src = '';
+}
+
+// Text Editor functions
+function openTextEditor(path, content, size) {
+  currentFileContent = content;
+  isTextModified = false;
   
-  if (!ws || ws.readyState !== WebSocket.OPEN) {
-    log('WebSocket not connected', 'error');
+  document.getElementById('textEditorPath').textContent = path;
+  document.getElementById('textEditorTextarea').value = content;
+  document.getElementById('editorFileSize').textContent = `Size: ${fmtSize(size)}`;
+  
+  const lines = content.split('\n').length;
+  document.getElementById('editorLines').textContent = `Lines: ${lines}`;
+  document.getElementById('editorModified').style.display = 'none';
+  document.getElementById('editorStatus').textContent = 'Ready';
+  
+  document.getElementById('textEditorModal').classList.add('show');
+  log(`📝 Opened file: ${path.split(/[\\/]/).pop()}`, 'info');
+  
+  // Track changes
+  const textarea = document.getElementById('textEditorTextarea');
+  textarea.oninput = () => {
+    isTextModified = (textarea.value !== currentFileContent);
+    document.getElementById('editorModified').style.display = isTextModified ? 'inline' : 'none';
+    const newLines = textarea.value.split('\n').length;
+    document.getElementById('editorLines').textContent = `Lines: ${newLines}`;
+  };
+}
+
+function closeTextEditor() {
+  if (isTextModified) {
+    if (!confirm('You have unsaved changes. Close anyway?')) {
+      return;
+    }
+  }
+  document.getElementById('textEditorModal').classList.remove('show');
+  document.getElementById('textEditorTextarea').value = '';
+  currentFilePath = null;
+  currentFileContent = null;
+  isTextModified = false;
+}
+
+function reloadTextFile() {
+  if (!currentFilePath || !selClient) return;
+  
+  if (isTextModified && !confirm('Discard your changes?')) {
     return;
   }
-
+  
   ws.send(JSON.stringify({
     type: 'read_file',
     client_id: selClient,
-    path: path
+    path: currentFilePath
   }));
-
-  log(`Reading: ${item.name}`, 'info');
+  document.getElementById('editorStatus').textContent = 'Reloading...';
 }
 
-function exUpload() {
-  log('Upload feature - coming soon', 'info');
-}
-
-function handleFileContent(content, path) {
-  if (!content) return;
+function saveTextFile() {
+  if (!currentFilePath || !selClient) return;
   
-  if (content.startsWith('[ERROR]')) {
-    log(content, 'error');
-    return;
-  }
+  const content = document.getElementById('textEditorTextarea').value;
+  document.getElementById('saveBtn').disabled = true;
+  document.getElementById('editorStatus').textContent = 'Saving...';
   
-  const filename = path.split(/[/\\]/).pop();
-  
-  // Create modal for viewing
-  const modal = document.createElement('div');
-  modal.style.cssText = `
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.9);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10000;
-  `;
-  
-  const viewer = document.createElement('div');
-  viewer.style.cssText = `
-    background: var(--surf);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    max-width: 90vw;
-    max-height: 90vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  `;
-  
-  viewer.innerHTML = `
-    <div style="padding: 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
-      <div style="font-family: var(--sans); font-weight: 700; font-size: 13px; color: var(--accent);">${filename}</div>
-      <button onclick="this.closest('.modal').remove()" style="background: none; border: none; color: var(--muted); cursor: pointer; font-size: 20px;">×</button>
-    </div>
-    <pre style="flex: 1; overflow: auto; padding: 16px; margin: 0; font-family: var(--mono); font-size: 11px; line-height: 1.6;">${content}</pre>
-  `;
-  
-  modal.className = 'modal';
-  modal.appendChild(viewer);
-  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
-  
-  document.body.appendChild(modal);
-}
-
-function handleFileTransferStart(msg) {
-  const tid = msg.transfer_id;
-  if (!exTransfers[tid]) {
-    exTransfers[tid] = {
-      name: msg.filename,
-      type: 'download',
-      progress: 0,
-      chunks: {},
-      totalChunks: msg.total_chunks
-    };
-  } else {
-    exTransfers[tid].totalChunks = msg.total_chunks;
-  }
-  
-  exRenderTransfers();
-}
-
-function handleFileChunk(msg) {
-  const tid = msg.transfer_id;
-  if (!exTransfers[tid]) return;
-  
-  exTransfers[tid].chunks[msg.chunk_idx] = msg.data;
-  exTransfers[tid].progress = (Object.keys(exTransfers[tid].chunks).length / exTransfers[tid].totalChunks) * 100;
-  
-  exRenderTransfers();
-}
-
-function handleFileTransferDone(msg) {
-  const tid = msg.transfer_id;
-  const transfer = exTransfers[tid];
-  if (!transfer) return;
-  
-  // Assemble file
-  const chunks = [];
-  for (let i = 0; i < transfer.totalChunks; i++) {
-    if (!transfer.chunks[i]) {
-      log(`Missing chunk ${i} for ${transfer.name}`, 'error');
-      return;
-    }
-    chunks.push(transfer.chunks[i]);
-  }
-  
-  // Convert to blob and download
-  const binary = atob(chunks.join(''));
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  
-  const blob = new Blob([bytes], { type: 'application/octet-stream' });
-  const url = URL.createObjectURL(blob);
-  
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = transfer.name;
-  a.click();
-  
-  URL.revokeObjectURL(url);
-  
-  // Remove transfer
-  delete exTransfers[tid];
-  exRenderTransfers();
-  
-  log(`Downloaded: ${transfer.name}`, 'result');
-}
-
-function exRenderTransfers() {
-  const container = document.getElementById('exTransfers');
-  const transfers = Object.values(exTransfers);
-  
-  if (transfers.length === 0) {
-    container.style.display = 'none';
-    return;
-  }
-  
-  container.style.display = 'block';
-  container.innerHTML = transfers.map(t => `
-    <div class="ex-transfer-item">
-      <div class="ex-transfer-name">${t.name}</div>
-      <div class="ex-transfer-progress">
-        <div class="ex-progress-bar">
-          <div class="ex-progress-fill" style="width: ${t.progress}%"></div>
-        </div>
-        <div class="ex-transfer-percent">${Math.round(t.progress)}%</div>
-      </div>
-    </div>
-  `).join('');
-}
-
-// Helper functions
-function formatBytes(bytes) {
-  if (bytes === 0) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}
-
-function getFileIcon(ext) {
-  const icons = {
-    '.txt': '📄', '.md': '📝', '.pdf': '📕',
-    '.doc': '📘', '.docx': '📘', '.xls': '📗', '.xlsx': '📗',
-    '.ppt': '📙', '.pptx': '📙',
-    '.jpg': '🖼', '.jpeg': '🖼', '.png': '🖼', '.gif': '🖼',
-    '.mp4': '🎬', '.avi': '🎬', '.mov': '🎬',
-    '.mp3': '🎵', '.wav': '🎵',
-    '.zip': '📦', '.rar': '📦', '.7z': '📦',
-    '.py': '🐍', '.js': '📜', '.html': '🌐', '.css': '🎨',
-    '.json': '⚙', '.xml': '⚙', '.yml': '⚙',
-  };
-  return icons[ext] || '📄';
-}
-
-// ════════════════════════════════════════════════════════════
-//  TASK MANAGER
-// ════════════════════════════════════════════════════════════
-function toggleTaskManager() {
-  tmOpen = !tmOpen;
-  const panel = document.getElementById('taskManagerPanel');
-  const btn = document.getElementById('taskBtn');
-  
-  if (tmOpen) {
-    // Tắt File Manager nếu đang mở
-    if (exOpen) {
-      exOpen = false;
-      document.getElementById('explorerPanel').classList.remove('open');
-      document.getElementById('filesBtn').classList.remove('files-active');
-    }
-    
-    panel.classList.add('open');
-    btn.classList.add('task-active');
-    if (selClient) {
-      requestProcesses();
-      requestSysInfo();
-    }
-  } else {
-    panel.classList.remove('open');
-    btn.classList.remove('task-active');
-  }
-}
-
-function requestProcesses() {
-  if (!selClient) {
-    log('Please select a client first', 'warn');
-    return;
-  }
-
-  if (!ws || ws.readyState !== WebSocket.OPEN) {
-    log('WebSocket not connected', 'error');
-    return;
-  }
-
   ws.send(JSON.stringify({
-    type: 'request_processes',
-    client_id: selClient
-  }));
-}
-
-function requestSysInfo() {
-  if (!selClient) return;
-
-  if (!ws || ws.readyState !== WebSocket.OPEN) return;
-
-  ws.send(JSON.stringify({
-    type: 'request_sysinfo',
-    client_id: selClient
-  }));
-}
-
-function handleProcessesData(data) {
-  if (!Array.isArray(data)) {
-    log('Invalid process data received', 'error');
-    return;
-  }
-
-  processes = data;
-  renderProcessTable();
-  
-  document.getElementById('tmProcStat').textContent = data.length;
-}
-
-function updateSysStats(data) {
-  if (!data) return;
-
-  document.getElementById('tmCpuStat').textContent = `${data.cpu_percent}%`;
-  document.getElementById('tmMemStat').textContent = `${data.memory_percent}%`;
-}
-
-function renderProcessTable() {
-  const container = document.getElementById('tmTableContainer');
-  
-  if (!processes || processes.length === 0) {
-    showEmptyState('No processes found');
-    return;
-  }
-
-  const sorted = [...processes].sort((a, b) => {
-    const aVal = a[sortField] || 0;
-    const bVal = b[sortField] || 0;
-    return sortDirection === 'desc' ? bVal - aVal : aVal - bVal;
-  });
-
-  const search = document.getElementById('tmSearch').value.toLowerCase();
-  const filtered = search ? sorted.filter(p => 
-    p.name.toLowerCase().includes(search) ||
-    String(p.pid).includes(search) ||
-    (p.path && p.path.toLowerCase().includes(search))
-  ) : sorted;
-
-  const html = `
-    <table class="tm-table">
-      <thead>
-        <tr>
-          <th class="sortable ${sortField === 'pid' ? 'sort-' + sortDirection : ''}" onclick="sortBy('pid')">PID</th>
-          <th class="sortable ${sortField === 'name' ? 'sort-' + sortDirection : ''}" onclick="sortBy('name')">Name</th>
-          <th class="sortable ${sortField === 'cpu' ? 'sort-' + sortDirection : ''}" onclick="sortBy('cpu')">CPU %</th>
-          <th class="sortable ${sortField === 'memory' ? 'sort-' + sortDirection : ''}" onclick="sortBy('memory')">Memory %</th>
-          <th class="sortable ${sortField === 'status' ? 'sort-' + sortDirection : ''}" onclick="sortBy('status')">Status</th>
-          <th class="sortable ${sortField === 'threads' ? 'sort-' + sortDirection : ''}" onclick="sortBy('threads')">Threads</th>
-          <th>User</th>
-          <th>Path</th>
-          <th style="text-align: right;">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${filtered.map(p => {
-          const cpuClass = p.cpu > 50 ? 'high' : p.cpu > 20 ? 'mid' : 'low';
-          const memClass = p.memory > 30 ? 'high' : p.memory > 10 ? 'mid' : 'low';
-          const isSelected = selectedProcess && selectedProcess.pid === p.pid;
-          
-          return `
-            <tr class="${isSelected ? 'selected' : ''}" onclick="selectProcess(${p.pid})">
-              <td class="pid">${p.pid}</td>
-              <td class="name" title="${p.name}">${p.name}</td>
-              <td class="cpu ${cpuClass}">${p.cpu.toFixed(1)}%</td>
-              <td class="memory ${memClass}">${p.memory.toFixed(1)}%</td>
-              <td class="status ${p.status}">${p.status || 'unknown'}</td>
-              <td>${p.threads || 0}</td>
-              <td class="user" title="${p.user || 'N/A'}">${p.user || 'N/A'}</td>
-              <td class="path" title="${p.path || 'N/A'}">${p.path || 'N/A'}</td>
-              <td class="actions">
-                <button class="tm-end-btn" onclick="event.stopPropagation(); killProcess(${p.pid})">End</button>
-              </td>
-            </tr>
-          `;
-        }).join('')}
-      </tbody>
-    </table>
-  `;
-
-  container.innerHTML = html;
-}
-
-function selectProcess(pid) {
-  const process = processes.find(p => p.pid === pid);
-  if (!process) return;
-
-  selectedProcess = process;
-  
-  document.getElementById('detailPid').textContent = process.pid;
-  document.getElementById('detailName').textContent = process.name;
-  document.getElementById('detailCpu').textContent = process.cpu.toFixed(2) + '%';
-  document.getElementById('detailMem').textContent = process.memory.toFixed(2) + '%';
-  document.getElementById('detailStatus').textContent = process.status || 'unknown';
-  document.getElementById('detailThreads').textContent = process.threads || '0';
-  document.getElementById('detailUser').textContent = process.user || 'N/A';
-  document.getElementById('detailPath').textContent = process.path || 'N/A';
-  
-  document.getElementById('tmDetails').classList.add('show');
-  renderProcessTable();
-}
-
-function sortBy(field) {
-  if (sortField === field) {
-    sortDirection = sortDirection === 'desc' ? 'asc' : 'desc';
-  } else {
-    sortField = field;
-    sortDirection = 'desc';
-  }
-  
-  document.querySelectorAll('.tm-sort-btn').forEach(btn => btn.classList.remove('active'));
-  if (field === 'cpu') {
-    document.getElementById('sortCpuBtn').classList.add('active');
-  } else if (field === 'memory') {
-    document.getElementById('sortMemBtn').classList.add('active');
-  }
-  
-  renderProcessTable();
-}
-
-function filterProcesses() {
-  renderProcessTable();
-}
-
-function killProcess(pid) {
-  if (!confirm(`Are you sure you want to end process ${pid}?`)) {
-    return;
-  }
-
-  if (!ws || ws.readyState !== WebSocket.OPEN) {
-    log('WebSocket not connected', 'error');
-    return;
-  }
-
-  ws.send(JSON.stringify({
-    type: 'kill_process',
+    type: 'write_file',
     client_id: selClient,
-    pid: pid
+    path: currentFilePath,
+    content: content
   }));
-
-  log(`Killing process ${pid}...`, 'info');
 }
 
-function endSelectedTask() {
-  if (!selectedProcess) {
-    log('No process selected', 'warn');
-    return;
-  }
+function handleWriteFileResult(msg) {
+  document.getElementById('saveBtn').disabled = false;
   
-  killProcess(selectedProcess.pid);
-}
-
-function copyPath() {
-  if (!selectedProcess || !selectedProcess.path || selectedProcess.path === 'N/A') {
-    log('No path available to copy', 'warn');
-    return;
-  }
-
-  navigator.clipboard.writeText(selectedProcess.path).then(() => {
-    log('Path copied to clipboard', 'result');
-  }).catch(err => {
-    log('Failed to copy path', 'error');
-  });
-}
-
-function openLocation() {
-  if (!selectedProcess || !selectedProcess.path || selectedProcess.path === 'N/A') {
-    log('No path available', 'warn');
-    return;
-  }
-
-  const path = selectedProcess.path;
-  const lastSlash = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
-  const directory = lastSlash > 0 ? path.substring(0, lastSlash) : path;
-
-  log(`Opening location: ${directory}`, 'info');
-}
-
-function showEmptyState(message) {
-  const container = document.getElementById('tmTableContainer');
-  container.innerHTML = `
-    <div class="tm-empty">
-      <div class="tm-empty-icon">⚙️</div>
-      <div class="tm-empty-text">${message}</div>
-    </div>
-  `;
-}
-
-// ════════════════════════════════════════════════════════════
-//  UTILITIES
-// ════════════════════════════════════════════════════════════
-function log(msg, type = 'info') {
-  const output = document.getElementById('output');
-  const ts = new Date().toLocaleTimeString('en-US', { hour12: false });
-  const div = document.createElement('div');
-  div.className = `log ${type}`;
-  div.innerHTML = `<div class="log ts">[${ts}]</div>${msg}`;
-  output.appendChild(div);
-  output.scrollTop = output.scrollHeight;
-}
-
-function updateStatus(status, text) {
-  const dot = document.getElementById('sdot');
-  const stxt = document.getElementById('stxt');
-  
-  if (status === 'connected') {
-    dot.classList.add('on');
+  if (msg.success) {
+    document.getElementById('editorStatus').textContent = '✓ Saved successfully';
+    document.getElementById('editorStatus').style.color = 'var(--green)';
+    currentFileContent = document.getElementById('textEditorTextarea').value;
+    isTextModified = false;
+    document.getElementById('editorModified').style.display = 'none';
+    log(`💾 Saved: ${currentFilePath.split(/[\\/]/).pop()}`, 'info');
+    
+    setTimeout(() => {
+      document.getElementById('editorStatus').textContent = 'Ready';
+      document.getElementById('editorStatus').style.color = 'var(--muted)';
+    }, 2000);
   } else {
-    dot.classList.remove('on');
+    document.getElementById('editorStatus').textContent = `✕ Error: ${msg.error}`;
+    document.getElementById('editorStatus').style.color = 'var(--red)';
+    log(`Save failed: ${msg.error}`, 'error');
   }
-  
-  stxt.textContent = text;
 }
 
-// ════════════════════════════════════════════════════════════
-//  INITIALIZATION
-// ════════════════════════════════════════════════════════════
-window.addEventListener('DOMContentLoaded', () => {
-  connectWS();
-  
-  setInterval(() => {
-    if (tmOpen && selClient) {
-      requestProcesses();
-      requestSysInfo();
-    }
-  }, 3000);
-});
-
+// Close modals with ESC key
 document.addEventListener('keydown', (e) => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-    e.preventDefault();
-    toggleTaskManager();
+  if (e.key === 'Escape') {
+    if (document.getElementById('imageViewerModal').classList.contains('show')) {
+      closeImageViewer();
+    }
+    if (document.getElementById('textEditorModal').classList.contains('show')) {
+      closeTextEditor();
+    }
   }
-  
-  if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
-    e.preventDefault();
-    toggleFileManager();
-  }
-  
-  if ((e.ctrlKey || e.metaKey) && e.key === 'r' && tmOpen) {
-    e.preventDefault();
-    requestProcesses();
-  }
-
-  if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
-    e.preventDefault();
-    toggleExplorer();
-  }
-
 });
-</script>
 
+</script>
 </body>
 </html>
