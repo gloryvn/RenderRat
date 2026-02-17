@@ -1024,117 +1024,466 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
 }
 
 
-/* ══ LOCK PANEL ═════════════════════════════════ */
+
+
+
+
+
+/* ══ LOCK GUIDE PANEL ═══════════════════════════════ */
 .lock-panel {
   width: 0;
   min-width: 0;
-  overflow: hidden;
   background: var(--surf);
-  border-left: 1px solid transparent;
+  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  position: relative;
   transition: width .22s cubic-bezier(.4,0,.2,1), border-color .22s;
 }
+
+
 .lock-panel.open {
-  width: 300px;
-  min-width: 300px;
+  width: 420px;          /* hoặc --lock-w nếu bạn dùng variable */
+  min-width: 420px;
   border-left-color: var(--border);
 }
-.lock-header {
+
+
+/* Subtle scanline texture */
+.lock-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,229,255,0.012) 2px,
+    rgba(0,229,255,0.012) 4px
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Header ─────────────────────────────────────── */
+.lk-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: 14px 16px;
   border-bottom: 1px solid var(--border);
   background: var(--surf2);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
 }
-.lock-title {
+
+.lk-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lk-icon {
+  width: 30px;
+  height: 30px;
+  background: rgba(255, 140, 0, 0.12);
+  border: 1px solid rgba(255, 140, 0, 0.35);
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  flex-shrink: 0;
+  box-shadow: 0 0 12px rgba(255,140,0,0.1);
+}
+
+.lk-title {
   font-family: var(--sans);
   font-weight: 800;
-  font-size: 13px;
-  color: var(--accent);
-  letter-spacing: .12em;
+  font-size: 12px;
+  color: var(--orange);
+  letter-spacing: .14em;
   text-transform: uppercase;
 }
-.lock-close {
-  background: none;
-  border: none;
+
+.lk-subtitle {
+  font-size: 9px;
   color: var(--muted);
+  letter-spacing: .08em;
+  margin-top: 1px;
+}
+
+/* Translate button */
+.lk-translate-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 5px 10px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
   cursor: pointer;
-  font-size: 20px;
-  padding: 4px 8px;
-  transition: color .12s;
+  transition: all .15s;
+  letter-spacing: .04em;
+  white-space: nowrap;
+}
+.lk-translate-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(0,229,255,0.05);
+}
+.lk-translate-btn .lang-flag {
+  font-size: 12px;
   line-height: 1;
 }
-.lock-close:hover { color: var(--red); }
-.lock-content {
-  padding: 16px;
+
+/* ── Content area ────────────────────────────────── */
+.lk-content {
   flex: 1;
   overflow-y: auto;
+  padding: 20px 18px;
   display: flex;
   flex-direction: column;
   gap: 20px;
+  position: relative;
+  z-index: 1;
 }
-.lock-status {
-  background: var(--surf2);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 12px;
+
+/* ── Section block ───────────────────────────────── */
+.lk-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
-.lock-status-item {
+
+.lk-section-label {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: .14em;
+  text-transform: uppercase;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
+  gap: 7px;
 }
-.lock-status-item:last-child { margin-bottom: 0; }
-.lock-status-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--muted);
+
+.lk-section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ── Target badges ───────────────────────────────── */
+.lk-target-row {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.lk-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
   text-transform: uppercase;
+  border: 1px solid;
 }
-.lock-status-value {
+
+.lk-badge.mouse  { color: #ff8c00; border-color: rgba(255,140,0,.4); background: rgba(255,140,0,.07); }
+.lk-badge.kb     { color: #bb66ff; border-color: rgba(187,102,255,.4); background: rgba(187,102,255,.07); }
+.lk-badge.screen { color: var(--accent); border-color: rgba(0,229,255,.4); background: rgba(0,229,255,.07); }
+
+.lk-badge .bd-icon { font-size: 13px; }
+
+/* ── Step card ───────────────────────────────────── */
+.lk-step {
+  display: flex;
+  gap: 13px;
+  align-items: flex-start;
+}
+
+.lk-step-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  background: rgba(0,229,255,0.08);
+  border: 1px solid rgba(0,229,255,0.25);
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.lk-step-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.lk-step-title {
   font-size: 12px;
   font-weight: 700;
   color: var(--text);
+  line-height: 1.4;
 }
-.lock-indicator {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  margin-left: 8px;
-}
-.lock-indicator.locked { background: var(--red); box-shadow: 0 0 6px var(--red); }
-.lock-indicator.unlocked { background: var(--green); box-shadow: 0 0 6px var(--green); }
-.lock-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.lock-btn {
-  font-family: var(--mono);
+
+.lk-step-desc {
   font-size: 11px;
-  font-weight: 600;
-  padding: 8px 12px;
+  color: var(--text);
+  line-height: 1.65;
+}
+
+/* ── File path chip ──────────────────────────────── */
+.lk-filepath {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--surf2);
   border: 1px solid var(--border);
   border-radius: 5px;
-  cursor: pointer;
-  background: transparent;
-  color: var(--text);
-  transition: all .12s;
-  text-align: center;
+  padding: 7px 11px;
+  margin-top: 2px;
 }
-.lock-btn:hover {
-  border-color: var(--accent);
+
+.lk-filepath .fp-icon {
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.lk-filepath .fp-name {
+  font-size: 12px;
+  font-weight: 700;
   color: var(--accent);
+  letter-spacing: .02em;
 }
-.lock-btn.primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #000;
+
+.lk-filepath .fp-hint {
+  font-size: 10px;
+  color: var(--muted);
+  margin-left: auto;
+  flex-shrink: 0;
 }
-.lock-btn.primary:hover { opacity: .85; }
+
+/* ── JSON code block ─────────────────────────────── */
+.lk-code-wrap {
+  position: relative;
+  border-radius: 7px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.lk-code-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: rgba(0,0,0,0.4);
+  border-bottom: 1px solid var(--border);
+}
+
+.lk-code-lang {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.lk-code-dots {
+  display: flex;
+  gap: 5px;
+}
+
+.lk-code-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.lk-code-dot.r { background: #ff5f57; }
+.lk-code-dot.y { background: #febc2e; }
+.lk-code-dot.g { background: #28c840; }
+
+.lk-code {
+  background: #060a10;
+  padding: 14px 16px;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.lk-code .tok-brace  { color: #c9d8ef; }
+.lk-code .tok-key    { color: #bb66ff; }
+.lk-code .tok-colon  { color: var(--muted); }
+.lk-code .tok-false  { color: var(--red); }
+.lk-code .tok-true   { color: var(--green); }
+.lk-code .tok-comma  { color: var(--muted); }
+
+/* ── Info callout ────────────────────────────────── */
+.lk-callout {
+  display: flex;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 7px;
+  border: 1px solid;
+  line-height: 1.6;
+  font-size: 11px;
+  align-items: flex-start;
+}
+
+.lk-callout.tip {
+  background: rgba(0,255,136,0.04);
+  border-color: rgba(0,255,136,0.2);
+  color: rgba(0,255,136,0.85);
+}
+
+.lk-callout.warn {
+  background: rgba(255,187,0,0.05);
+  border-color: rgba(255,187,0,0.25);
+  color: rgba(255,187,0,0.85);
+}
+
+.lk-callout .co-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.lk-callout .co-text strong {
+  font-weight: 700;
+  display: block;
+  margin-bottom: 2px;
+}
+
+/* ── Value table ─────────────────────────────────── */
+.lk-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: 7px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  font-size: 11px;
+}
+
+.lk-table thead tr {
+  background: rgba(0,0,0,0.3);
+  border-bottom: 1px solid var(--border);
+}
+
+.lk-table th {
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.lk-table tbody tr {
+  border-bottom: 1px solid rgba(26,34,51,0.5);
+  transition: background .1s;
+}
+
+.lk-table tbody tr:last-child { border-bottom: none; }
+.lk-table tbody tr:hover { background: #0a111c; }
+
+.lk-table td {
+  padding: 9px 12px;
+  color: var(--text);
+}
+
+.lk-table td.key-col {
+  color: #bb66ff;
+  font-weight: 700;
+}
+
+.lk-table td.val-false {
+  color: var(--red);
+  font-weight: 700;
+}
+
+.lk-table td.val-true {
+  color: var(--green);
+  font-weight: 700;
+}
+
+.lk-table td.desc-col {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+/* ── Footer divider ──────────────────────────────── */
+.lk-footer {
+  flex-shrink: 0;
+  padding: 12px 18px;
+  border-top: 1px solid var(--border);
+  background: var(--surf2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  z-index: 1;
+}
+
+.lk-footer-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--orange);
+  box-shadow: 0 0 6px var(--orange);
+  animation: flicker 3s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  45% { opacity: 0.3; }
+  50% { opacity: 1; }
+  55% { opacity: 0.5; }
+  60% { opacity: 1; }
+}
+
+.lk-footer-text {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: .04em;
+}
+
+.lk-footer-text span {
+  color: var(--orange);
+  font-weight: 700;
+}
+
+/* ── Right placeholder ───────────────────────────── */
+.rest {
+  flex: 1;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: .04em;
+  opacity: 0.3;
+}
+
 
 
 
@@ -1185,8 +1534,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
     <button class="btn" id="taskBtn" onclick="toggleTaskManager()">⚙️ Tasks</button>
     <button class="btn" id="wallpaperBtn" onclick="toggleWallpaper()">🖼️ Wallpaper</button>
     <button class="btn" id="alertBtn" onclick="toggleAlertPanel()">🔔 Alert</button>
-    <button class="btn" id="lockBtn" onclick="toggleLockPanel()">🔒 Lock</button>
-
+    <button class="btn" id="lockBtn" onclick="toggleLockGuide()">🔒 Lock Guide</button>
     <div class="divider"></div>
     <div class="stat-badge" id="fpsBadge">-- FPS</div>
     <div class="stat-badge" id="latBadge">-- ms</div>
@@ -1432,32 +1780,154 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
 
 
 
-    <!-- ══ LOCK PANEL ══════════════════════════════ -->
+
+    <!-- ══ LOCK GUIDE PANEL ════════════════════════════════════ -->
     <div class="lock-panel" id="lockPanel">
-      <div class="lock-header">
-        <div class="lock-title">🔒 Lock Control</div>
-        <button class="lock-close" onclick="toggleLockPanel()">✕</button>
-      </div>
-      <div class="lock-content">
-        <div class="lock-status">
-          <div class="lock-status-item">
-            <span class="lock-status-label">Input Lock:</span>
-            <span class="lock-status-value" id="lockInputStatus">Unknown</span>
-            <div class="lock-indicator" id="lockInputIndicator"></div>
-          </div>
-          <div class="lock-status-item">
-            <span class="lock-status-label">Screen Lock:</span>
-            <span class="lock-status-value" id="lockScreenStatus">Unknown</span>
-            <div class="lock-indicator" id="lockScreenIndicator"></div>
+
+      <!-- Header -->
+      <div class="lk-header">
+        <div class="lk-title-wrap">
+          <div class="lk-icon">🔒</div>
+          <div>
+            <div class="lk-title" id="lkTitle">Lock Guide</div>
+            <div class="lk-subtitle" id="lkSub">Mouse · Keyboard · Screen</div>
           </div>
         </div>
-        <div class="lock-actions">
-          <button class="lock-btn" id="toggleInputBtn" onclick="toggleInputLock()">Toggle Input Lock</button>
-          <button class="lock-btn" id="toggleScreenBtn" onclick="toggleScreenLock()">Toggle Screen Lock</button>
-          <button class="lock-btn primary" onclick="reloadLockStatus()">⟳ Reload Status</button>
+        <button class="lk-translate-btn" onclick="toggleLang()" title="Switch language">
+          <span class="lang-flag" id="langFlag">🇺🇸</span>
+          <span id="langLabel">EN</span>
+        </button>
+      </div>
+
+      <!-- Scrollable content -->
+      <div class="lk-content">
+
+        <!-- Section: Target -->
+        <div class="lk-section">
+          <div class="lk-section-label" id="sec0">Control Targets</div>
+          <div class="lk-target-row">
+            <span class="lk-badge mouse"><span class="bd-icon">🖱</span><span id="badgeMouse">Mouse</span></span>
+            <span class="lk-badge kb"><span class="bd-icon">⌨</span><span id="badgeKb">Keyboard</span></span>
+            <span class="lk-badge screen"><span class="bd-icon">🖥</span><span id="badgeScreen">Screen</span></span>
+          </div>
+        </div>
+
+        <!-- Section: Steps -->
+        <div class="lk-section">
+          <div class="lk-section-label" id="sec1">How To Apply</div>
+
+          <!-- Step 1 -->
+          <div class="lk-step">
+            <div class="lk-step-num">1</div>
+            <div class="lk-step-body">
+              <div class="lk-step-title" id="s1t">Locate the config file on Client</div>
+              <div class="lk-step-desc" id="s1d">Navigate to the Client machine's file system and find the following file:</div>
+              <div class="lk-filepath">
+                <span class="fp-icon">📄</span>
+                <span class="fp-name">client_state.json</span>
+                <span class="fp-hint" id="fpHint">config</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="lk-step">
+            <div class="lk-step-num">2</div>
+            <div class="lk-step-body">
+              <div class="lk-step-title" id="s2t">Download the file to Admin machine</div>
+              <div class="lk-step-desc" id="s2d">Use the Files panel to download <code style="color:var(--accent);font-size:11px">client_state.json</code> from the Client to your local Admin machine for editing.</div>
+            </div>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="lk-step">
+            <div class="lk-step-num">3</div>
+            <div class="lk-step-body">
+              <div class="lk-step-title" id="s3t">File structure &amp; default values</div>
+              <div class="lk-step-desc" id="s3d">The downloaded file will contain the following JSON structure:</div>
+
+              <!-- JSON code block -->
+              <div class="lk-code-wrap">
+                <div class="lk-code-topbar">
+                  <span class="lk-code-lang">JSON</span>
+                  <div class="lk-code-dots">
+                    <div class="lk-code-dot r"></div>
+                    <div class="lk-code-dot y"></div>
+                    <div class="lk-code-dot g"></div>
+                  </div>
+                </div>
+                <div class="lk-code">
+                  <span class="tok-brace">{</span><br>
+                  &nbsp;&nbsp;<span class="tok-key">"input_locked"</span><span class="tok-colon">:</span> <span class="tok-false">false</span><span class="tok-comma">,</span><br>
+                  &nbsp;&nbsp;<span class="tok-key">"screen_locked"</span><span class="tok-colon">:</span> <span class="tok-false">false</span><br>
+                  <span class="tok-brace">}</span>
+                </div>
+              </div>
+
+              <!-- Value table -->
+              <table class="lk-table" style="margin-top:10px">
+                <thead>
+                  <tr>
+                    <th id="th0">Key</th>
+                    <th id="th1">false</th>
+                    <th id="th2">true</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="key-col">input_locked</td>
+                    <td class="val-false" id="td1a">Unlocked</td>
+                    <td class="val-true" id="td1b">Locks Mouse + Keyboard</td>
+                  </tr>
+                  <tr>
+                    <td class="key-col">screen_locked</td>
+                    <td class="val-false" id="td2a">Visible</td>
+                    <td class="val-true" id="td2b">Locks Screen (Black)</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Step 4 -->
+          <div class="lk-step">
+            <div class="lk-step-num">4</div>
+            <div class="lk-step-body">
+              <div class="lk-step-title" id="s4t">Delete the old file on Client, then re-upload</div>
+              <div class="lk-step-desc" id="s4d">Delete <code style="color:var(--accent);font-size:11px">client_state.json</code> from the Client machine first. Then edit the values locally and upload the modified file back to the exact same path on the Client. The Client will automatically read and apply the new configuration.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Callout: tip -->
+        <div class="lk-callout tip">
+          <div class="co-icon">✅</div>
+          <div class="co-text" id="tipText">
+            <strong>Auto-Apply</strong>
+            The Client monitors this file continuously. No restart required — changes take effect immediately after the file is re-uploaded.
+          </div>
+        </div>
+
+        <!-- Callout: warn -->
+        <div class="lk-callout warn">
+          <div class="co-icon">⚠️</div>
+          <div class="co-text" id="warnText">
+            <strong>Important</strong>
+            Always delete the existing file before uploading the new one to ensure the Client detects the update correctly.
+          </div>
+        </div>
+
+      </div><!-- /lk-content -->
+
+      <!-- Footer -->
+      <div class="lk-footer">
+        <div class="lk-footer-dot"></div>
+        <div class="lk-footer-text" id="footerText">
+          Applies to: <span>Mouse</span>, <span>Keyboard</span> &amp; <span>Screen</span> control
         </div>
       </div>
     </div>
+
 
 
   </div><!-- /workspace -->
@@ -1480,12 +1950,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
 // ════════════════════════════════════════════════════════════
 //  STATE
 // ════════════════════════════════════════════════════════════
-
 let lockOpen = false;
-let inputLocked = false;
-let screenLocked = false;
-
-
 let selClient    = null;
 let isStreaming  = false;
 let frameCount   = 0;
@@ -1539,70 +2004,6 @@ ws.onclose= () => { $sdot.classList.remove('on'); $stxt.textContent='Disconnecte
 
 
 
-
-function toggleLockPanel() {
-  lockOpen = !lockOpen;
-  document.getElementById('lockPanel').classList.toggle('open', lockOpen);
-  document.getElementById('lockBtn').classList.toggle('files-active', lockOpen); // reuse class
-  if (lockOpen) {
-    // Close other panels
-    if (exOpen) toggleExplorer();
-    if (tmOpen) toggleTaskManager();
-    if (wpOpen) toggleWallpaper();
-    if (alertOpen) toggleAlertPanel();
-    // Request current status if client selected
-    if (selClient) reloadLockStatus();
-  }
-}
-
-function updateLockUI(state) {
-  inputLocked = state.input_locked ?? false;
-  screenLocked = state.screen_locked ?? false;
-  
-  document.getElementById('lockInputStatus').textContent = inputLocked ? 'Locked' : 'Unlocked';
-  document.getElementById('lockScreenStatus').textContent = screenLocked ? 'Locked' : 'Unlocked';
-  
-  const inputInd = document.getElementById('lockInputIndicator');
-  const screenInd = document.getElementById('lockScreenIndicator');
-  inputInd.className = 'lock-indicator ' + (inputLocked ? 'locked' : 'unlocked');
-  screenInd.className = 'lock-indicator ' + (screenLocked ? 'locked' : 'unlocked');
-}
-
-
-function reloadLockStatus() {
-  if (!selClient) { log('Select a client', 'error'); return; }
-  ws.send(JSON.stringify({
-    type: 'get_lock_state',
-    client_id: selClient
-  }));
-}
-
-
-function toggleInputLock() {
-  if (!selClient) { log('Select a client', 'error'); return; }
-  ws.send(JSON.stringify({
-    type: 'set_lock_state',
-    client_id: selClient,
-    input_locked: !inputLocked
-  }));
-  // ✅ Không update UI ở đây — chờ server phản hồi lock_state
-}
-
-
-function toggleScreenLock() {
-  if (!selClient) { log('Select a client', 'error'); return; }
-  ws.send(JSON.stringify({
-    type: 'set_lock_state',
-    client_id: selClient,
-    screen_locked: !screenLocked
-  }));
-  // ✅ Không update UI ở đây — chờ server phản hồi lock_state
-}
-
-
-
-
-
 ws.onmessage = ({data}) => {
   let msg; try { msg=JSON.parse(data); } catch { return; }
   const {type, client_id} = msg;
@@ -1618,16 +2019,6 @@ ws.onmessage = ({data}) => {
     $img.src='data:image/jpeg;base64,'+msg.image; showScreen(); return;
   }
 
-
-  if (type === 'lock_state') {
-    updateLockUI(msg);
-    log(`Lock state: Input ${msg.input_locked ? 'Locked' : 'Unlocked'}, Screen ${msg.screen_locked ? 'Locked' : 'Unlocked'}`, 'info');
-    return;
-  }
-  if (type === 'lock_state_error') {
-    log(`Lock error: ${msg.error}`, 'error');
-    return;
-  }
 
   if (type==='webcam_frame' && client_id===selClient) {
     const now=performance.now();
@@ -1769,6 +2160,10 @@ function renderClients(clients) {
   });
 }
 
+
+
+
+
 function selectClient(id) {
   if(id===selClient) return;
   if(isStreaming && selClient) ws.send(JSON.stringify({type:'stop_stream',client_id:selClient}));
@@ -1783,12 +2178,16 @@ function selectClient(id) {
     document.getElementById('webcamBtn').textContent = '📷 Webcam';
     document.getElementById('webcamBtn').classList.remove('active-stream');
   }
-  if (lockOpen) reloadLockStatus();
 }
 
 // ════════════════════════════════════════════════════════════
 //  STREAM
 // ════════════════════════════════════════════════════════════
+
+
+
+
+
 function toggleStream() {
   if (fpsTimer) clearInterval(fpsTimer);
   fpsTimer = setInterval(() => {
@@ -1888,6 +2287,7 @@ function sendCmd() {
 
 function showScreen() { $img.classList.add('show'); $ph.style.display='none'; }
 function hideScreen() { $img.classList.remove('show'); $ph.style.display='flex'; }
+
 
 // ════════════════════════════════════════════════════════════
 //  EXPLORER PANEL
@@ -2699,6 +3099,152 @@ function closeAlert() {
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function toggleLockGuide() {
+  lockOpen = !lockOpen;
+  document.getElementById('lockPanel').classList.toggle('open', lockOpen);
+  document.getElementById('lockBtn').classList.toggle('files-active', lockOpen);
+  // Đóng các panel khác khi mở Lock Guide
+  if (lockOpen) {
+    if (exOpen) toggleExplorer();
+    if (tmOpen) toggleTaskManager();
+    if (wpOpen) toggleWallpaper();
+    if (alertOpen) toggleAlertPanel();
+  }
+}
+
+
+/* ── Language data ─────────────────────────────────────── */
+const langs = {
+  vi: {
+    flag: '🇻🇳',
+    label: 'VI',
+    title: 'Hướng Dẫn Khóa',
+    sub: 'Chuột · Bàn Phím · Màn Hình',
+    badgeMouse: 'Chuột',
+    badgeKb: 'Bàn Phím',
+    badgeScreen: 'Màn Hình',
+    sec0: 'Đối Tượng Điều Khiển',
+    sec1: 'Cách Thực Hiện',
+    s1t: 'Tìm file cấu hình trên máy Client',
+    s1d: 'Duyệt vào hệ thống file của máy Client và tìm file sau:',
+    fpHint: 'cấu hình',
+    s2t: 'Tải file về máy Admin',
+    s2d: 'Dùng panel Files để tải client_state.json từ máy Client về máy Admin để chỉnh sửa.',
+    s3t: 'Cấu trúc file & giá trị mặc định',
+    s3d: 'File sau khi tải về sẽ có nội dung JSON như sau:',
+    th0: 'Key',
+    th1: 'false',
+    th2: 'true',
+    td1a: 'Mở khóa',
+    td1b: 'Khóa Chuột + Bàn Phím',
+    td2a: 'Hiển thị',
+    td2b: 'Khóa Màn Hình (Đen)',
+    s4t: 'Xóa file cũ trên Client, sau đó upload lại',
+    s4d: 'Xóa client_state.json trên máy Client trước. Sau đó chỉnh sửa giá trị tại máy Admin rồi upload file đã sửa trở lại đúng đường dẫn cũ trên máy Client. Client sẽ tự động đọc và áp dụng cấu hình mới.',
+    tipStrong: 'Tự Động Áp Dụng',
+    tipBody: 'Client theo dõi file này liên tục. Không cần khởi động lại — thay đổi có hiệu lực ngay sau khi upload file.',
+    warnStrong: 'Lưu Ý Quan Trọng',
+    warnBody: 'Luôn xóa file cũ trước khi upload file mới để đảm bảo Client nhận biết đúng sự thay đổi.',
+    footerText: 'Áp dụng cho: <span>Chuột</span>, <span>Bàn Phím</span> &amp; <span>Màn Hình</span>'
+  },
+  en: {
+    flag: '🇺🇸',
+    label: 'EN',
+    title: 'Lock Guide',
+    sub: 'Mouse · Keyboard · Screen',
+    badgeMouse: 'Mouse',
+    badgeKb: 'Keyboard',
+    badgeScreen: 'Screen',
+    sec0: 'Control Targets',
+    sec1: 'How To Apply',
+    s1t: 'Locate the config file on Client',
+    s1d: 'Navigate to the Client machine\'s file system and find the following file:',
+    fpHint: 'config',
+    s2t: 'Download the file to Admin machine',
+    s2d: 'Use the Files panel to download client_state.json from the Client to your local Admin machine for editing.',
+    s3t: 'File structure & default values',
+    s3d: 'The downloaded file will contain the following JSON structure:',
+    th0: 'Key',
+    th1: 'false',
+    th2: 'true',
+    td1a: 'Unlocked',
+    td1b: 'Locks Mouse + Keyboard',
+    td2a: 'Visible',
+    td2b: 'Locks Screen (Black)',
+    s4t: 'Delete old file on Client, then re-upload',
+    s4d: 'Delete client_state.json from the Client machine first. Then edit the values locally and upload the modified file back to the exact same path on the Client. The Client will automatically read and apply the new configuration.',
+    tipStrong: 'Auto-Apply',
+    tipBody: 'The Client monitors this file continuously. No restart required — changes take effect immediately after the file is re-uploaded.',
+    warnStrong: 'Important',
+    warnBody: 'Always delete the existing file before uploading the new one to ensure the Client detects the update correctly.',
+    footerText: 'Applies to: <span>Mouse</span>, <span>Keyboard</span> &amp; <span>Screen</span> control'
+  }
+};
+
+let currentLang = 'us';
+
+function applyLang(lang) {
+  const d = langs[lang];
+  document.getElementById('langFlag').textContent   = d.flag;
+  document.getElementById('langLabel').textContent  = d.label;
+  document.getElementById('lkTitle').textContent    = d.title;
+  document.getElementById('lkSub').textContent      = d.sub;
+  document.getElementById('badgeMouse').textContent = d.badgeMouse;
+  document.getElementById('badgeKb').textContent    = d.badgeKb;
+  document.getElementById('badgeScreen').textContent= d.badgeScreen;
+  document.getElementById('sec0').innerHTML         = d.sec0 + '<span style="display:none"></span>'; // keep ::after via class
+  // rebuild section label safely
+  setSection('sec0', d.sec0);
+  setSection('sec1', d.sec1);
+
+  document.getElementById('s1t').textContent  = d.s1t;
+  document.getElementById('s1d').textContent  = d.s1d;
+  document.getElementById('fpHint').textContent= d.fpHint;
+  document.getElementById('s2t').textContent  = d.s2t;
+  document.getElementById('s2d').innerHTML    = d.s2d.replace('client_state.json', '<code style="color:var(--accent);font-size:11px">client_state.json</code>');
+  document.getElementById('s3t').textContent  = d.s3t;
+  document.getElementById('s3d').textContent  = d.s3d;
+  document.getElementById('th0').textContent  = d.th0;
+  document.getElementById('th1').textContent  = d.th1;
+  document.getElementById('th2').textContent  = d.th2;
+  document.getElementById('td1a').textContent = d.td1a;
+  document.getElementById('td1b').textContent = d.td1b;
+  document.getElementById('td2a').textContent = d.td2a;
+  document.getElementById('td2b').textContent = d.td2b;
+  document.getElementById('s4t').textContent  = d.s4t;
+  document.getElementById('s4d').innerHTML    = d.s4d.replace('client_state.json', '<code style="color:var(--accent);font-size:11px">client_state.json</code>');
+  document.getElementById('tipText').innerHTML  = `<strong>${d.tipStrong}</strong>${d.tipBody}`;
+  document.getElementById('warnText').innerHTML = `<strong>${d.warnStrong}</strong>${d.warnBody}`;
+  document.getElementById('footerText').innerHTML = d.footerText;
+}
+
+function setSection(id, text) {
+  // Preserve the ::after trick by just setting textContent before the pseudo
+  const el = document.getElementById(id);
+  el.textContent = text;
+}
+
+function toggleLang() {
+  currentLang = (currentLang === 'en') ? 'vi' : 'en';
+  applyLang(currentLang);
+}
+
+// Init
+applyLang('us');
 
 
 </script>
