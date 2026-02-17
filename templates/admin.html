@@ -1556,8 +1556,8 @@ function toggleLockPanel() {
 }
 
 function updateLockUI(state) {
-  inputLocked = state.input_locked || false;
-  screenLocked = state.screen_locked || false;
+  inputLocked = state.input_locked ?? false;
+  screenLocked = state.screen_locked ?? false;
   
   document.getElementById('lockInputStatus').textContent = inputLocked ? 'Locked' : 'Unlocked';
   document.getElementById('lockScreenStatus').textContent = screenLocked ? 'Locked' : 'Unlocked';
