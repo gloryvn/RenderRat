@@ -2787,6 +2787,10 @@ function lockInput(lock) {
     type: lock ? 'lock_input' : 'unlock_input',
     client_id: selClient
   }));
+  // Yêu cầu cập nhật trạng thái sau 500ms
+  setTimeout(() => {
+    ws.send(JSON.stringify({type: 'get_lock_status', client_id: selClient}));
+  }, 500);
   log(`Sent ${lock ? 'lock' : 'unlock'} input command`, 'info');
 }
 
@@ -2796,6 +2800,9 @@ function lockScreen(lock) {
     type: lock ? 'lock_screen' : 'unlock_screen',
     client_id: selClient
   }));
+  setTimeout(() => {
+    ws.send(JSON.stringify({type: 'get_lock_status', client_id: selClient}));
+  }, 500);
   log(`Sent ${lock ? 'lock' : 'unlock'} screen command`, 'info');
 }
 
