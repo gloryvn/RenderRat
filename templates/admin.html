@@ -1024,6 +1024,124 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
 }
 
 
+/* ══ LOCK PANEL ═════════════════════════════════ */
+.lock-panel {
+  width: 0;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--surf);
+  border-left: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  transition: width .22s cubic-bezier(.4,0,.2,1), border-color .22s;
+}
+.lock-panel.open {
+  width: 300px;
+  min-width: 300px;
+  border-left-color: var(--border);
+}
+.lock-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surf2);
+}
+.lock-title {
+  font-family: var(--sans);
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--accent);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.lock-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 20px;
+  padding: 4px 8px;
+  transition: color .12s;
+  line-height: 1;
+}
+.lock-close:hover { color: var(--red); }
+.lock-content {
+  padding: 16px;
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.lock-status {
+  background: var(--surf2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+}
+.lock-status-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.lock-status-item:last-child { margin-bottom: 0; }
+.lock-status-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.lock-status-value {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+}
+.lock-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-left: 8px;
+}
+.lock-indicator.locked { background: var(--red); box-shadow: 0 0 6px var(--red); }
+.lock-indicator.unlocked { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.lock-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.lock-btn {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text);
+  transition: all .12s;
+  text-align: center;
+}
+.lock-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.lock-btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #000;
+}
+.lock-btn.primary:hover { opacity: .85; }
+
+
+
+
+
+
+
 /* ══ OUTPUT LOG ═════════════════════════════════════ */
 .output-panel {
   height: 130px; background: var(--surf);
@@ -1067,6 +1185,8 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
     <button class="btn" id="taskBtn" onclick="toggleTaskManager()">⚙️ Tasks</button>
     <button class="btn" id="wallpaperBtn" onclick="toggleWallpaper()">🖼️ Wallpaper</button>
     <button class="btn" id="alertBtn" onclick="toggleAlertPanel()">🔔 Alert</button>
+    <button class="btn" id="lockBtn" onclick="toggleLockPanel()">🔒 Lock</button>
+
     <div class="divider"></div>
     <div class="stat-badge" id="fpsBadge">-- FPS</div>
     <div class="stat-badge" id="latBadge">-- ms</div>
@@ -1308,6 +1428,38 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
       </div>
     </div>
 
+
+
+
+
+    <!-- ══ LOCK PANEL ══════════════════════════════ -->
+    <div class="lock-panel" id="lockPanel">
+      <div class="lock-header">
+        <div class="lock-title">🔒 Lock Control</div>
+        <button class="lock-close" onclick="toggleLockPanel()">✕</button>
+      </div>
+      <div class="lock-content">
+        <div class="lock-status">
+          <div class="lock-status-item">
+            <span class="lock-status-label">Input Lock:</span>
+            <span class="lock-status-value" id="lockInputStatus">Unknown</span>
+            <div class="lock-indicator" id="lockInputIndicator"></div>
+          </div>
+          <div class="lock-status-item">
+            <span class="lock-status-label">Screen Lock:</span>
+            <span class="lock-status-value" id="lockScreenStatus">Unknown</span>
+            <div class="lock-indicator" id="lockScreenIndicator"></div>
+          </div>
+        </div>
+        <div class="lock-actions">
+          <button class="lock-btn" id="toggleInputBtn" onclick="toggleInputLock()">Toggle Input Lock</button>
+          <button class="lock-btn" id="toggleScreenBtn" onclick="toggleScreenLock()">Toggle Screen Lock</button>
+          <button class="lock-btn primary" onclick="reloadLockStatus()">⟳ Reload Status</button>
+        </div>
+      </div>
+    </div>
+
+
   </div><!-- /workspace -->
 
 
@@ -1328,6 +1480,11 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
 // ════════════════════════════════════════════════════════════
 //  STATE
 // ════════════════════════════════════════════════════════════
+
+let lockOpen = false;
+let inputLocked = false;
+let screenLocked = false;
+
 
 let selClient    = null;
 let isStreaming  = false;
@@ -1378,6 +1535,78 @@ const $out    = document.getElementById('output');
 ws.onopen = () => { $sdot.classList.add('on'); $stxt.textContent='Connected'; log('Connected','info'); };
 ws.onclose= () => { $sdot.classList.remove('on'); $stxt.textContent='Disconnected'; _stopStream(false); log('Disconnected','error'); };
 
+
+
+
+
+
+function toggleLockPanel() {
+  lockOpen = !lockOpen;
+  document.getElementById('lockPanel').classList.toggle('open', lockOpen);
+  document.getElementById('lockBtn').classList.toggle('files-active', lockOpen); // reuse class
+  if (lockOpen) {
+    // Close other panels
+    if (exOpen) toggleExplorer();
+    if (tmOpen) toggleTaskManager();
+    if (wpOpen) toggleWallpaper();
+    if (alertOpen) toggleAlertPanel();
+    // Request current status if client selected
+    if (selClient) reloadLockStatus();
+  }
+}
+
+function updateLockUI(state) {
+  inputLocked = state.input_locked || false;
+  screenLocked = state.screen_locked || false;
+  
+  document.getElementById('lockInputStatus').textContent = inputLocked ? 'Locked' : 'Unlocked';
+  document.getElementById('lockScreenStatus').textContent = screenLocked ? 'Locked' : 'Unlocked';
+  
+  const inputInd = document.getElementById('lockInputIndicator');
+  const screenInd = document.getElementById('lockScreenIndicator');
+  inputInd.className = 'lock-indicator ' + (inputLocked ? 'locked' : 'unlocked');
+  screenInd.className = 'lock-indicator ' + (screenLocked ? 'locked' : 'unlocked');
+}
+
+
+function reloadLockStatus() {
+  if (!selClient) { log('Select a client', 'error'); return; }
+  ws.send(JSON.stringify({
+    type: 'get_lock_state',
+    client_id: selClient
+  }));
+}
+
+
+function toggleInputLock() {
+  if (!selClient) { log('Select a client', 'error'); return; }
+  ws.send(JSON.stringify({
+    type: 'set_lock_state',
+    client_id: selClient,
+    input_locked: !inputLocked
+    // screen_locked omitted – leave unchanged
+  }));
+  // Optimistic update (will be corrected by server response)
+  inputLocked = !inputLocked;
+  updateLockUI({ input_locked: inputLocked, screen_locked: screenLocked });
+}
+
+function toggleScreenLock() {
+  if (!selClient) { log('Select a client', 'error'); return; }
+  ws.send(JSON.stringify({
+    type: 'set_lock_state',
+    client_id: selClient,
+    screen_locked: !screenLocked
+  }));
+  screenLocked = !screenLocked;
+  updateLockUI({ input_locked: inputLocked, screen_locked: screenLocked });
+}
+
+
+
+
+
+
 ws.onmessage = ({data}) => {
   let msg; try { msg=JSON.parse(data); } catch { return; }
   const {type, client_id} = msg;
@@ -1393,6 +1622,16 @@ ws.onmessage = ({data}) => {
     $img.src='data:image/jpeg;base64,'+msg.image; showScreen(); return;
   }
 
+
+  if (type === 'lock_state') {
+    updateLockUI(msg);
+    log(`Lock state: Input ${msg.input_locked ? 'Locked' : 'Unlocked'}, Screen ${msg.screen_locked ? 'Locked' : 'Unlocked'}`, 'info');
+    return;
+  }
+  if (type === 'lock_state_error') {
+    log(`Lock error: ${msg.error}`, 'error');
+    return;
+  }
 
   if (type==='webcam_frame' && client_id===selClient) {
     const now=performance.now();
@@ -1548,6 +1787,7 @@ function selectClient(id) {
     document.getElementById('webcamBtn').textContent = '📷 Webcam';
     document.getElementById('webcamBtn').classList.remove('active-stream');
   }
+  if (lockOpen) reloadLockStatus();
 }
 
 // ════════════════════════════════════════════════════════════
