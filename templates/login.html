@@ -2,10 +2,10 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Admin Login</title>
+<title>Admin Panel</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@700;800&display=swap');
- 
+
 :root {
   --bg:      #080b10;
   --surf:    #0d1117;
@@ -14,237 +14,2810 @@
   --accent:  #00e5ff;
   --red:     #ff3366;
   --green:   #00ff88;
+  --yellow:  #ffbb00;
   --muted:   #3d4f66;
   --text:    #c9d8ef;
   --mono:    'JetBrains Mono', monospace;
   --sans:    'Syne', sans-serif;
+  --ex-w:    380px;   /* explorer panel width */
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--mono);
-  height: 100vh;
+body { background: var(--bg); color: var(--text); font-family: var(--mono); height: 100vh; display: flex; overflow: hidden; }
+
+/* ══ SCROLLBAR ══════════════════════════════════════ */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ══ SIDEBAR (client list) ══════════════════════════ */
+.sidebar {
+  width: 200px; min-width: 200px;
+  background: var(--surf);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+}
+.sidebar-hdr {
+  padding: 16px 14px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.logo {
+  font-family: var(--sans); font-weight: 800; font-size: 14px;
+  color: var(--accent); display: flex; align-items: center; gap: 8px;
+}
+.logo-dot {
+  width: 7px; height: 7px; background: var(--accent); border-radius: 50%;
+  box-shadow: 0 0 7px var(--accent); animation: pulse 2s infinite;
+}
+@keyframes pulse { 50% { opacity: .4; transform: scale(.6); } }
+.clients-lbl {
+  font-size: 9px; color: var(--muted); letter-spacing: .12em;
+  text-transform: uppercase; margin-top: 12px;
+}
+.client-list { flex: 1; overflow-y: auto; padding: 8px; }
+.client-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 10px; border-radius: 7px; cursor: pointer;
+  border: 1px solid transparent; margin-bottom: 3px;
+  transition: background .12s, border-color .12s;
+  font-size: 13px; font-weight: 600;
+}
+.client-item:hover { background: #111a28; }
+.client-item.active { background: #0a1929; border-color: var(--accent); }
+.cdot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; box-shadow: 0 0 5px var(--green); flex-shrink: 0; }
+.no-clients { color: var(--muted); font-size: 11px; text-align: center; padding: 16px 0; }
+
+/* ══ MAIN AREA ══════════════════════════════════════ */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+
+/* ══ TOPBAR ═════════════════════════════════════════ */
+.topbar {
+  display: flex; align-items: center; gap: 7px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surf); flex-shrink: 0; flex-wrap: wrap;
+}
+.btn {
+  font-family: var(--mono); font-size: 11px; font-weight: 600;
+  padding: 6px 12px; border: 1px solid var(--border); border-radius: 5px;
+  cursor: pointer; background: transparent; color: var(--text);
+  transition: all .12s; white-space: nowrap; letter-spacing: .03em;
+}
+.btn:hover { border-color: var(--accent); color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #000; font-weight: 700; }
+.btn.primary:hover { opacity: .85; }
+.btn.active-stream { background: rgba(0,255,136,.1); border-color: var(--green); color: var(--green); }
+.btn.files-active { border-color: var(--accent); color: var(--accent); background: rgba(0,229,255,.07); }
+.divider { width: 1px; height: 18px; background: var(--border); margin: 0 1px; }
+.cmd-input {
+  font-family: var(--mono); font-size: 12px;
+  background: #0a1120; border: 1px solid var(--border); border-radius: 5px;
+  padding: 6px 10px; color: var(--text); outline: none; flex: 1; max-width: 300px;
+  transition: border .12s;
+}
+.cmd-input:focus { border-color: var(--accent); }
+.cmd-input::placeholder { color: var(--muted); }
+.stat-badge {
+  background: #0d1a2a; border: 1px solid var(--border); border-radius: 4px;
+  padding: 3px 9px; font-size: 11px; font-weight: 600; min-width: 60px;
+  text-align: center; color: var(--green); transition: color .3s, border-color .3s;
+}
+.stat-badge.good { color: var(--green); border-color: rgba(0,255,136,.3); }
+.stat-badge.mid  { color: var(--yellow); border-color: rgba(255,187,0,.3); }
+.stat-badge.low  { color: var(--red); border-color: rgba(255,51,102,.3); }
+.status-pill { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); margin-left: auto; }
+.sdot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
+.sdot.on { background: var(--green); box-shadow: 0 0 5px var(--green); }
+.btn-logout { background: transparent; border: 1px solid var(--border); color: var(--muted); font-size: 11px; padding: 6px 12px; border-radius: 5px; cursor: pointer; transition: all .12s; font-family: var(--mono); font-weight: 600; margin-left: 8px; }
+.btn-logout:hover { border-color: var(--red); color: var(--red); }
+
+/* ══ WORKSPACE (viewer + explorer side by side) ══════ */
+.workspace { flex: 1; display: flex; overflow: hidden; }
+
+/* ══ VIEWER ═════════════════════════════════════════ */
+.viewer {
+  flex: 1; background: #04070d; display: flex;
+  align-items: center; justify-content: center;
+  position: relative; overflow: hidden; min-width: 0;
+}
+.screen-img { 
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;  /* Quan trọng: giữ tỷ lệ và fit vào khung */
+  object-position: center; /* Căn giữa */
+  display: none; 
+  border-radius: 3px;
+}
+
+.screen-img.show { display: block; }
+.placeholder { display: flex; flex-direction: column; align-items: center; gap: 12px; color: var(--muted); }
+.ph-icon { font-size: 40px; opacity: .22; }
+.ph-text { font-family: var(--sans); font-size: 12px; letter-spacing: .06em; }
+.live-badge {
+  position: absolute; top: 10px; left: 10px; display: none;
+  align-items: center; gap: 5px;
+  background: rgba(0,0,0,.65); border: 1px solid rgba(0,255,136,.35);
+  border-radius: 20px; padding: 3px 10px 3px 7px;
+  font-size: 11px; color: var(--green); font-weight: 700; letter-spacing: .08em;
+  backdrop-filter: blur(6px);
+}
+.live-badge.show { display: flex; }
+.rec { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: blink 1s step-end infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+/* ══ EXPLORER PANEL (VS Code style) ═════════════════ */
+.explorer-panel {
+  width: 0; min-width: 0; overflow: hidden;
+  background: var(--surf);
+  border-left: 1px solid transparent;
+  display: flex; flex-direction: column;
+  transition: width .22s cubic-bezier(.4,0,.2,1), border-color .22s;
+}
+.explorer-panel.open {
+  width: var(--ex-w); min-width: var(--ex-w);
+  border-left-color: var(--border);
+}
+
+/* Explorer header */
+.ex-hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0; background: var(--surf2);
+}
+.ex-title {
+  font-family: var(--sans); font-weight: 800; font-size: 11px;
+  color: var(--muted); letter-spacing: .14em; text-transform: uppercase;
+}
+.ex-hdr-btns { display: flex; gap: 4px; }
+.ex-icon-btn {
+  background: none; border: none; color: var(--muted); cursor: pointer;
+  padding: 3px 6px; border-radius: 4px; font-size: 14px; line-height: 1;
+  transition: color .12s, background .12s;
+}
+.ex-icon-btn:hover { color: var(--text); background: #1a2233; }
+
+/* Path bar */
+.ex-pathbar {
+  display: flex; align-items: center; gap: 0;
+  border-bottom: 1px solid var(--border); flex-shrink: 0;
+  background: var(--surf2);
+}
+.ex-back {
+  padding: 7px 10px; color: var(--muted); cursor: pointer;
+  font-size: 13px; border-right: 1px solid var(--border);
+  transition: color .12s; flex-shrink: 0;
+}
+.ex-back:hover { color: var(--accent); }
+.ex-path-input {
+  flex: 1; background: none; border: none; outline: none;
+  color: var(--text); font-family: var(--mono); font-size: 11px;
+  padding: 7px 10px; min-width: 0;
+}
+.ex-path-input::placeholder { color: var(--muted); }
+.ex-refresh { padding: 7px 10px; color: var(--muted); cursor: pointer; font-size: 13px; transition: color .12s; }
+.ex-refresh:hover { color: var(--accent); }
+
+/* Drives bar */
+.ex-drives {
+  display: flex; gap: 4px; padding: 6px 10px; flex-wrap: wrap;
+  border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.ex-drive-pill {
+  font-size: 10px; font-weight: 600; padding: 3px 9px;
+  border: 1px solid var(--border); border-radius: 12px; cursor: pointer;
+  color: var(--muted); background: transparent; font-family: var(--mono);
+  transition: all .12s;
+}
+.ex-drive-pill:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Toolbar */
+.ex-toolbar {
+  display: flex; align-items: center; gap: 6px; padding: 6px 10px;
+  border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.ex-btn {
+  font-family: var(--mono); font-size: 10px; font-weight: 600;
+  padding: 4px 10px; border: 1px solid var(--border); border-radius: 4px;
+  cursor: pointer; background: transparent; color: var(--text); white-space: nowrap;
+  transition: all .12s;
+}
+.ex-btn:hover { border-color: var(--accent); color: var(--accent); }
+.ex-btn.primary { background: var(--accent); border-color: var(--accent); color: #000; }
+.ex-btn.primary:hover { opacity: .85; }
+.ex-btn:disabled { opacity: .3; pointer-events: none; }
+.ex-btn.delete {
+  background: #ff4d4f;
+  border-color: #ff4d4f;
+  color: #fff;
+}
+
+.ex-btn.delete:hover {
+  background: #d9363e;
+  border-color: #d9363e;
+}
+
+.ex-btn.delete:active {
+  transform: scale(0.96);
+}
+
+.ex-btn.delete:disabled {
+  background: #555;
+  border-color: #555;
+  color: #aaa;
+}
+.ex-btn.delete-outline {
+  background: transparent;
+  border-color: #ff4d4f;
+  color: #ff4d4f;
+}
+
+.ex-btn.delete-outline:hover {
+  background: #ff4d4f;
+  color: #fff;
+}
+
+.ex-sel-info { font-size: 10px; color: var(--muted); margin-left: auto; white-space: nowrap; }
+
+/* File list */
+.ex-filelist { flex: 1; overflow-y: auto; }
+
+.ex-row {
+  display: flex; align-items: center; gap: 0;
+  padding: 0; cursor: pointer;
+  border-left: 2px solid transparent;
+  transition: background .1s;
+  user-select: none;
+}
+.ex-row:hover { background: #111a28; }
+.ex-row.selected { background: #0a1929; border-left-color: var(--accent); }
+.ex-row.active-dir { background: rgba(0,229,255,.05); }
+
+.ex-row-icon { width: 32px; text-align: center; font-size: 14px; flex-shrink: 0; padding: 6px 0; }
+.ex-row-name {
+  flex: 1; font-size: 12px; padding: 6px 6px 6px 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
+}
+.ex-row-name.dir  { color: var(--accent); }
+.ex-row-name.parent { color: var(--muted); font-style: italic; }
+.ex-row-size { font-size: 10px; color: var(--muted); padding: 6px 10px 6px 6px; white-space: nowrap; flex-shrink: 0; }
+
+/* Transfer queue */
+.ex-transfers {
+  flex-shrink: 0; max-height: 200px; overflow-y: auto;
+  border-top: 1px solid var(--border);
+  background: var(--surf2);
+}
+}
+ 
+.transfer-item {
+  padding: 8px 12px; border-bottom: 1px solid rgba(26,34,51,.5);
+  font-size: 11px;
+}
+
+.t-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+.t-name { font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+.t-size { color: var(--muted); font-size: 10px; flex-shrink: 0; }
+.t-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 4px; }
+.t-fill { height: 100%; border-radius: 2px; transition: width .2s; background: var(--accent); width: 0%; }
+.t-fill.done { background: var(--green); }
+.t-fill.err  { background: var(--red); }
+.t-status { display: flex; justify-content: space-between; align-items: center; }
+.t-msg { font-size: 10px; color: var(--muted); }
+.t-dl { font-size: 10px; font-weight: 700; color: var(--accent); text-decoration: none; display: none; }
+.t-dl.show { display: inline; }
+.t-dl:hover { text-decoration: underline; }
+.no-transfers { font-size: 11px; color: var(--muted); text-align: center; padding: 12px; }
+.ex-transfers { font-size: 11px; color: var(--muted); text-align: left; padding: 12px; }
+
+
+
+
+/* Loading spinner */
+.ex-loading { display: flex; align-items: center; justify-content: center; padding: 30px; gap: 10px; color: var(--muted); font-size: 12px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner { border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; width: 14px; height: 14px; animation: spin .7s linear infinite; flex-shrink: 0; }
+
+ 
+.drop-overlay.show { display: flex; }
+
+
+
+
+/* ══ TASK MANAGER PANEL ═════════════════════════════ */
+.task-manager-panel {
+  width: 0;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--surf);
+  border-left: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  transition: width .25s cubic-bezier(.4,0,.2,1), border-color .25s;
+}
+
+.task-manager-panel.open {
+  width: 750px;
+  min-width: 750px;
+  border-left-color: var(--border);
+}
+
+
+.tm-header {
   display: flex;
   align-items: center;
-  justify-content: center;
-  overflow: hidden;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surf2);
+  flex-shrink: 0;
 }
-
-.login-container {
-  width: 100%;
-  max-width: 400px;
-  padding: 20px;
-}
-
-.login-box {
-  background: var(--surf);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 40px 36px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-}
-
-.logo-area {
-  text-align: center;
-  margin-bottom: 32px;
-}
-
-.logo {
+.tm-title {
   font-family: var(--sans);
   font-weight: 800;
-  font-size: 28px;
-  color: var(--accent);
-  display: inline-flex;
+  font-size: 13px;
+  color: var(--purple);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 8px;
 }
-
-.logo-dot {
-  width: 9px;
-  height: 9px;
-  background: var(--accent);
-  border-radius: 50%;
-  box-shadow: 0 0 10px var(--accent);
-  animation: pulse 2s infinite;
+.tm-title-icon {
+  font-size: 16px;
 }
-
-@keyframes pulse {
-  50% { opacity: .4; transform: scale(.6); }
+.tm-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 20px;
+  padding: 4px 8px;
+  transition: color .12s;
+  line-height: 1;
 }
-
-.subtitle {
-  font-size: 12px;
+.tm-close:hover { color: var(--red); }
+.tm-stats {
+  display: flex;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surf);
+  flex-shrink: 0;
+}
+.tm-stat-card {
+  flex: 1;
+  background: var(--surf2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tm-stat-label {
+  font-size: 9px;
   color: var(--muted);
   letter-spacing: .08em;
   text-transform: uppercase;
-}
-
-.form-group {
-  margin-bottom: 20px;
-}
-
-.form-label {
-  display: block;
-  font-size: 11px;
   font-weight: 600;
-  color: var(--muted);
-  margin-bottom: 8px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
 }
-
-.form-input {
-  width: 100%;
-  font-family: var(--mono);
-  font-size: 14px;
-  background: var(--surf2);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 12px 14px;
+.tm-stat-value {
+  font-size: 18px;
+  font-weight: 700;
   color: var(--text);
-  outline: none;
-  transition: border-color .2s, box-shadow .2s;
 }
-
-.form-input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.1);
-}
-
-.form-input::placeholder {
-  color: var(--muted);
-  opacity: 0.5;
-}
-
-.error-msg {
-  background: rgba(255, 51, 102, 0.15);
-  border: 1px solid rgba(255, 51, 102, 0.3);
-  border-radius: 6px;
-  padding: 12px 14px;
-  color: var(--red);
-  font-size: 12px;
-  margin-bottom: 20px;
+.tm-stat-value.cpu { color: var(--accent); }
+.tm-stat-value.mem { color: var(--green); }
+.tm-stat-value.proc { color: var(--purple); }
+.tm-controls {
   display: flex;
   align-items: center;
   gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surf);
+  flex-shrink: 0;
 }
-
-.btn-login {
-  width: 100%;
+.tm-search {
+  flex: 1;
   font-family: var(--mono);
-  font-size: 13px;
-  font-weight: 700;
-  padding: 14px;
-  background: var(--accent);
-  border: 1px solid var(--accent);
-  border-radius: 6px;
-  color: #000;
-  cursor: pointer;
-  transition: all .2s;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  font-size: 12px;
+  background: var(--surf2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 7px 12px;
+  color: var(--text);
+  outline: none;
+  transition: border-color .2s;
 }
-
-.btn-login:hover {
-  opacity: 0.85;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 229, 255, 0.3);
+.tm-search:focus {
+  border-color: var(--accent);
 }
-
-.btn-login:active {
-  transform: translateY(0);
-}
-
-.footer-note {
-  text-align: center;
-  margin-top: 24px;
-  font-size: 11px;
+.tm-search::placeholder {
   color: var(--muted);
 }
-
-.footer-note code {
-  background: var(--surf2);
-  padding: 2px 6px;
-  border-radius: 3px;
+.tm-sort-btn {
+  font-family: var(--mono);
   font-size: 10px;
+  font-weight: 600;
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text);
+  transition: all .12s;
+  white-space: nowrap;
+}
+.tm-sort-btn:hover {
+  border-color: var(--accent);
   color: var(--accent);
 }
-
-/* Animated background */
-@keyframes float {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-20px) rotate(5deg); }
+.tm-sort-btn.active {
+  background: rgba(0,229,255,.08);
+  border-color: var(--accent);
+  color: var(--accent);
 }
-
-.bg-decoration {
-  position: fixed;
-  width: 300px;
-  height: 300px;
+.tm-refresh-btn {
+  font-family: var(--mono);
+  font-size: 18px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--muted);
+  transition: all .12s;
+  line-height: 1;
+}
+.tm-refresh-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: rotate(90deg);
+}
+.tm-table-container {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.tm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+.tm-table thead {
+  position: sticky;
+  top: 0;
+  background: var(--surf);
+  z-index: 10;
+  border-bottom: 2px solid var(--border);
+}
+.tm-table th {
+  text-align: left;
+  padding: 10px 12px;
+  font-weight: 700;
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: color .12s;
+  user-select: none;
+}
+.tm-table th:hover {
+  color: var(--accent);
+}
+.tm-table th.sortable::after {
+  content: ' ↕';
+  opacity: .3;
+}
+.tm-table th.sort-asc::after {
+  content: ' ↑';
+  opacity: 1;
+  color: var(--accent);
+}
+.tm-table th.sort-desc::after {
+  content: ' ↓';
+  opacity: 1;
+  color: var(--accent);
+}
+.tm-table tbody tr {
+  border-bottom: 1px solid rgba(26,34,51,.4);
+  transition: background .12s;
+  cursor: pointer;
+}
+.tm-table tbody tr:hover {
+  background: #111a28;
+}
+.tm-table tbody tr.selected {
+  background: rgba(187,102,255,.08);
+  border-left: 3px solid var(--purple);
+}
+.tm-table td {
+  padding: 10px 12px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+.tm-table td.pid {
+  font-weight: 700;
+  color: var(--accent);
+  font-family: var(--mono);
+}
+.tm-table td.name {
+  font-weight: 600;
+  max-width: 180px;
+}
+.tm-table td.cpu,
+.tm-table td.memory {
+  font-family: var(--mono);
+  font-weight: 600;
+}
+.tm-table td.cpu.high { color: var(--red); }
+.tm-table td.cpu.mid { color: var(--yellow); }
+.tm-table td.cpu.low { color: var(--green); }
+.tm-table td.memory.high { color: var(--red); }
+.tm-table td.memory.mid { color: var(--yellow); }
+.tm-table td.memory.low { color: var(--green); }
+.tm-table td.status {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.tm-table td.status.running { color: var(--green); }
+.tm-table td.status.sleeping { color: var(--muted); }
+.tm-table td.path {
+  max-width: 250px;
+  font-size: 10px;
+  color: var(--muted);
+}
+.tm-table td.user {
+  max-width: 100px;
+  font-size: 10px;
+}
+.tm-table td.actions {
+  text-align: right;
+}
+.tm-end-btn {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--red);
+  transition: all .12s;
+}
+.tm-end-btn:hover {
+  background: rgba(255,51,102,.12);
+  border-color: var(--red);
+}
+.tm-details {
+  max-height: 0;
+  overflow: hidden;
+  border-top: 1px solid transparent;
+  background: var(--surf2);
+  transition: max-height .3s ease-out, border-color .3s;
+}
+.tm-details.show {
+  max-height: 400px;
+  border-top-color: var(--border);
+}
+.tm-details-title {
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--purple);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: 12px 16px 8px;
+}
+.tm-details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 0 16px 12px;
+}
+.tm-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tm-detail-label {
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.tm-detail-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tm-detail-value.path {
+  font-size: 11px;
+  word-break: break-all;
+  white-space: normal;
+}
+.tm-details-actions {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px 16px;
+}
+.tm-detail-btn {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 7px 14px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text);
+  transition: all .12s;
+  flex: 1;
+}
+.tm-detail-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(0,229,255,.08);
+}
+.tm-detail-btn.danger {
+  border-color: var(--red);
+  color: var(--red);
+}
+.tm-detail-btn.danger:hover {
+  background: rgba(255,51,102,.12);
+}
+.tm-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: var(--muted);
+}
+.tm-empty-icon {
+  font-size: 48px;
+  opacity: .2;
+  margin-bottom: 16px;
+}
+.tm-empty-text {
+  font-size: 13px;
+  font-family: var(--sans);
+  letter-spacing: .05em;
+}
+.tm-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner {
+  border: 3px solid var(--border);
+  border-top-color: var(--purple);
   border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.15;
-  animation: float 8s ease-in-out infinite;
-  pointer-events: none;
+  width: 24px;
+  height: 24px;
+  animation: spin .7s linear infinite;
+  flex-shrink: 0;
 }
 
-.bg-decoration.d1 {
-  top: -100px;
-  right: -100px;
+
+
+
+/* ══ WALLPAPER PANEL ═════════════════════════════ */
+
+.wallpaper-panel {
+  width: 0;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--surf);
+  border-left: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  transition: width .22s cubic-bezier(.4,0,.2,1), border-color .22s;
+}
+.wallpaper-panel.open {
+  width: 400px;
+  min-width: 400px;
+  border-left-color: var(--border);
+}
+.wp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surf2);
+}
+.wp-title {
+  font-family: var(--sans);
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--accent);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.wp-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 20px;
+  padding: 4px 8px;
+  transition: color .12s;
+  line-height: 1;
+}
+.wp-close:hover { color: var(--red); }
+.wp-content {
+  padding: 16px;
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.wp-dropzone {
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .12s, background .12s;
+}
+.wp-dropzone:hover, .wp-dropzone.dragover {
+  border-color: var(--accent);
+  background: rgba(0,229,255,.05);
+}
+.wp-dropzone-icon {
+  font-size: 32px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.wp-dropzone-text {
+  font-size: 12px;
+  color: var(--muted);
+}
+.wp-preview {
+  display: none;
+  text-align: center;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 8px;
+  background: var(--surf2);
+}
+.wp-preview img {
+  max-width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+}
+.wp-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.wp-btn {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text);
+  transition: all .12s;
+}
+.wp-btn.primary {
   background: var(--accent);
+  border-color: var(--accent);
+  color: #000;
+}
+.wp-btn.primary:hover { opacity: .85; }
+.wp-btn:hover { border-color: var(--accent); color: var(--accent); }
+.wp-btn:disabled { opacity: .3; pointer-events: none; }
+
+
+
+
+
+
+/*  ══ ALERT PANEL ══════════════════════════════ */
+
+.alert-panel {
+  width: 0;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--surf);
+  border-left: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  transition: width .22s cubic-bezier(.4,0,.2,1), border-color .22s;
+}
+.alert-panel.open {
+  width: 400px;
+  min-width: 400px;
+  border-left-color: var(--border);
+}
+.alert-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surf2);
+}
+.alert-title {
+  font-family: var(--sans);
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--accent);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.alert-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 20px;
+  padding: 4px 8px;
+  transition: color .12s;
+  line-height: 1;
+}
+.alert-close:hover { color: var(--red); }
+.alert-content {
+  padding: 16px;
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.alert-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.alert-row label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.alert-row textarea,
+.alert-row input[type="number"],
+.alert-row select {
+  background: var(--surf2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 8px 10px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text);
+  outline: none;
+}
+.alert-row textarea:focus,
+.alert-row input:focus,
+.alert-row select:focus {
+  border-color: var(--accent);
+}
+.alert-image-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.alert-image-preview img {
+  max-width: 100px;
+  max-height: 60px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+.alert-image-preview button {
+  background: var(--red);
+  border: none;
+  color: #fff;
+  width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+}
+.alert-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.alert-actions .btn {
+  flex: 1;
+}
+#alertCustomPos {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  align-items: center;
+}
+#alertCustomPos input {
+  width: 80px;
+}
+.alert-row input[type="file"] {
+  background: var(--surf2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 6px 10px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text);
+  cursor: pointer;
+  width: 100%;
+  transition: border-color 0.12s;
+}
+.alert-row input[type="file"]:hover {
+  border-color: var(--accent);
 }
 
-.bg-decoration.d2 {
-  bottom: -100px;
-  left: -100px;
-  background: var(--green);
-  animation-delay: -4s;
+/* Style cho nút "Choose File" (Webkit/Blink) */
+.alert-row input[type="file"]::-webkit-file-upload-button {
+  background: var(--accent);
+  border: none;
+  border-radius: 3px;
+  padding: 4px 8px;
+  margin-right: 10px;
+  color: #000;
+  font-weight: 600;
+  font-family: var(--mono);
+  font-size: 11px;
+  cursor: pointer;
+  transition: opacity 0.12s;
 }
+.alert-row input[type="file"]::-webkit-file-upload-button:hover {
+  opacity: 0.85;
+}
+
+/* Style cho nút "Choose File" (Firefox) */
+.alert-row input[type="file"]::file-selector-button {
+  background: var(--accent);
+  border: none;
+  border-radius: 3px;
+  padding: 4px 8px;
+  margin-right: 10px;
+  color: #000;
+  font-weight: 600;
+  font-family: var(--mono);
+  font-size: 11px;
+  cursor: pointer;
+  transition: opacity 0.12s;
+}
+
+.alert-row input[type="file"]::file-selector-button:hover {
+  opacity: 0.85;
+}
+.alert-image-preview img {
+  max-width: 100px;
+  max-height: 60px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  transition: transform 0.2s;
+}
+
+.alert-image-preview img:hover {
+  transform: scale(1.05);
+  border-color: var(--accent);
+}
+
+/* ══ LOCK PANEL  ═════════════════════════════════════ */
+
+.lock-panel {
+  width: 0;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--surf);
+  border-left: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  transition: width .22s cubic-bezier(.4,0,.2,1), border-color .22s;
+}
+.lock-panel.open {
+  width: 380px;
+  min-width: 380px;
+  border-left-color: var(--border);
+}
+.lock-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surf2);
+}
+.lock-title {
+  font-family: var(--sans);
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--accent);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.lock-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 20px;
+  padding: 4px 8px;
+  transition: color .12s;
+  line-height: 1;
+}
+.lock-close:hover { color: var(--red); }
+.lock-content {
+  padding: 16px;
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.lock-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.lock-row label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.lock-status {
+  font-size: 12px;
+  color: var(--text);
+  background: var(--surf2);
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+.lock-btn {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  transition: all .12s;
+  margin-right: 8px;
+}
+.lock-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.lock-dropzone {
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .12s;
+}
+.lock-dropzone:hover, .lock-dropzone.dragover {
+  border-color: var(--accent);
+  background: rgba(0,229,255,.05);
+}
+.lock-dropzone-icon { font-size: 24px; color: var(--muted); }
+.lock-dropzone-text { font-size: 11px; color: var(--muted); }
+.lock-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.lock-preview img {
+  max-width: 100px;
+  max-height: 60px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+.lock-preview button {
+  background: var(--red);
+  border: none;
+  color: #fff;
+  width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+}
+.lock-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ══ OUTPUT LOG ═════════════════════════════════════ */
+.output-panel {
+  height: 130px; background: var(--surf);
+  border-top: 1px solid var(--border);
+  padding: 8px 12px; overflow-y: auto;
+  font-size: 11px; line-height: 1.65; flex-shrink: 0;
+}
+.log { color: #4a6a8a; }
+.log.info   { color: var(--accent); }
+.log.result { color: var(--green); }
+.log.error  { color: var(--red); }
+.log.ts     { color: var(--muted); font-size: 9px; margin-bottom: 1px; }
 </style>
 </head>
 <body>
 
-<div class="bg-decoration d1"></div>
-<div class="bg-decoration d2"></div>
-
-<div class="login-container">
-  <div class="login-box">
-    <div class="logo-area">
-      <div class="logo">
-        <span class="logo-dot"></span>
-        GLORY VN 
-      </div>
-      <div class="subtitle">Admin Panel</div>
-    </div>
-
-    {% if error %}
-    <div class="error-msg">
-      <span>⚠</span>
-      <span>{{ error }}</span>
-    </div>
-    {% endif %}
-
-    <form method="post" action="/login">
-      <div class="form-group">
-        <label class="form-label">Username</label>
-        <input type="text" name="username" class="form-input" placeholder="Enter username" required autofocus>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Password</label>
-        <input type="password" name="password" class="form-input" placeholder="Enter password" required>
-      </div>
-
-      <button type="submit" class="btn-login">Sign In</button>
-    </form>
-
-    <div class="footer-note">
-      Login to <code>GloryVN</code> Admin
-    </div>
+<!-- ══ CLIENT SIDEBAR ══════════════════════════════════ -->
+<div class="sidebar">
+  <div class="sidebar-hdr">
+    <div class="logo"><span class="logo-dot"></span>GLORYVN</div>
+    <div class="clients-lbl">Online Clients</div>
+  </div>
+  <div class="client-list" id="clientList">
+    <div class="no-clients">No clients online</div>
   </div>
 </div>
 
+<!-- ══ MAIN ════════════════════════════════════════════ -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <button class="btn primary" id="streamBtn" onclick="toggleStream()">▶ Stream</button>
+    <button class="btn" id="webcamBtn" onclick="toggleWebcam()">📷 Webcam</button>
+    <button class="btn" onclick="reqScreenshot()">⎙ Snap</button>
+    <div class="divider"></div>
+    <input class="cmd-input" id="cmdInput" placeholder="Shell command…" onkeydown="if(event.key==='Enter')sendCmd()">
+    <button class="btn" onclick="sendCmd()">Run</button>
+    <div class="divider"></div>
+    <button class="btn" id="filesBtn" onclick="toggleExplorer()">📁 Files</button>
+    <button class="btn" id="taskBtn" onclick="toggleTaskManager()">⚙️ Tasks</button>
+    <button class="btn" id="wallpaperBtn" onclick="toggleWallpaper()">🖼️ Wallpaper</button>
+    <button class="btn" id="alertBtn" onclick="toggleAlertPanel()">🔔 Alert</button>
+    <button class="btn" id="lockBtn" onclick="toggleLockPanel()">🔒 Lock</button>
+    <div class="divider"></div>
+    <div class="stat-badge" id="fpsBadge">-- FPS</div>
+    <div class="stat-badge" id="latBadge">-- ms</div>
+    <div class="status-pill">
+      <div class="sdot" id="sdot"></div>
+      <span id="stxt">Connecting…</span>
+    </div>
+    <button class="btn-logout" onclick="window.location.href='/logout'">🚪 Logout</button>
+  </div>
+
+  <!-- WORKSPACE -->
+  <div class="workspace">
+
+    <!-- VIEWER -->
+    <div class="viewer" id="viewer"
+         ondragover="onViewerDragOver(event)"
+         ondragleave="onViewerDragLeave(event)"
+         ondrop="onViewerDrop(event)">
+      <div class="placeholder" id="placeholder">
+        <div class="ph-icon">🖥</div>
+        <div class="ph-text">Select a client to begin</div>
+      </div>
+      <img class="screen-img" id="screenImg" alt="">
+      <div class="live-badge" id="liveBadge"><div class="rec"></div>LIVE</div>
+    </div>
+
+    <!-- ══ EXPLORER PANEL ══════════════════════════════ -->
+    <div class="explorer-panel" id="explorerPanel">
+
+      <!-- Header -->
+      <div class="ex-hdr">
+        <div class="ex-title">Explorer</div>
+        <div class="ex-hdr-btns">
+          <button class="ex-icon-btn" title="Upload file" onclick="document.getElementById('uploadInput').click()">↑</button>
+          <button class="ex-icon-btn" title="Close" onclick="toggleExplorer()">✕</button>
+        </div>
+      </div>
+      <input type="file" id="uploadInput" style="display:none" multiple onchange="uploadFiles(event)">
+
+      <!-- Path bar -->
+      <div class="ex-pathbar">
+        <div class="ex-back" onclick="navBack()" title="Back">←</div>
+        <input class="ex-path-input" id="exPath" placeholder="Path…" onkeydown="if(event.key==='Enter')navTo(this.value)">
+        <div class="ex-refresh" onclick="navTo(exCurPath)" title="Refresh">↺</div>
+      </div>
+
+      <!-- Drives -->
+      <div class="ex-drives" id="exDrives"></div>
+
+      <!-- Toolbar -->
+      <div class="ex-toolbar">
+        <button class="ex-btn delete" id="exDeleteBtn" disabled onclick="deleteSelected()">🗑 Delete</button>
+        <button class="ex-btn primary" id="exDlBtn" disabled onclick="downloadSelected()">↓ Download</button>
+        <button class="ex-btn" onclick="document.getElementById('uploadInput').click()">↑ Upload</button>
+        <span class="ex-sel-info" id="exSelInfo">–</span>
+      </div>
+
+      <!-- File list -->
+      <div class="ex-filelist" id="exFilelist" style="position:relative">
+        <div class="ex-loading"><div class="spinner"></div>Waiting for client…</div>
+      </div>
+
+      <!-- Transfer queue -->
+      <div class="ex-transfers" id="exTransfers">
+        <div class="ex-transfer-hdr">Transfers</div>
+        <div class="no-transfers" id="noTransfers">No active transfers</div>
+      </div>
+    </div><!-- /explorer-panel -->
+
+    <!-- ══ TASK MANAGER PANEL ══════════════════════════════ -->
+
+    <div class="task-manager-panel" id="taskManagerPanel">
+      
+      <!-- Header -->
+      <div class="tm-header">
+        <div class="tm-title">
+          <span class="tm-title-icon">⚙️</span>
+          <span>Task Manager</span>
+        </div>
+        <button class="tm-close" onclick="toggleTaskManager()">×</button>
+      </div>
+
+      <!-- Stats -->
+      <div class="tm-stats">
+        <div class="tm-stat-card">
+          <div class="tm-stat-label">CPU Usage</div>
+          <div class="tm-stat-value cpu" id="tmCpuStat">--</div>
+        </div>
+        <div class="tm-stat-card">
+          <div class="tm-stat-label">Memory</div>
+          <div class="tm-stat-value mem" id="tmMemStat">--</div>
+        </div>
+        <div class="tm-stat-card">
+          <div class="tm-stat-label">Processes</div>
+          <div class="tm-stat-value proc" id="tmProcStat">--</div>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="tm-controls">
+        <input type="text" class="tm-search" id="tmSearch" placeholder="🔍 Search processes..." onkeyup="filterProcesses()">
+        <button class="tm-sort-btn" id="sortCpuBtn" onclick="sortBy('cpu')">Sort CPU</button>
+        <button class="tm-sort-btn" id="sortMemBtn" onclick="sortBy('memory')">Sort MEM</button>
+        <button class="tm-refresh-btn" onclick="requestProcesses()" title="Refresh">↻</button>
+      </div>
+
+      <!-- Process Table -->
+      <div class="tm-table-container" id="tmTableContainer">
+        <div class="tm-loading">
+          <div class="spinner"></div>
+          <span>Loading processes...</span>
+        </div>
+      </div>
+
+      <!-- Process Details -->
+      <div class="tm-details" id="tmDetails">
+        <div class="tm-details-title">Process Details</div>
+        <div class="tm-details-grid">
+          <div class="tm-detail-item">
+            <div class="tm-detail-label">Process ID</div>
+            <div class="tm-detail-value" id="detailPid">--</div>
+          </div>
+          <div class="tm-detail-item">
+            <div class="tm-detail-label">Name</div>
+            <div class="tm-detail-value" id="detailName">--</div>
+          </div>
+          <div class="tm-detail-item">
+            <div class="tm-detail-label">CPU Usage</div>
+            <div class="tm-detail-value" id="detailCpu">--</div>
+          </div>
+          <div class="tm-detail-item">
+            <div class="tm-detail-label">Memory Usage</div>
+            <div class="tm-detail-value" id="detailMem">--</div>
+          </div>
+          <div class="tm-detail-item">
+            <div class="tm-detail-label">Status</div>
+            <div class="tm-detail-value" id="detailStatus">--</div>
+          </div>
+          <div class="tm-detail-item">
+            <div class="tm-detail-label">Threads</div>
+            <div class="tm-detail-value" id="detailThreads">--</div>
+          </div>
+          <div class="tm-detail-item">
+            <div class="tm-detail-label">User</div>
+            <div class="tm-detail-value" id="detailUser">--</div>
+          </div>
+          <div class="tm-detail-item" style="grid-column: span 2;">
+            <div class="tm-detail-label">Executable Path</div>
+            <div class="tm-detail-value path" id="detailPath">--</div>
+          </div>
+        </div>
+        <div class="tm-details-actions">
+          <button class="tm-detail-btn" onclick="copyPath()">📋 Copy Path</button>
+          <button class="tm-detail-btn" onclick="openLocation()">📂 Open Location</button>
+          <button class="tm-detail-btn danger" onclick="endSelectedTask()">🔴 End Task</button>
+        </div>
+      </div>
+      
+    </div><!-- /task-manager-panel -->
+
+    <!-- ══ WALLPAPER PANEL ══════════════════════════════ -->
+    <div class="wallpaper-panel" id="wallpaperPanel">
+      <div class="wp-header">
+        <div class="wp-title">🖼️ Wallpaper</div>
+        <button class="wp-close" onclick="toggleWallpaper()">✕</button>
+      </div>
+      <div class="wp-content">
+        <div class="wp-dropzone" id="wallpaperDropzone"
+             onclick="document.getElementById('wallpaperFileInput').click()"
+             ondragover="event.preventDefault(); this.classList.add('dragover')"
+             ondragleave="this.classList.remove('dragover')"
+             ondrop="onWallpaperDrop(event)">
+          <div class="wp-dropzone-icon">📤</div>
+          <div class="wp-dropzone-text">Drag & drop an image here or click to select</div>
+          <input type="file" id="wallpaperFileInput" accept="image/*" style="display:none" onchange="onWallpaperFileSelect(event)">
+        </div>
+        <div class="wp-preview" id="wallpaperPreview">
+          <img id="wallpaperPreviewImg" src="" alt="Preview">
+        </div>
+        <div class="wp-actions">
+          <button class="wp-btn primary" id="setWallpaperBtn" disabled onclick="setWallpaper()">Set Wallpaper</button>
+          <button class="wp-btn" onclick="resetWallpaper()">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ ALERT PANEL ══════════════════════════════ -->
+    <div class="alert-panel" id="alertPanel">
+      <div class="alert-header">
+        <div class="alert-title">🔔 Alert</div>
+        <button class="alert-close" onclick="toggleAlertPanel()">✕</button>
+      </div>
+      <div class="alert-content">
+        <div class="alert-row">
+          <label>Message:</label>
+          <textarea id="alertMessage" rows="3" placeholder="Enter alert message..."></textarea>
+        </div>
+        <div class="alert-row">
+          <label>Image (optional):</label>
+          <input type="file" id="alertImage" accept="image/*" onchange="previewAlertImage()">
+          <div class="alert-image-preview" id="alertImagePreview" style="display:none;">
+            <img id="alertPreviewImg" src="" alt="Preview">
+            <button onclick="clearAlertImage()">✕</button>
+          </div>
+        </div>
+        <div class="alert-row">
+          <label>Width:</label>
+          <input type="number" id="alertWidth" value="400" min="100" max="2000">
+        </div>
+        <div class="alert-row">
+          <label>Height:</label>
+          <input type="number" id="alertHeight" value="300" min="100" max="2000">
+        </div>
+        <div class="alert-row">
+          <label>Position preset:</label>
+          <select id="alertPositionPreset" onchange="toggleCustomPosition()">
+            <option value="center" selected>Center</option>
+            <option value="top-left">Top-left</option>
+            <option value="top-right">Top-right</option>
+            <option value="bottom-left">Bottom-left</option>
+            <option value="bottom-right">Bottom-right</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+        <div class="alert-row" id="alertCustomPos" style="display:none;">
+          <label>X:</label>
+          <input type="number" id="alertX" value="100">
+          <label>Y:</label>
+          <input type="number" id="alertY" value="100">
+        </div>
+        <div class="alert-row">
+          <label>
+            <input type="checkbox" id="alertAlwaysOnTop" checked> Always on top
+          </label>
+        </div>
+        <div class="alert-actions">
+          <button class="btn primary" onclick="sendAlert()">Send Alert</button>
+          <button class="btn" onclick="closeAlert()">Close Alert</button>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ══ LOCK PANEL ══════════════════════════════ -->
+    <div class="lock-panel" id="lockPanel">
+      <div class="lock-header">
+        <div class="lock-title">🔒 Lock Control</div>
+        <button class="lock-close" onclick="toggleLockPanel()">✕</button>
+      </div>
+      <div class="lock-content">
+        <!-- Upload ảnh khóa màn hình -->
+        <div class="lock-row">
+          <label>Lock Screen Image:</label>
+          <div class="lock-dropzone" id="lockDropzone"
+               onclick="document.getElementById('lockFileInput').click()"
+               ondragover="event.preventDefault(); this.classList.add('dragover')"
+               ondragleave="this.classList.remove('dragover')"
+               ondrop="onLockImageDrop(event)">
+            <div class="lock-dropzone-icon">📤</div>
+            <div class="lock-dropzone-text">Drag & drop or click to select</div>
+            <input type="file" id="lockFileInput" accept="image/*" style="display:none" onchange="onLockImageSelect(event)">
+          </div>
+          <div class="lock-preview" id="lockPreview" style="display:none;">
+            <img id="lockPreviewImg" src="" alt="Preview">
+            <button onclick="clearLockImage()">✕</button>
+          </div>
+        </div>
+
+        <!-- Trạng thái hiện tại -->
+        <div class="lock-row">
+          <label>Input:</label>
+          <span id="inputStatus" class="lock-status">Unknown</span>
+          <button class="lock-btn" onclick="lockInput(true)">Lock</button>
+          <button class="lock-btn" onclick="lockInput(false)">Unlock</button>
+        </div>
+        <div class="lock-row">
+          <label>Screen:</label>
+          <span id="screenStatus" class="lock-status">Unknown</span>
+          <button class="lock-btn" onclick="lockScreen(true)">Lock</button>
+          <button class="lock-btn" onclick="lockScreen(false)">Unlock</button>
+        </div>
+        <div class="lock-actions">
+          <button class="btn primary" onclick="setLockImage()" id="setLockImageBtn" disabled>Set as Lock Image</button>
+        </div>
+      </div>
+    </div>
+
+
+  </div><!-- /workspace -->
+
+
+ 
+
+
+  <!-- OUTPUT LOG -->
+  <div class="output-panel" id="output">
+    <div class="log info">[SYSTEM] Panel ready</div>
+  </div>
+
+</div><!-- /main -->
+
+ 
+
+
+<script>
+// ════════════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════════════
+
+
+let lockStates = {};  // client_id -> { input: bool, screen: bool }
+
+let lockOpen = false;
+let lockImageFile = null;
+let lockImageBase64 = null;
+
+
+let selClient    = null;
+let isStreaming  = false;
+let frameCount   = 0;
+let fpsTimer     = null;
+let lastFrameTs  = 0;
+let exOpen       = false;
+let exCurPath    = '.';
+let exHistory    = [];
+let exSelected   = new Set();
+let exItems      = [];
+let activeXfers  = {};       // tid → { el, fill, msg, dl, chunks, total }
+const CHUNK      = 512*1024; // 512KB
+let tmOpen           = false;
+let fileOpen         = false;
+let processes        = [];
+let selectedProcess  = null;
+let sortField        = 'cpu';
+let sortDirection    = 'desc';
+let currentPath      = '';
+let pathHistory      = [];
+
+let isWebcam = false;
+let wpOpen = false;
+let wpFile = null;
+
+
+let alertOpen = false;
+let alertImageBase64 = null;
+
+// ════════════════════════════════════════════════════════════
+//  WEBSOCKET
+// ════════════════════════════════════════════════════════════
+const ws = new WebSocket(
+  (location.protocol==='https:'?'wss:':'ws:') + '//' + location.host + '/ws/admin'
+);
+
+const $sdot   = document.getElementById('sdot');
+const $stxt   = document.getElementById('stxt');
+const $stream = document.getElementById('streamBtn');
+const $live   = document.getElementById('liveBadge');
+const $fps    = document.getElementById('fpsBadge');
+const $lat    = document.getElementById('latBadge');
+const $img    = document.getElementById('screenImg');
+const $ph     = document.getElementById('placeholder');
+const $out    = document.getElementById('output');
+
+ws.onopen = () => { $sdot.classList.add('on'); $stxt.textContent='Connected'; log('Connected','info'); };
+ws.onclose= () => { $sdot.classList.remove('on'); $stxt.textContent='Disconnected'; _stopStream(false); log('Disconnected','error'); };
+
+ws.onmessage = ({data}) => {
+  let msg; try { msg=JSON.parse(data); } catch { return; }
+  const {type, client_id} = msg;
+
+  if (type==='clients')         { renderClients(msg.clients); return; }
+  if (type==='client_info' && client_id===selClient) {
+    const s=msg.sysinfo||{}; log(`[#${client_id}] ${s.platform} CPU:${s.cpu_percent}% RAM:${s.memory_percent}%`,'info'); return;
+  }
+  if (type==='stream_frame' && client_id===selClient) {
+    const now=performance.now();
+    if(lastFrameTs) $lat.textContent=Math.round(now-lastFrameTs)+'ms';
+    lastFrameTs=now; frameCount++;
+    $img.src='data:image/jpeg;base64,'+msg.image; showScreen(); return;
+  }
+
+
+  if (type === 'lock_status' && client_id) {
+      lockStates[client_id] = {
+          input: msg.input_locked,
+          screen: msg.screen_locked
+      };
+      // If this client is currently selected, update the UI
+      if (client_id === selClient) {
+          updateLockUI();
+      }
+      return;
+  }
+
+  if (type==='webcam_frame' && client_id===selClient) {
+    const now=performance.now();
+    if(lastFrameTs) $lat.textContent=Math.round(now-lastFrameTs)+'ms';
+    lastFrameTs=now; frameCount++;
+    $img.src='data:image/jpeg;base64,'+msg.image; 
+    
+    // Đảm bảo ảnh được hiển thị đúng
+    $img.onload = function() {
+      // Tự động căn chỉnh - không cần làm gì thêm vì CSS đã xử lý
+      $img.style.objectFit = 'contain';
+      $img.style.maxWidth = '100%';
+      $img.style.maxHeight = '100%';
+    };
+    
+    showScreen(); 
+    return;
+  }
+
+  if (type==='webcam_error' && client_id===selClient) {
+    log(`Webcam error: ${msg.error}`, 'error');
+    // Tắt trạng thái webcam
+    isWebcam = false;
+    document.getElementById('webcamBtn').textContent = '📷 Webcam';
+    document.getElementById('webcamBtn').classList.remove('active-stream');
+    document.getElementById('liveBadge').classList.remove('show');
+    hideScreen();
+    return;
+  }
+
+  if (type==='screenshot' && client_id===selClient) {
+    $img.src='data:image/jpeg;base64,'+msg.image; showScreen(); log(`Snapshot received`,'info'); return;
+  }
+  if (type==='command_result' && client_id===selClient) { log(msg.output,'result'); return; }
+  if (type==='stream_stopped'  && client_id===selClient) { _stopStream(false); log(`Stream stopped: ${msg.reason}`,'error'); return; }
+
+  // ── Explorer ─────────────────────────────────────────────
+  if (type==='directory_list') { renderDir(msg.data); return; }
+  if (type==='drives_list')    { renderDrives(msg.data); return; }
+  if (type==='file_content')   { handleFileContent(msg); return; }
+  if (type==='write_file_result') { handleWriteFileResult(msg); return; }
+
+
+
+  if (type === 'delete_result') {
+    const results = msg.results || [];
+    const successCount = results.filter(r => r.success).length;
+    const failCount = results.length - successCount;
+    
+    log(`🗑 Đã xóa ${successCount} mục, ${failCount} thất bại`, successCount > 0 ? 'info' : 'error');
+    
+    results.forEach(r => {
+      if (!r.success) {
+        log(`  ✕ ${r.path}: ${r.message}`, 'error');
+      }
+    });
+    
+    // Refresh lại thư mục hiện tại nếu explorer đang mở
+    if (exOpen) navTo(exCurPath);
+    return;
+  }
+
+
+  // ── Task Manager ─────────────────────────────────────────
+  if (type==='processes' && client_id===selClient) {
+    handleProcessesData(msg.data);
+    return;
+  }
+  
+  if (type==='sysinfo' && client_id===selClient) {
+    updateSysStats(msg.data);
+    return;
+  }
+  
+  if (type==='kill_result' && client_id===selClient) {
+    log(msg.result || 'Process terminated', 'info');
+    // Refresh processes after kill
+    setTimeout(() => requestProcesses(), 500);
+    return;
+  }
+
+
+
+
+  // ── File transfers ────────────────────────────────────────
+  if (type==='folder_transfer_start') { onFolderStart(msg); return; }
+  if (type==='folder_transfer_done')  { onFolderDone(msg);  return; }
+  if (type==='file_transfer_start')   { onXferStart(msg);   return; }
+  if (type==='file_chunk')            { onXferChunk(msg);   return; }
+  if (type==='file_transfer_done')    { onXferDone(msg);    return; }
+  if (type==='file_transfer_error')   { onXferError(msg);   return; }
+  if (type==='file_transfer_progress'){ onXferProgress(msg);return; }
+  if (type==='file_save_result')      { onSaveResult(msg);  return; }
+
+
+
+  if (type === 'wallpaper_set_result') {
+    const {transfer_id, success, error} = msg;
+    const x = activeXfers[transfer_id];
+    if (x) {
+      if (success) {
+        setXferDone(transfer_id);
+        x.msg.textContent = '✅ Wallpaper set';
+        log('Wallpaper changed successfully', 'result');
+      } else {
+        x.fill.classList.add('err');
+        x.msg.textContent = '❌ ' + (error || 'Failed');
+        log('Wallpaper error: ' + error, 'error');
+      }
+    }
+    resetWallpaper(); // optional, clears preview
+    return;
+  }
+
+  
+};
+
+
+
+
+
+function updateLockUI() {
+    const state = lockStates[selClient];
+    if (state) {
+        document.getElementById('inputStatus').textContent = state.input ? 'Locked' : 'Unlocked';
+        document.getElementById('screenStatus').textContent = state.screen ? 'Locked' : 'Unlocked';
+        // Optional: add color coding
+        document.getElementById('inputStatus').style.color = state.input ? 'var(--red)' : 'var(--green)';
+        document.getElementById('screenStatus').style.color = state.screen ? 'var(--red)' : 'var(--green)';
+    } else {
+        document.getElementById('inputStatus').textContent = 'Unknown';
+        document.getElementById('screenStatus').textContent = 'Unknown';
+    }
+}
+
+
+// ════════════════════════════════════════════════════════════
+//  CLIENTS
+// ════════════════════════════════════════════════════════════
+function renderClients(clients) {
+  const el = document.getElementById('clientList');
+  if (!clients.length) {
+    el.innerHTML='<div class="no-clients">No clients online</div>';
+    if (selClient && !clients.includes(selClient)) { selClient=null; _stopStream(false); hideScreen(); }
+    return;
+  }
+  el.innerHTML='';
+  clients.forEach(id => {
+    const d=document.createElement('div');
+    d.className='client-item'+(id===selClient?' active':'');
+    d.innerHTML=`<div class="cdot"></div>#${id}`;
+    d.onclick=()=>selectClient(id);
+    el.appendChild(d);
+  });
+}
+
+function selectClient(id) {
+  if(id===selClient) return;
+  if(isStreaming && selClient) ws.send(JSON.stringify({type:'stop_stream',client_id:selClient}));
+  isStreaming=false;
+  selClient=id;
+  document.querySelectorAll('.client-item').forEach(e=>e.classList.toggle('active',e.textContent.trim()==='#'+id));
+  log(`[#${id}] Selected`,'info');
+  if(exOpen) { reqDrives(); navTo('.'); }
+  if (isWebcam) {
+    ws.send(JSON.stringify({type:'stop_webcam',client_id:selClient}));
+    isWebcam = false;
+    document.getElementById('webcamBtn').textContent = '📷 Webcam';
+    document.getElementById('webcamBtn').classList.remove('active-stream');
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+//  STREAM
+// ════════════════════════════════════════════════════════════
+function toggleStream() {
+  if (fpsTimer) clearInterval(fpsTimer);
+  fpsTimer = setInterval(() => {
+      // Giả sử cập nhật mỗi giây
+      $fps.textContent = frameCount + ' FPS';
+      frameCount = 0; // reset frame đếm cho giây tiếp theo
+  }, 1000);
+  if (!selClient) { log('Select a client', 'error'); return; }
+  if (isStreaming) {
+    // Đang stream -> tắt
+    ws.send(JSON.stringify({type: 'stop_stream', client_id: selClient}));
+    isStreaming = false;
+    document.getElementById('streamBtn').textContent = '▶ Stream';
+    document.getElementById('streamBtn').classList.remove('active-stream');
+    if (!isWebcam) document.getElementById('liveBadge').classList.remove('show');
+  } else {
+    // Nếu đang webcam, tắt nó trước
+    if (isWebcam) {
+      ws.send(JSON.stringify({type: 'stop_webcam', client_id: selClient}));
+      isWebcam = false;
+      document.getElementById('webcamBtn').textContent = '📷 Webcam';
+      document.getElementById('webcamBtn').classList.remove('active-stream');
+    }
+    ws.send(JSON.stringify({type: 'start_stream', client_id: selClient}));
+    isStreaming = true;
+    document.getElementById('streamBtn').textContent = '⏹ Stop';
+    document.getElementById('streamBtn').classList.add('active-stream');
+    document.getElementById('liveBadge').classList.add('show');
+
+  }
+}
+
+function _stopStream(send) {
+  if (isWebcam) {
+    // Nếu đang webcam, tắt nó
+    if (send && selClient) ws.send(JSON.stringify({type:'stop_webcam',client_id:selClient}));
+    isWebcam = false;
+    document.getElementById('webcamBtn').textContent = '📷 Webcam';
+    document.getElementById('webcamBtn').classList.remove('active-stream');
+  }
+  // ... phần cũ cho stream
+  isStreaming=false; clearInterval(fpsTimer); fpsTimer=null; frameCount=0;
+  $stream.textContent='▶ Stream'; $stream.className='btn primary';
+  $live.classList.remove('show');
+  $fps.textContent='-- FPS'; $fps.className='stat-badge';
+  $lat.textContent='-- ms';
+}
+
+
+function toggleWebcam() {
+  if (fpsTimer) clearInterval(fpsTimer);
+fpsTimer = setInterval(() => {
+    // Giả sử cập nhật mỗi giây
+    $fps.textContent = frameCount + ' FPS';
+    frameCount = 0; // reset frame đếm cho giây tiếp theo
+}, 1000);
+  if (!selClient) { log('Select a client', 'error'); return; }
+  
+  if (isWebcam) {
+    // Đang webcam -> tắt
+    ws.send(JSON.stringify({type: 'stop_webcam', client_id: selClient}));
+    isWebcam = false;
+    document.getElementById('webcamBtn').textContent = '📷 Webcam';
+    document.getElementById('webcamBtn').classList.remove('active-stream');
+    _stopStream(false); // tắt trạng thái stream ảo ở admin
+  } else {
+    // Nếu đang screen stream, tắt nó trước
+    if (isStreaming) {
+      ws.send(JSON.stringify({type: 'stop_stream', client_id: selClient}));
+      isStreaming = false;
+      document.getElementById('streamBtn').textContent = '▶ Stream';
+      document.getElementById('streamBtn').classList.remove('active-stream');
+    }
+    // Yêu cầu webcam
+    ws.send(JSON.stringify({type: 'start_webcam', client_id: selClient}));
+    isWebcam = true;
+    document.getElementById('webcamBtn').textContent = '⏹ Webcam';
+    document.getElementById('webcamBtn').classList.add('active-stream');
+    // Hiển thị live badge
+    document.getElementById('liveBadge').classList.add('show');
+  }
+}
+
+
+function reqScreenshot() {
+  if(!selClient){log('Select a client','error');return;}
+  ws.send(JSON.stringify({type:'request_screenshot',client_id:selClient}));
+}
+
+function sendCmd() {
+  if(!selClient){log('Select a client','error');return;}
+  const v=document.getElementById('cmdInput').value.trim(); if(!v) return;
+  ws.send(JSON.stringify({type:'command',client_id:selClient,command:v}));
+  log('$ '+v,'log');
+  document.getElementById('cmdInput').value='';
+}
+
+function showScreen() { $img.classList.add('show'); $ph.style.display='none'; }
+function hideScreen() { $img.classList.remove('show'); $ph.style.display='flex'; }
+
+// ════════════════════════════════════════════════════════════
+//  EXPLORER PANEL
+// ════════════════════════════════════════════════════════════
+
+
+function toggleExplorer() {
+  exOpen=!exOpen;
+  document.getElementById('explorerPanel').classList.toggle('open',exOpen);
+  document.getElementById('filesBtn').classList.toggle('files-active',exOpen);
+  if(exOpen && selClient) { reqDrives(); navTo(exCurPath); }
+ 
+}
+
+
+
+
+
+
+
+
+function reqDrives() {
+  if(!selClient) return;
+  ws.send(JSON.stringify({type:'get_drives',client_id:selClient}));
+}
+
+function navTo(path) {
+  if(!selClient) return;
+  if(path!==exCurPath) exHistory.push(exCurPath);
+  exCurPath=path;
+  exSelected.clear(); updateSel();
+  document.getElementById('exPath').value=path;
+  document.getElementById('exFilelist').innerHTML='<div class="ex-loading"><div class="spinner"></div>Loading…</div>';
+  ws.send(JSON.stringify({type:'list_directory',client_id:selClient,path}));
+}
+
+function navBack() { if(exHistory.length) navTo(exHistory.pop()); }
+
+function renderDrives(drives=[]) {
+  document.getElementById('exDrives').innerHTML = drives.map(d=>
+    `<button class="ex-drive-pill" onclick="navTo('${esc(d.path)}')">${d.name}</button>`
+  ).join('');
+}
+
+function renderDir(data) {
+  if(!data) return;
+  const items = data.items || [];
+  const path  = data.path  || exCurPath;
+  exCurPath=path; exItems=items;
+  exSelected.clear(); updateSel();
+  document.getElementById('exPath').value=path;
+
+  if(data.error) {
+    document.getElementById('exFilelist').innerHTML=
+      `<div style="color:var(--red);padding:16px;font-size:12px">⚠ ${data.error}</div>`;
+    return;
+  }
+
+  const rows = items.map(item => {
+    const isDir   = item.type==='dir';
+    const isPar   = item.type==='parent';
+    const icon    = isPar?'↩':isDir?'📁':fileIcon(item.ext||'');
+    const nc      = isPar?'parent':isDir?'dir':'';
+    const size    = isPar?'':isDir?`${item.size} items`:fmtSize(item.size);
+    return `<div class="ex-row" data-path="${esc(item.path)}" data-type="${item.type}"
+               ondblclick="rowDbl(this)" onclick="rowClick(this,event)">
+      <div class="ex-row-icon">${icon}</div>
+      <div class="ex-row-name ${nc}" title="${esc(item.name)}">${esc(item.name)}</div>
+      <div class="ex-row-size">${size}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('exFilelist').innerHTML = rows ||
+    '<div style="color:var(--muted);padding:20px;font-size:12px;text-align:center">Empty folder</div>';
+}
+
+function rowDbl(el) {
+  const {type, path} = el.dataset;
+  if(type==='dir'||type==='parent') {
+    navTo(path);
+  } else {
+    // Check file extension to decide action
+    const ext = path.substring(path.lastIndexOf('.')).toLowerCase();
+    
+    // Text files - open in editor
+    const textExts = ['.txt', '.py', '.js', '.html', '.css', '.json', '.xml', '.md', 
+                      '.log', '.csv', '.ini', '.yaml', '.yml', '.sh', '.bat', '.c', 
+                      '.cpp', '.java', '.php', '.rb', '.go', '.rs', '.ts', '.jsx', 
+                      '.tsx', '.vue', '.sql', '.conf', '.cfg'];
+    
+    // Image files - open in viewer
+    const imageExts = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg', '.ico'];
+    
+    if (textExts.includes(ext) || imageExts.includes(ext)) {
+      // Request file content from client
+      ws.send(JSON.stringify({
+        type: 'read_file',
+        client_id: selClient,
+        path: path
+      }));
+      log(`📂 Opening: ${path.split(/[\\/]/).pop()}`, 'info');
+    } else {
+      // Other files - download
+      exSelected.clear(); 
+      exSelected.add(path); 
+      updateSel(); 
+      downloadSelected();
+    }
+  }
+}
+
+function rowClick(el, e) {
+  const {path, type} = el.dataset;
+  if(type==='parent') return;
+  if(e.ctrlKey||e.metaKey) { exSelected.has(path)?exSelected.delete(path):exSelected.add(path); }
+  else if(e.shiftKey && exSelected.size) {
+    const rows=[...document.querySelectorAll('.ex-row')];
+    const a=rows.indexOf(el), b=rows.findIndex(r=>exSelected.has(r.dataset.path));
+    for(let i=Math.min(a,b);i<=Math.max(a,b);i++) if(rows[i].dataset.path) exSelected.add(rows[i].dataset.path);
+  } else { exSelected.clear(); exSelected.add(path); }
+  document.querySelectorAll('.ex-row').forEach(r=>r.classList.toggle('selected',exSelected.has(r.dataset.path)));
+  updateSel();
+}
+
+function updateSel() {
+  const n = exSelected.size;
+  document.getElementById('exSelInfo').textContent = n ? `${n} selected` : '–';
+  document.getElementById('exDlBtn').disabled = !n;
+  // Bật/tắt nút Delete dựa trên số lượng selected
+  document.getElementById('exDeleteBtn').disabled = !n;
+}
+
+
+function deleteSelected() {
+  if (!exSelected.size || !selClient) return;
+  
+  const count = exSelected.size;
+  const msg = count === 1 
+    ? `Delete ${Array.from(exSelected)[0]}?` 
+    : `Delete ${count} selected items?`;
+  
+  if (!confirm(msg)) return;
+  
+  const paths = Array.from(exSelected);
+  ws.send(JSON.stringify({
+    type: 'delete_files',
+    client_id: selClient,
+    paths: paths
+  }));
+  
+  log(`🗑 Đang xóa ${paths.length} mục...`, 'info');
+  
+  // Có thể tạm thời vô hiệu hóa nút để tránh click liên tục
+  document.getElementById('exDeleteBtn').disabled = true;
+}
+
+
+// ── Download: Client → Admin ───────────────────────────────
+function downloadSelected() {
+  if(!exSelected.size||!selClient) return;
+  const items=[...exSelected].map(p=>exItems.find(i=>i.path===p)).filter(Boolean);
+  items.forEach(item=>{
+    const tid='xfer_'+Date.now()+'_'+Math.random().toString(36).slice(2,9);
+    mkXferItem(tid, item.name, item.type === 'dir' ? null : item.size, 'down');
+    ws.send(JSON.stringify({type:'request_file_upload',client_id:selClient,path:item.path,transfer_id:tid}));
+  });
+  log(`Download started: ${items.map(i=>i.name).join(', ')}`,'info');
+}
+
+// ── Upload: Admin → Client (into current explorer dir) ─────
+async function uploadFiles(e) {
+  const files=[...e.target.files]; e.target.value='';
+  if(!files.length||!selClient) return;
+  for(const file of files) await sendOneFile(file, exCurPath);
+}
+
+async function sendOneFile(file, saveDir) {
+  const tid=randId();
+  const total=Math.ceil(file.size/CHUNK)||1;
+  mkXferItem(tid, file.name, file.size, 'up');
+  ws.send(JSON.stringify({type:'send_file_to_client',client_id:selClient,transfer_id:tid,
+    filename:file.name,file_size:file.size,total_chunks:total,save_dir:saveDir}));
+  for(let i=0;i<total;i++){
+    const b64=await readB64(file.slice(i*CHUNK,(i+1)*CHUNK));
+    ws.send(JSON.stringify({type:'send_chunk_to_client',client_id:selClient,transfer_id:tid,
+      chunk_idx:i,total_chunks:total,data:b64}));
+    xferProgress(tid,i+1,total);
+    await tick();
+  }
+  ws.send(JSON.stringify({type:'finish_file_to_client',client_id:selClient,transfer_id:tid,
+    filename:file.name,file_size:file.size}));
+  log(`↑ Sent: ${file.name} → ${saveDir}`,'info');
+}
+
+// ── Drag & drop onto viewer → upload to current dir ─────────
+function onViewerDragOver(e) {
+  if(!exOpen||!selClient) return;
+  e.preventDefault();
+  document.getElementById('dropOverlay').classList.add('show');
+  document.getElementById('dropOverlay').textContent=`Drop to upload → ${exCurPath}`;
+}
+function onViewerDragLeave() { document.getElementById('dropOverlay').classList.remove('show'); }
+function onViewerDrop(e) {
+  e.preventDefault();
+  document.getElementById('dropOverlay').classList.remove('show');
+  if(!exOpen||!selClient) return;
+  [...(e.dataTransfer.files||[])].forEach(f=>sendOneFile(f,exCurPath));
+}
+
+// ════════════════════════════════════════════════════════════
+//  TRANSFER HANDLERS (incoming from server)
+// ════════════════════════════════════════════════════════════
+function onFolderStart(msg) {
+  // folder_transfer_start — tạo 1 item đại diện cho cả folder
+  const {transfer_id:tid, folder_name, total_files} = msg;
+  mkXferItem(tid, `📁 ${folder_name}/`, null, 'down', `0/${total_files} files`);
+}
+
+function onFolderDone(msg) {
+  const {transfer_id:tid, folder_name, total_files} = msg;
+  const x=activeXfers[tid];
+  if(!x) return;
+  setXferDone(tid);
+  x.msg.textContent=`${total_files} files received`;
+  // Tạo download link cho folder — chỉ available qua server endpoint
+  x.dl.href=`/download_folder/${tid}`;
+  x.dl.textContent='⬇ Download zip';
+  x.dl.classList.add('show');
+  log(`↓ Folder done: ${folder_name} (${total_files} files)`,'result');
+  // Refresh explorer nếu đang mở
+  if(exOpen) setTimeout(()=>navTo(exCurPath), 800);
+}
+
+function onXferStart(msg) {
+  const {transfer_id:tid, filename, file_size, total_chunks, total_files, file_index, is_folder} = msg;
+  if(is_folder && activeXfers[tid]) {
+    // Cập nhật progress item folder đã có
+    const x=activeXfers[tid];
+    const fi=file_index+1;
+    x.msg.textContent=`[${fi}/${total_files}] ${filename.split(/[\\/]/).pop()}`;
+    x.fill.style.width='0%';
+    // track chunk state riêng cho file hiện tại
+    x.curChunks=0; x.curTotal=total_chunks;
+    return;
+  }
+  // File đơn
+  if(!activeXfers[tid]) mkXferItem(tid, filename, file_size, 'down');
+  const x=activeXfers[tid];
+  if(x){ x.total=total_chunks; x.chunks=0; }
+}
+
+function onXferChunk(msg) {
+  const {transfer_id:tid, chunk_idx, total_chunks} = msg;
+  const x=activeXfers[tid]; if(!x) return;
+  if(x.curTotal!=null) {
+    // folder mode: progress per file
+    x.curChunks=(x.curChunks||0)+1;
+    xferProgress(tid, x.curChunks, x.curTotal);
+  } else {
+    x.chunks=(x.chunks||0)+1;
+    xferProgress(tid, x.chunks, x.total||total_chunks);
+  }
+}
+
+function onXferDone(msg) {
+  const {transfer_id:tid, filename, file_index, total_files, is_folder} = msg;
+  if(is_folder) return; // folder done xử lý bởi onFolderDone
+  setXferDone(tid);
+  const x=activeXfers[tid]; if(!x) return;
+  x.dl.href=`/download/${tid}`;
+  x.dl.textContent='⬇ Download';
+  x.dl.classList.add('show');
+  log(`↓ Ready: ${filename}`,'result');
+}
+
+function onXferError(msg) {
+  const {transfer_id:tid, error} = msg;
+  const x=activeXfers[tid]; if(!x) return;
+  x.fill.classList.add('err'); x.fill.style.width='100%';
+  x.msg.textContent='✕ '+error;
+  x.msg.style.color='var(--red)';
+  log(`Transfer error: ${error}`,'error');
+}
+
+function onXferProgress(msg) {
+  const {transfer_id:tid} = msg;
+  const x=activeXfers[tid]; if(!x) return;
+  x.msg.textContent=msg.message||'…';
+}
+
+function onSaveResult(msg) {
+  const {transfer_id:tid, path, error} = msg;
+  const x=activeXfers[tid];
+  if(x){ if(error){x.fill.classList.add('err');x.msg.textContent='✕ '+error;}else{setXferDone(tid);x.msg.textContent='Saved: '+path;} }
+  if(error) log(`Save error: ${error}`,'error');
+  else { log(`↑ Saved: ${path}`,'result'); if(exOpen) setTimeout(()=>navTo(exCurPath),600); }
+}
+
+// ════════════════════════════════════════════════════════════
+//  TRANSFER UI HELPERS
+// ════════════════════════════════════════════════════════════
+function mkXferItem(tid, name, size, dir, initMsg='') {
+  document.getElementById('noTransfers')?.remove();
+  const el=document.createElement('div'); el.className='transfer-item'; el.id='xfer-'+tid;
+  el.innerHTML=`
+    <div class="t-row">
+      <span class="t-name" title="${esc(name)}">${dir==='up'?'↑':'↓'} ${esc(name)}</span>
+      <span class="t-size">${size!=null?fmtSize(size):''}</span>
+    </div>
+    <div class="t-bar"><div class="t-fill" id="fill-${tid}"></div></div>
+    <div class="t-status">
+      <span class="t-msg" id="msg-${tid}">${initMsg||'Starting…'}</span>
+      <a class="t-dl" id="dl-${tid}" target="_blank"></a>
+    </div>`;
+  document.getElementById('exTransfers').appendChild(el);
+  activeXfers[tid]={
+    el, fill:document.getElementById('fill-'+tid),
+    msg:document.getElementById('msg-'+tid),
+    dl:document.getElementById('dl-'+tid),
+    chunks:0, total:0
+  };
+}
+
+function xferProgress(tid, done, total) {
+  const x=activeXfers[tid]; if(!x||!total) return;
+  const pct=Math.round(done/total*100);
+  x.fill.style.width=pct+'%';
+  if(!x.curTotal) x.msg.textContent=pct+'%'; // solo file
+}
+
+function setXferDone(tid) {
+  const x=activeXfers[tid]; if(!x) return;
+  x.fill.style.width='100%'; x.fill.classList.add('done');
+}
+
+// ════════════════════════════════════════════════════════════
+//  UTILS
+// ════════════════════════════════════════════════════════════
+function fileIcon(ext) {
+  const m={
+    '.exe':'⚙','.dll':'⚙','.bat':'⚙','.sh':'⚙',
+    '.zip':'🗜','.rar':'🗜','.7z':'🗜','.tar':'🗜','.gz':'🗜',
+    '.jpg':'🖼','.jpeg':'🖼','.png':'🖼','.gif':'🖼','.bmp':'🖼','.svg':'🖼','.webp':'🖼',
+    '.mp4':'🎬','.mkv':'🎬','.avi':'🎬','.mov':'🎬',
+    '.mp3':'🎵','.wav':'🎵','.flac':'🎵','.aac':'🎵',
+    '.pdf':'📄','.doc':'📝','.docx':'📝','.xls':'📊','.xlsx':'📊',
+    '.txt':'📃','.log':'📃','.md':'📃',
+    '.py':'🐍','.js':'📜','.ts':'📜','.html':'🌐','.css':'🎨',
+    '.json':'📋','.xml':'📋','.csv':'📊',
+    '.db':'🗄','.sqlite':'🗄','.sql':'🗄',
+  };
+  return m[ext]||'📄';
+}
+
+function fmtSize(b) {
+  if(b==null||b==='') return '';
+  if(b<1024) return b+' B';
+  if(b<1048576) return (b/1024).toFixed(1)+' KB';
+  return (b/1048576).toFixed(2)+' MB';
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function randId() { return Math.random().toString(36).slice(2,10); }
+
+function readB64(blob) {
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=()=>res(r.result.split(',')[1]);
+    r.onerror=rej; r.readAsDataURL(blob);
+  });
+}
+
+function tick() { return new Promise(r=>setTimeout(r,0)); }
+
+function log(msg, cls='') {
+  const ts=document.createElement('div'); ts.className='log ts';
+  ts.textContent=new Date().toLocaleTimeString();
+  const el=document.createElement('div'); el.className='log '+cls;
+  el.textContent=msg;
+  $out.append(ts,el); $out.scrollTop=$out.scrollHeight;
+  while($out.children.length>300) $out.removeChild($out.firstChild);
+}
+ 
+
+
+
+function toggleTaskManager() {
+  tmOpen = !tmOpen;
+  const panel = document.getElementById('taskManagerPanel');
+  const btn = document.getElementById('taskBtn');
+  
+  if (tmOpen) {
+    if (exOpen) {
+      exOpen = false;
+      document.getElementById('explorerPanel').classList.remove('open');
+      document.getElementById('filesBtn').classList.remove('files-active');
+    }
+    
+    panel.classList.add('open');
+    btn.classList.add('task-active');
+    if (selClient) {
+      requestProcesses();
+      requestSysInfo();
+    }
+  } else {
+    panel.classList.remove('open');
+    btn.classList.remove('task-active');
+  }
+}
+
+function requestProcesses() {
+  if (!selClient) {
+    log('Please select a client first', 'warn');
+    return;
+  }
+
+  if (!ws || ws.readyState !== WebSocket.OPEN) {
+    log('WebSocket not connected', 'error');
+    return;
+  }
+
+  ws.send(JSON.stringify({
+    type: 'request_processes',
+    client_id: selClient
+  }));
+}
+
+function requestSysInfo() {
+  if (!selClient) return;
+
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+  ws.send(JSON.stringify({
+    type: 'request_sysinfo',
+    client_id: selClient
+  }));
+}
+
+function handleProcessesData(data) {
+  if (!Array.isArray(data)) {
+    log('Invalid process data received', 'error');
+    return;
+  }
+
+  processes = data;
+  renderProcessTable();
+  
+  document.getElementById('tmProcStat').textContent = data.length;
+}
+
+function updateSysStats(data) {
+  if (!data) return;
+
+  document.getElementById('tmCpuStat').textContent = `${data.cpu_percent}%`;
+  document.getElementById('tmMemStat').textContent = `${data.memory_percent}%`;
+}
+
+function renderProcessTable() {
+  const container = document.getElementById('tmTableContainer');
+  
+  if (!processes || processes.length === 0) {
+    showEmptyState('No processes found');
+    return;
+  }
+
+  const sorted = [...processes].sort((a, b) => {
+    const aVal = a[sortField] || 0;
+    const bVal = b[sortField] || 0;
+    return sortDirection === 'desc' ? bVal - aVal : aVal - bVal;
+  });
+
+  const search = document.getElementById('tmSearch').value.toLowerCase();
+  const filtered = search ? sorted.filter(p => 
+    p.name.toLowerCase().includes(search) ||
+    String(p.pid).includes(search) ||
+    (p.path && p.path.toLowerCase().includes(search))
+  ) : sorted;
+
+  const html = `
+    <table class="tm-table">
+      <thead>
+        <tr>
+          <th class="sortable ${sortField === 'pid' ? 'sort-' + sortDirection : ''}" onclick="sortBy('pid')">PID</th>
+          <th class="sortable ${sortField === 'name' ? 'sort-' + sortDirection : ''}" onclick="sortBy('name')">Name</th>
+          <th class="sortable ${sortField === 'cpu' ? 'sort-' + sortDirection : ''}" onclick="sortBy('cpu')">CPU %</th>
+          <th class="sortable ${sortField === 'memory' ? 'sort-' + sortDirection : ''}" onclick="sortBy('memory')">Memory %</th>
+          <th class="sortable ${sortField === 'status' ? 'sort-' + sortDirection : ''}" onclick="sortBy('status')">Status</th>
+          <th class="sortable ${sortField === 'threads' ? 'sort-' + sortDirection : ''}" onclick="sortBy('threads')">Threads</th>
+          <th>User</th>
+          <th>Path</th>
+          <th style="text-align: right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${filtered.map(p => {
+          const cpuClass = p.cpu > 50 ? 'high' : p.cpu > 20 ? 'mid' : 'low';
+          const memClass = p.memory > 30 ? 'high' : p.memory > 10 ? 'mid' : 'low';
+          const isSelected = selectedProcess && selectedProcess.pid === p.pid;
+          
+          return `
+            <tr class="${isSelected ? 'selected' : ''}" onclick="selectProcess(${p.pid})">
+              <td class="pid">${p.pid}</td>
+              <td class="name" title="${p.name}">${p.name}</td>
+              <td class="cpu ${cpuClass}">${p.cpu.toFixed(1)}%</td>
+              <td class="memory ${memClass}">${p.memory.toFixed(1)}%</td>
+              <td class="status ${p.status}">${p.status || 'unknown'}</td>
+              <td>${p.threads || 0}</td>
+              <td class="user" title="${p.user || 'N/A'}">${p.user || 'N/A'}</td>
+              <td class="path" title="${p.path || 'N/A'}">${p.path || 'N/A'}</td>
+              <td class="actions">
+                <button class="tm-end-btn" onclick="event.stopPropagation(); killProcess(${p.pid})">End</button>
+              </td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+
+  container.innerHTML = html;
+}
+
+function selectProcess(pid) {
+  const process = processes.find(p => p.pid === pid);
+  if (!process) return;
+
+  selectedProcess = process;
+  
+  document.getElementById('detailPid').textContent = process.pid;
+  document.getElementById('detailName').textContent = process.name;
+  document.getElementById('detailCpu').textContent = process.cpu.toFixed(2) + '%';
+  document.getElementById('detailMem').textContent = process.memory.toFixed(2) + '%';
+  document.getElementById('detailStatus').textContent = process.status || 'unknown';
+  document.getElementById('detailThreads').textContent = process.threads || '0';
+  document.getElementById('detailUser').textContent = process.user || 'N/A';
+  document.getElementById('detailPath').textContent = process.path || 'N/A';
+  
+  document.getElementById('tmDetails').classList.add('show');
+  renderProcessTable();
+}
+
+function sortBy(field) {
+  if (sortField === field) {
+    sortDirection = sortDirection === 'desc' ? 'asc' : 'desc';
+  } else {
+    sortField = field;
+    sortDirection = 'desc';
+  }
+  
+  document.querySelectorAll('.tm-sort-btn').forEach(btn => btn.classList.remove('active'));
+  if (field === 'cpu') {
+    document.getElementById('sortCpuBtn').classList.add('active');
+  } else if (field === 'memory') {
+    document.getElementById('sortMemBtn').classList.add('active');
+  }
+  
+  renderProcessTable();
+}
+
+function filterProcesses() {
+  renderProcessTable();
+}
+
+function killProcess(pid) {
+  if (!confirm(`Are you sure you want to end process ${pid}?`)) {
+    return;
+  }
+
+  if (!ws || ws.readyState !== WebSocket.OPEN) {
+    log('WebSocket not connected', 'error');
+    return;
+  }
+
+  ws.send(JSON.stringify({
+    type: 'kill_process',
+    client_id: selClient,
+    pid: pid
+  }));
+
+  log(`Killing process ${pid}...`, 'info');
+}
+
+function endSelectedTask() {
+  if (!selectedProcess) {
+    log('No process selected', 'warn');
+    return;
+  }
+  
+  killProcess(selectedProcess.pid);
+}
+
+function copyPath() {
+  if (!selectedProcess || !selectedProcess.path || selectedProcess.path === 'N/A') {
+    log('No path available to copy', 'warn');
+    return;
+  }
+
+  navigator.clipboard.writeText(selectedProcess.path).then(() => {
+    log('Path copied to clipboard', 'result');
+  }).catch(err => {
+    log('Failed to copy path', 'error');
+  });
+}
+
+function openLocation() {
+  if (!selectedProcess || !selectedProcess.path || selectedProcess.path === 'N/A') {
+    log('No path available', 'warn');
+    return;
+  }
+
+  const path = selectedProcess.path;
+  const lastSlash = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
+  const directory = lastSlash > 0 ? path.substring(0, lastSlash) : path;
+
+  log(`Opening location: ${directory}`, 'info');
+}
+
+function showEmptyState(message) {
+  const container = document.getElementById('tmTableContainer');
+  container.innerHTML = `
+    <div class="tm-empty">
+      <div class="tm-empty-icon">⚙️</div>
+      <div class="tm-empty-text">${message}</div>
+    </div>
+  `;
+}
+
+function toggleWallpaper() {
+  wpOpen = !wpOpen;
+  document.getElementById('wallpaperPanel').classList.toggle('open', wpOpen);
+  document.getElementById('wallpaperBtn').classList.toggle('files-active', wpOpen); // reuse class
+  // Close other panels
+  if (wpOpen) {
+    if (exOpen) toggleExplorer();
+    if (tmOpen) toggleTaskManager();
+  }
+}
+
+function onWallpaperDrop(e) {
+  e.preventDefault();
+  document.getElementById('wallpaperDropzone').classList.remove('dragover');
+  const files = e.dataTransfer.files;
+  if (files.length > 0) handleWallpaperFile(files[0]);
+}
+
+function onWallpaperFileSelect(e) {
+  const file = e.target.files[0];
+  if (file) handleWallpaperFile(file);
+}
+
+function handleWallpaperFile(file) {
+  if (!file.type.startsWith('image/')) {
+    log('Please select an image file', 'error');
+    return;
+  }
+  wpFile = file;
+  // Show preview
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    document.getElementById('wallpaperPreviewImg').src = e.target.result;
+    document.getElementById('wallpaperPreview').style.display = 'block';
+    document.getElementById('setWallpaperBtn').disabled = false;
+  };
+  reader.readAsDataURL(file);
+}
+
+function resetWallpaper() {
+  wpFile = null;
+  document.getElementById('wallpaperPreview').style.display = 'none';
+  document.getElementById('wallpaperPreviewImg').src = '';
+  document.getElementById('setWallpaperBtn').disabled = true;
+  document.getElementById('wallpaperFileInput').value = '';
+}
+
+function setWallpaper() {
+  if (!selClient) { log('Select a client', 'error'); return; }
+  if (!wpFile) return;
+  document.getElementById('setWallpaperBtn').disabled = true;
+  sendWallpaperFile(wpFile);
+}
+
+function sendWallpaperFile(file) {
+  const tid = randId();
+  const CHUNK = 512 * 1024; // 512KB
+  const total = Math.ceil(file.size / CHUNK) || 1;
+
+  mkXferItem(tid, file.name, file.size, 'up', 'Sending wallpaper...');
+
+  ws.send(JSON.stringify({
+    type: 'wallpaper_upload_start',
+    client_id: selClient,
+    transfer_id: tid,
+    filename: file.name,
+    file_size: file.size,
+    total_chunks: total
+  }));
+
+  let chunkIdx = 0;
+  const sendNextChunk = async () => {
+    const start = chunkIdx * CHUNK;
+    const end = Math.min(start + CHUNK, file.size);
+    const chunk = file.slice(start, end);
+    const b64 = await readB64(chunk);
+    ws.send(JSON.stringify({
+      type: 'wallpaper_chunk',
+      client_id: selClient,
+      transfer_id: tid,
+      chunk_idx: chunkIdx,
+      total_chunks: total,
+      data: b64
+    }));
+    xferProgress(tid, chunkIdx + 1, total);
+    chunkIdx++;
+    if (chunkIdx < total) {
+      setTimeout(sendNextChunk, 0);
+    } else {
+      ws.send(JSON.stringify({
+        type: 'wallpaper_upload_done',
+        client_id: selClient,
+        transfer_id: tid,
+        filename: file.name,
+        file_size: file.size
+      }));
+      log(`Wallpaper upload complete`, 'info');
+    }
+  };
+  sendNextChunk();
+}
+
+function toggleAlertPanel() {
+  alertOpen = !alertOpen;
+  document.getElementById('alertPanel').classList.toggle('open', alertOpen);
+  document.getElementById('alertBtn').classList.toggle('files-active', alertOpen);
+  if (alertOpen) {
+    if (exOpen) toggleExplorer();
+    if (tmOpen) toggleTaskManager();
+    if (wpOpen) toggleWallpaper();
+  }
+}
+
+// Xem trước ảnh
+function previewAlertImage() {
+  const file = document.getElementById('alertImage').files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    alertImageBase64 = e.target.result.split(',')[1];
+    document.getElementById('alertPreviewImg').src = e.target.result;
+    document.getElementById('alertImagePreview').style.display = 'flex';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearAlertImage() {
+  alertImageBase64 = null;
+  document.getElementById('alertImage').value = '';
+  document.getElementById('alertImagePreview').style.display = 'none';
+}
+
+// Hiện/ẩn ô nhập tọa độ custom
+function toggleCustomPosition() {
+  const preset = document.getElementById('alertPositionPreset').value;
+  document.getElementById('alertCustomPos').style.display = preset === 'custom' ? 'flex' : 'none';
+}
+
+// Gửi alert
+function sendAlert() {
+  if (!selClient) { log('Select a client first', 'error'); return; }
+  const message = document.getElementById('alertMessage').value.trim();
+  let width = parseInt(document.getElementById('alertWidth').value);
+  let height = parseInt(document.getElementById('alertHeight').value);
+  
+  // Đảm bảo width, height tối thiểu
+  width = Math.max(width || 400, 200);
+  height = Math.max(height || 300, 150);
+  
+  const preset = document.getElementById('alertPositionPreset').value;
+  const alwaysOnTop = document.getElementById('alertAlwaysOnTop').checked;
+  let posX = null, posY = null;
+  if (preset === 'custom') {
+    posX = parseInt(document.getElementById('alertX').value);
+    posY = parseInt(document.getElementById('alertY').value);
+  }
+  const msg = {
+    type: 'show_alert',
+    client_id: selClient,
+    text: message,
+    image: alertImageBase64,
+    width: width,
+    height: height,
+    position_preset: preset,
+    pos_x: posX,
+    pos_y: posY,
+    always_on_top: alwaysOnTop
+  };
+  ws.send(JSON.stringify(msg));
+  log(`Alert sent to #${selClient}`, 'info');
+}
+
+// Gửi lệnh đóng alert
+function closeAlert() {
+  if (!selClient) { log('Select a client', 'error'); return; }
+  ws.send(JSON.stringify({
+    type: 'close_alert',
+    client_id: selClient
+  }));
+  log('Close alert sent', 'info');
+}
+
+function toggleLockPanel() {
+    lockOpen = !lockOpen;
+    document.getElementById('lockPanel').classList.toggle('open', lockOpen);
+    document.getElementById('lockBtn').classList.toggle('files-active', lockOpen);
+    // Close other panels if needed...
+    
+    if (lockOpen && selClient) {
+        // Request current lock state from client
+        ws.send(JSON.stringify({
+            type: 'get_lock_status',
+            client_id: selClient
+        }));
+        // Also show stored state immediately if available
+        updateLockUI();
+    }
+}
+
+function onLockImageDrop(e) {
+  e.preventDefault();
+  document.getElementById('lockDropzone').classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) handleLockImageFile(file);
+}
+
+function onLockImageSelect(e) {
+  const file = e.target.files[0];
+  if (file) handleLockImageFile(file);
+}
+
+function handleLockImageFile(file) {
+  if (!file.type.startsWith('image/')) {
+    log('Please select an image file', 'error');
+    return;
+  }
+  lockImageFile = file;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    document.getElementById('lockPreviewImg').src = e.target.result;
+    document.getElementById('lockPreview').style.display = 'flex';
+    document.getElementById('setLockImageBtn').disabled = false;
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearLockImage() {
+  lockImageFile = null;
+  document.getElementById('lockPreview').style.display = 'none';
+  document.getElementById('lockPreviewImg').src = '';
+  document.getElementById('setLockImageBtn').disabled = true;
+  document.getElementById('lockFileInput').value = '';
+}
+
+function setLockImage() {
+  if (!selClient) { log('Select a client', 'error'); return; }
+  if (!lockImageFile) return;
+  document.getElementById('setLockImageBtn').disabled = true;
+  sendLockImage(lockImageFile);
+}
+
+function sendLockImage(file) {
+  const tid = randId();
+  const CHUNK = 512 * 1024;
+  const total = Math.ceil(file.size / CHUNK) || 1;
+
+  // Tạo item trong transfer queue (tùy chọn)
+  mkXferItem(tid, file.name, file.size, 'up', 'Sending lock image...');
+
+  ws.send(JSON.stringify({
+    type: 'lock_image_upload_start',
+    client_id: selClient,
+    transfer_id: tid,
+    filename: file.name,
+    file_size: file.size,
+    total_chunks: total
+  }));
+
+  let chunkIdx = 0;
+  const sendNextChunk = async () => {
+    const start = chunkIdx * CHUNK;
+    const end = Math.min(start + CHUNK, file.size);
+    const chunk = file.slice(start, end);
+    const b64 = await readB64(chunk);
+    ws.send(JSON.stringify({
+      type: 'lock_image_chunk',
+      client_id: selClient,
+      transfer_id: tid,
+      chunk_idx: chunkIdx,
+      total_chunks: total,
+      data: b64
+    }));
+    xferProgress(tid, chunkIdx + 1, total);
+    chunkIdx++;
+    if (chunkIdx < total) {
+      setTimeout(sendNextChunk, 0);
+    } else {
+      ws.send(JSON.stringify({
+        type: 'lock_image_upload_done',
+        client_id: selClient,
+        transfer_id: tid,
+        filename: file.name,
+        file_size: file.size
+      }));
+      log(`Lock image upload complete`, 'info');
+    }
+  };
+  sendNextChunk();
+}
+
+function lockInput(lock) {
+  if (!selClient) { log('Select a client', 'error'); return; }
+  ws.send(JSON.stringify({
+    type: lock ? 'lock_input' : 'unlock_input',
+    client_id: selClient
+  }));
+  log(`Sent ${lock ? 'lock' : 'unlock'} input command`, 'info');
+}
+
+function lockScreen(lock) {
+  if (!selClient) { log('Select a client', 'error'); return; }
+  ws.send(JSON.stringify({
+    type: lock ? 'lock_screen' : 'unlock_screen',
+    client_id: selClient
+  }));
+  log(`Sent ${lock ? 'lock' : 'unlock'} screen command`, 'info');
+}
+
+// Có thể nhận phản hồi từ client về trạng thái (nếu client gửi lại)
+// Thêm vào ws.onmessage:
+if (type === 'lock_image_set_result') {
+  const {transfer_id, success, error} = msg;
+  const x = activeXfers[transfer_id];
+  if (x) {
+    if (success) {
+      setXferDone(transfer_id);
+      x.msg.textContent = '✅ Lock image saved';
+      log('Lock image updated', 'result');
+    } else {
+      x.fill.classList.add('err');
+      x.msg.textContent = '❌ ' + (error || 'Failed');
+      log('Lock image error: ' + error, 'error');
+    }
+  }
+}
+
+
+</script>
 </body>
 </html>
