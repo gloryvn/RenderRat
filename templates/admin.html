@@ -1584,12 +1584,10 @@ function toggleInputLock() {
     type: 'set_lock_state',
     client_id: selClient,
     input_locked: !inputLocked
-    // screen_locked omitted – leave unchanged
   }));
-  // Optimistic update (will be corrected by server response)
-  inputLocked = !inputLocked;
-  updateLockUI({ input_locked: inputLocked, screen_locked: screenLocked });
+  // ✅ Không update UI ở đây — chờ server phản hồi lock_state
 }
+
 
 function toggleScreenLock() {
   if (!selClient) { log('Select a client', 'error'); return; }
@@ -1598,10 +1596,8 @@ function toggleScreenLock() {
     client_id: selClient,
     screen_locked: !screenLocked
   }));
-  screenLocked = !screenLocked;
-  updateLockUI({ input_locked: inputLocked, screen_locked: screenLocked });
+  // ✅ Không update UI ở đây — chờ server phản hồi lock_state
 }
-
 
 
 
