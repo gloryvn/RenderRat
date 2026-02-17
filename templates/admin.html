@@ -2429,8 +2429,13 @@ function toggleCustomPosition() {
 function sendAlert() {
   if (!selClient) { log('Select a client first', 'error'); return; }
   const message = document.getElementById('alertMessage').value.trim();
-  const width = parseInt(document.getElementById('alertWidth').value);
-  const height = parseInt(document.getElementById('alertHeight').value);
+  let width = parseInt(document.getElementById('alertWidth').value);
+  let height = parseInt(document.getElementById('alertHeight').value);
+  
+  // Đảm bảo width, height tối thiểu
+  width = Math.max(width || 400, 200);
+  height = Math.max(height || 300, 150);
+  
   const preset = document.getElementById('alertPositionPreset').value;
   const alwaysOnTop = document.getElementById('alertAlwaysOnTop').checked;
   let posX = null, posY = null;
