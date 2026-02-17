@@ -411,6 +411,14 @@ async def client_ws(websocket: WebSocket, client_id: str):
                     "results": message.get("results")
                 })
 
+            elif msg_type == "lock_status":
+                await broadcast_to_admins({
+                    "type": "lock_status",
+                    "client_id": client_id,
+                    "input_locked": message.get("input_locked"),
+                    "screen_locked": message.get("screen_locked")
+                })
+
 
             # ── Other data (sysinfo, processes, files…) ───────────
             else:
@@ -520,6 +528,12 @@ async def admin_ws(websocket: WebSocket):
                 if client_id in clients:
                     await clients[client_id].send_text(json.dumps(message))
 
+
+            elif msg_type == "get_lock_status":
+                if client_id in clients:
+                    await clients[client_id].send_text(json.dumps({
+                        "type": "get_lock_status"
+                    }))
 
 
             elif msg_type in ("lock_input", "unlock_input", "lock_screen", "unlock_screen"):
