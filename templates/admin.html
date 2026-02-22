@@ -1688,7 +1688,21 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
 }
 
 
-
+body.mouse-control-active::after {
+  content: '🖱 REMOTE MOUSE ACTIVE';
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(0, 229, 255, 0.2);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  padding: 5px 10px;
+  font-size: 11px;
+  border-radius: 20px;
+  z-index: 10000;
+  pointer-events: none;
+  backdrop-filter: blur(4px);
+}
 
 
 
@@ -3639,13 +3653,13 @@ function sendKeyCombo() {
 function toggleMouseControl(enable) {
   mouseControlEnabled = enable;
   if (enable) {
-    // Focus to ensure key events are captured
-    window.focus();
+    document.body.classList.add('mouse-control-active');
+    // Có thể hiển thị overlay nhỏ thông báo
     log('Mouse control enabled – use arrow keys, PgDn, Home', 'info');
   } else {
-    // Release any held mouse button
+    document.body.classList.remove('mouse-control-active');
     if (mouseDown) {
-      sendMouseUp();
+      sendMouseUp(currentMouseButton);
       mouseDown = false;
     }
   }
@@ -3704,13 +3718,23 @@ function switchMouseButton() {
   log(`🖱 Switched to ${currentMouseButton} button`, 'info');
 }
 
+
+window.addEventListener('blur', () => {
+  if (mouseDown) {
+    sendMouseUp(currentMouseButton);
+    mouseDown = false;
+  }
+});
+
+
 // ── Keyboard event listeners ───────────────────────
 window.addEventListener('keydown', (e) => {
   if (!mouseControlEnabled || !selClient) return;
   const key = e.key;
-  // Prevent default for control keys
+  // Ngăn chặn hành vi mặc định ngay cả khi phần tử đang focus là input/textarea
   if (key.startsWith('Arrow') || key === 'PageDown' || key === 'Home') {
     e.preventDefault();
+    e.stopPropagation(); // Ngăn không cho sự kiện lan xuống các phần tử con
   }
   switch (key) {
     case 'ArrowUp': sendMouseMove(0, -10); break;
@@ -3729,23 +3753,23 @@ window.addEventListener('keydown', (e) => {
       switchMouseButton();
       break;
   }
-});
+}, { capture: true }); // ← Quan trọng
 
 window.addEventListener('keyup', (e) => {
   if (!mouseControlEnabled || !selClient) return;
   if (e.key === 'PageDown') {
+    e.preventDefault();
+    e.stopPropagation();
     if (mouseDown) {
       const duration = Date.now() - mouseDownTime;
       if (!mouseMoved && duration < 200) {
-        // Tap -> click
         sendMouseClick(currentMouseButton);
       }
       sendMouseUp(currentMouseButton);
       mouseDown = false;
     }
-    e.preventDefault();
   }
-});
+}, { capture: true });
 
 // Xử lý toggle checkbox
 document.getElementById('mouseControlToggle').addEventListener('change', (e) => {
