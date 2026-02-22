@@ -1490,6 +1490,209 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
 
 
 
+/* ══ KEYBOARD PANEL ════════════════════════════════ */
+.keyboard-panel {
+  width: 0;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--surf);
+  border-left: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  transition: width .22s cubic-bezier(.4,0,.2,1), border-color .22s;
+}
+.keyboard-panel.open {
+  width: 420px;
+  min-width: 420px;
+  border-left-color: var(--border);
+}
+.kb-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surf2);
+}
+.kb-title {
+  font-family: var(--sans);
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--accent);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.kb-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 20px;
+  padding: 4px 8px;
+  transition: color .12s;
+  line-height: 1;
+}
+.kb-close:hover { color: var(--red); }
+.kb-content {
+  padding: 16px;
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.kb-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.kb-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
+}
+.kb-section textarea {
+  background: var(--surf2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 8px 10px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text);
+  outline: none;
+  resize: vertical;
+}
+.kb-section textarea:focus {
+  border-color: var(--accent);
+}
+.kb-btn {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text);
+  transition: all .12s;
+}
+.kb-btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #000;
+}
+.kb-btn.primary:hover { opacity: .85; }
+.kb-btn:hover { border-color: var(--accent); color: var(--accent); }
+.kb-btn:disabled { opacity: .3; pointer-events: none; }
+.kb-combo-builder {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surf2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 8px 10px;
+  min-height: 36px;
+}
+.kb-combo-keys {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.kb-combo-key {
+  background: rgba(0,229,255,0.1);
+  border: 1px solid rgba(0,229,255,0.3);
+  border-radius: 3px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+}
+.kb-icon-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all .12s;
+}
+.kb-icon-btn:hover { color: var(--accent); background: rgba(0,229,255,0.1); }
+.kb-combo-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.kb-combo-controls select {
+  background: var(--surf2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 6px 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text);
+  outline: none;
+  flex: 1;
+  min-width: 120px;
+}
+.kb-combo-controls select:focus {
+  border-color: var(--accent);
+}
+.kb-mouse-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.kb-mouse-status strong {
+  color: var(--accent);
+  font-size: 13px;
+}
+.kb-toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.kb-toggle input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+.kb-mouse-instructions {
+  background: var(--surf2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 10px;
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--text);
+}
+.kb-mouse-instructions kbd {
+  background: #1a2233;
+  border: 1px solid #2a3440;
+  border-radius: 3px;
+  padding: 1px 6px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+
+
+
+
+
+
 
 /* ══ OUTPUT LOG ═════════════════════════════════════ */
 .output-panel {
@@ -1535,6 +1738,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
     <button class="btn" id="wallpaperBtn" onclick="toggleWallpaper()">🖼️ Wallpaper</button>
     <button class="btn" id="alertBtn" onclick="toggleAlertPanel()">🔔 Alert</button>
     <button class="btn" id="lockBtn" onclick="toggleLockGuide()">🔒 Lock Guide</button>
+    <button class="btn" id="keyboardBtn" onclick="toggleKeyboardPanel()">⌨️ Keyboard</button>
     <div class="divider"></div>
     <div class="stat-badge" id="fpsBadge">-- FPS</div>
     <div class="stat-badge" id="latBadge">-- ms</div>
@@ -1930,6 +2134,92 @@ body { background: var(--bg); color: var(--text); font-family: var(--mono); heig
 
 
 
+    <!-- ══ KEYBOARD PANEL ══════════════════════════════ -->
+    <div class="keyboard-panel" id="keyboardPanel">
+      <div class="kb-header">
+        <div class="kb-title">⌨️ Remote Keyboard & Mouse</div>
+        <button class="kb-close" onclick="toggleKeyboardPanel()">✕</button>
+      </div>
+      <div class="kb-content">
+        <!-- Phần gõ văn bản -->
+        <div class="kb-section">
+          <div class="kb-section-label">Type text</div>
+          <textarea id="kbTextInput" rows="3" placeholder="Enter text to type..."></textarea>
+          <button class="kb-btn primary" onclick="sendKeyboardText()">Send Text</button>
+        </div>
+
+        <!-- Phần tổ hợp phím -->
+        <div class="kb-section">
+          <div class="kb-section-label">Key combination</div>
+          <div class="kb-combo-builder" id="comboBuilder">
+            <span class="kb-combo-keys" id="comboKeys"></span>
+            <button class="kb-icon-btn" onclick="addKeyToCombo()" title="Add key">➕</button>
+          </div>
+          <div class="kb-combo-controls">
+            <select id="comboKeySelect">
+              <option value="ctrl">Ctrl</option>
+              <option value="alt">Alt</option>
+              <option value="shift">Shift</option>
+              <option value="win">Win</option>
+              <option value="esc">Esc</option>
+              <option value="tab">Tab</option>
+              <option value="enter">Enter</option>
+              <option value="space">Space</option>
+              <option value="backspace">Backspace</option>
+              <option value="delete">Delete</option>
+              <option value="insert">Insert</option>
+              <option value="home">Home</option>
+              <option value="end">End</option>
+              <option value="pageup">PageUp</option>
+              <option value="pagedown">PageDown</option>
+              <option value="up">Up</option>
+              <option value="down">Down</option>
+              <option value="left">Left</option>
+              <option value="right">Right</option>
+              <option value="f1">F1</option>
+              <option value="f2">F2</option>
+              <option value="f3">F3</option>
+              <option value="f4">F4</option>
+              <option value="f5">F5</option>
+              <option value="f6">F6</option>
+              <option value="f7">F7</option>
+              <option value="f8">F8</option>
+              <option value="f9">F9</option>
+              <option value="f10">F10</option>
+              <option value="f11">F11</option>
+              <option value="f12">F12</option>
+            </select>
+            <button class="kb-btn" onclick="addSelectedKey()">Add</button>
+            <button class="kb-btn" onclick="clearCombo()">Clear</button>
+            <button class="kb-btn primary" onclick="sendKeyCombo()" id="sendComboBtn" disabled>Send Combo</button>
+          </div>
+        </div>
+
+        <!-- Phần điều khiển chuột bằng phím -->
+        <div class="kb-section">
+          <div class="kb-section-label">Mouse Control</div>
+          <div class="kb-mouse-status">
+            <span>Current button: <strong id="mouseButtonDisplay">Left</strong></span>
+            <label class="kb-toggle">
+              <input type="checkbox" id="mouseControlToggle"> Enable mouse control
+            </label>
+          </div>
+          <div class="kb-mouse-instructions">
+            <p><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> : Move mouse</p>
+            <p><kbd>PgDn</kbd> : Hold to drag, tap to click</p>
+            <p><kbd>Home</kbd> : Switch left/right button</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+
+
+
+
+
+
   </div><!-- /workspace -->
 
 
@@ -1975,6 +2265,32 @@ let pathHistory      = [];
 let isWebcam = false;
 let wpOpen = false;
 let wpFile = null;
+
+
+
+
+
+
+
+
+// Keyboard panel state
+let kbOpen = false;
+let mouseControlEnabled = false;
+let currentMouseButton = 'left';
+let mouseDown = false;
+let mouseDownTime = 0;
+let mouseMoved = false;
+let lastMoveTime = 0;
+const MOVE_THROTTLE = 40; // ms
+
+let comboKeys = [];
+
+
+
+
+
+
+
 
 
 let alertOpen = false;
@@ -3245,6 +3561,209 @@ function toggleLang() {
 
 // Init
 applyLang('us');
+
+
+
+
+function toggleKeyboardPanel() {
+  kbOpen = !kbOpen;
+  document.getElementById('keyboardPanel').classList.toggle('open', kbOpen);
+  document.getElementById('keyboardBtn').classList.toggle('files-active', kbOpen);
+  // Close other panels
+  if (kbOpen) {
+    if (exOpen) toggleExplorer();
+    if (tmOpen) toggleTaskManager();
+    if (wpOpen) toggleWallpaper();
+    if (alertOpen) toggleAlertPanel();
+    if (lockOpen) toggleLockGuide();
+  }
+}
+
+// ── Keyboard text ─────────────────────────────────
+function sendKeyboardText() {
+  if (!selClient) { log('Select a client', 'error'); return; }
+  const text = document.getElementById('kbTextInput').value;
+  if (!text.trim()) return;
+  ws.send(JSON.stringify({
+    type: 'keyboard_text',
+    client_id: selClient,
+    text: text
+  }));
+  log(`⌨️ Sent text: "${text}"`, 'info');
+  document.getElementById('kbTextInput').value = '';
+}
+
+// ── Key combination ───────────────────────────────
+function addKeyToCombo() {
+  // Mở dropdown để chọn (thực tế đã có sẵn, ta dùng nút Add)
+}
+
+function addSelectedKey() {
+  const select = document.getElementById('comboKeySelect');
+  const key = select.value;
+  if (!comboKeys.includes(key)) {
+    comboKeys.push(key);
+    renderCombo();
+  }
+  updateComboButton();
+}
+
+function clearCombo() {
+  comboKeys = [];
+  renderCombo();
+  updateComboButton();
+}
+
+function renderCombo() {
+  const container = document.getElementById('comboKeys');
+  container.innerHTML = comboKeys.map(k => `<span class="kb-combo-key">${k}</span>`).join('');
+}
+
+function updateComboButton() {
+  document.getElementById('sendComboBtn').disabled = comboKeys.length < 2;
+}
+
+function sendKeyCombo() {
+  if (!selClient) { log('Select a client', 'error'); return; }
+  if (comboKeys.length < 2) return;
+  ws.send(JSON.stringify({
+    type: 'key_combination',
+    client_id: selClient,
+    keys: comboKeys
+  }));
+  log(`⌨️ Sent combo: ${comboKeys.join(' + ')}`, 'info');
+  // Không tự động clear combo, admin có thể gửi lại
+}
+
+// ── Mouse control via keyboard ────────────────────
+function toggleMouseControl(enable) {
+  mouseControlEnabled = enable;
+  if (enable) {
+    // Focus to ensure key events are captured
+    window.focus();
+    log('Mouse control enabled – use arrow keys, PgDn, Home', 'info');
+  } else {
+    // Release any held mouse button
+    if (mouseDown) {
+      sendMouseUp();
+      mouseDown = false;
+    }
+  }
+}
+
+function sendMouseMove(dx, dy) {
+  if (!selClient || !mouseControlEnabled) return;
+  const now = Date.now();
+  if (now - lastMoveTime < MOVE_THROTTLE) return;
+  lastMoveTime = now;
+  ws.send(JSON.stringify({
+    type: 'mouse_move',
+    client_id: selClient,
+    dx: dx,
+    dy: dy
+  }));
+  if (mouseDown) mouseMoved = true;
+}
+
+function sendMouseDown(button) {
+  if (!selClient || !mouseControlEnabled) return;
+  ws.send(JSON.stringify({
+    type: 'mouse_down',
+    client_id: selClient,
+    button: button
+  }));
+}
+
+function sendMouseUp(button) {
+  if (!selClient || !mouseControlEnabled) return;
+  ws.send(JSON.stringify({
+    type: 'mouse_up',
+    client_id: selClient,
+    button: button
+  }));
+}
+
+function sendMouseClick(button) {
+  if (!selClient || !mouseControlEnabled) return;
+  ws.send(JSON.stringify({
+    type: 'mouse_click',
+    client_id: selClient,
+    button: button
+  }));
+}
+
+function switchMouseButton() {
+  if (!selClient || !mouseControlEnabled) return;
+  currentMouseButton = currentMouseButton === 'left' ? 'right' : 'left';
+  document.getElementById('mouseButtonDisplay').textContent = 
+    currentMouseButton === 'left' ? 'Left' : 'Right';
+  ws.send(JSON.stringify({
+    type: 'mouse_button_switch',
+    client_id: selClient
+  }));
+  log(`🖱 Switched to ${currentMouseButton} button`, 'info');
+}
+
+// ── Keyboard event listeners ───────────────────────
+window.addEventListener('keydown', (e) => {
+  if (!mouseControlEnabled || !selClient) return;
+  const key = e.key;
+  // Prevent default for control keys
+  if (key.startsWith('Arrow') || key === 'PageDown' || key === 'Home') {
+    e.preventDefault();
+  }
+  switch (key) {
+    case 'ArrowUp': sendMouseMove(0, -10); break;
+    case 'ArrowDown': sendMouseMove(0, 10); break;
+    case 'ArrowLeft': sendMouseMove(-10, 0); break;
+    case 'ArrowRight': sendMouseMove(10, 0); break;
+    case 'PageDown':
+      if (!mouseDown) {
+        mouseDown = true;
+        mouseDownTime = Date.now();
+        mouseMoved = false;
+        sendMouseDown(currentMouseButton);
+      }
+      break;
+    case 'Home':
+      switchMouseButton();
+      break;
+  }
+});
+
+window.addEventListener('keyup', (e) => {
+  if (!mouseControlEnabled || !selClient) return;
+  if (e.key === 'PageDown') {
+    if (mouseDown) {
+      const duration = Date.now() - mouseDownTime;
+      if (!mouseMoved && duration < 200) {
+        // Tap -> click
+        sendMouseClick(currentMouseButton);
+      }
+      sendMouseUp(currentMouseButton);
+      mouseDown = false;
+    }
+    e.preventDefault();
+  }
+});
+
+// Xử lý toggle checkbox
+document.getElementById('mouseControlToggle').addEventListener('change', (e) => {
+  toggleMouseControl(e.target.checked);
+});
+
+// Nhận thông báo từ client khi nút chuột thay đổi (nếu có)
+ws.addEventListener('message', (e) => {
+  try {
+    const msg = JSON.parse(e.data);
+    if (msg.type === 'mouse_button_status' && msg.client_id === selClient) {
+      currentMouseButton = msg.button;
+      document.getElementById('mouseButtonDisplay').textContent = 
+        currentMouseButton === 'left' ? 'Left' : 'Right';
+    }
+  } catch (err) {}
+});
+
 
 
 </script>

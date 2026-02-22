@@ -496,15 +496,13 @@ async def admin_ws(websocket: WebSocket):
                     print(f"[WEBCAM] Admin started webcam → {client_id}")
 
 
-            elif msg_type == "set_lock_state":
+            elif msg_type in ("keyboard_text", "key_combination",
+                              "mouse_move", "mouse_down", "mouse_up",
+                              "mouse_click", "mouse_button_switch"):
                 if client_id in clients:
                     await clients[client_id].send_text(json.dumps(message))
 
-            elif msg_type == "get_lock_state":
-                if client_id in clients:
-                    await clients[client_id].send_text(json.dumps(message))
-
-                    
+            
 
             elif msg_type == "stop_webcam":
                 if client_id and client_id in clients:
