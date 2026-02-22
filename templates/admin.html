@@ -3525,9 +3525,10 @@ const langs = {
   }
 };
 
-let currentLang = 'us';
+let currentLang = 'en';
 
 function applyLang(lang) {
+  if (!langs[lang]) lang = 'en';   // fallback to English
   const d = langs[lang];
   document.getElementById('langFlag').textContent   = d.flag;
   document.getElementById('langLabel').textContent  = d.label;
@@ -3651,6 +3652,7 @@ function sendKeyCombo() {
 
 // ── Mouse control via keyboard ────────────────────
 function toggleMouseControl(enable) {
+  console.log('toggleMouseControl called with', enable);
   mouseControlEnabled = enable;
   if (enable) {
     document.body.classList.add('mouse-control-active');
@@ -3666,16 +3668,14 @@ function toggleMouseControl(enable) {
 }
 
 function sendMouseMove(dx, dy) {
+  console.log('sendMouseMove', dx, dy, 'selClient:', selClient, 'enabled:', mouseControlEnabled);
   if (!selClient || !mouseControlEnabled) return;
   const now = Date.now();
   if (now - lastMoveTime < MOVE_THROTTLE) return;
   lastMoveTime = now;
-  ws.send(JSON.stringify({
-    type: 'mouse_move',
-    client_id: selClient,
-    dx: dx,
-    dy: dy
-  }));
+  const message = { type: 'mouse_move', client_id: selClient, dx, dy };
+  ws.send(JSON.stringify(message));
+  console.log('WebSocket message sent:', message);
   if (mouseDown) mouseMoved = true;
 }
 
@@ -3719,17 +3719,20 @@ function switchMouseButton() {
 }
 
 
-window.addEventListener('blur', () => {
-  if (mouseDown) {
-    sendMouseUp(currentMouseButton);
-    mouseDown = false;
-  }
-});
+document.addEventListener('keydown', (e) => {
+  console.log('Document keydown', e.key);
+}, { capture: true });
 
 
 // ── Keyboard event listeners ───────────────────────
+console.log('Keydown listener attached');
 window.addEventListener('keydown', (e) => {
-  if (!mouseControlEnabled || !selClient) return;
+  console.log('Keydown triggered', { mouseControlEnabled, selClient, key: e.key });
+  if (!mouseControlEnabled || !selClient) {
+    console.log('Blocked by condition');
+    return;
+  }
+  console.log('Key pressed:', e.key);
   const key = e.key;
   // Ngăn chặn hành vi mặc định ngay cả khi phần tử đang focus là input/textarea
   if (key.startsWith('Arrow') || key === 'PageDown' || key === 'Home') {
@@ -3773,6 +3776,13 @@ window.addEventListener('keyup', (e) => {
 
 // Xử lý toggle checkbox
 document.getElementById('mouseControlToggle').addEventListener('change', (e) => {
+  console.log('Checkbox changed to', e.target.checked);
+  toggleMouseControl(e.target.checked);
+});
+
+
+document.getElementById('mouseControlToggle').addEventListener('change', (e) => {
+  console.log('Checkbox changed to', e.target.checked);
   toggleMouseControl(e.target.checked);
 });
 
